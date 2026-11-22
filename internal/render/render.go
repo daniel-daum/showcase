@@ -25,6 +25,7 @@ type Renderer struct {
 	Now   time.Time // fixed per build so output is deterministic
 	css   string    // short hash of style.css, so caches never serve a stale one
 	Theme string    // saturn palette name, the default without JS
+	Base  string    // base_path ("/projects"), put in front of every root-relative link
 	pages map[string]*template.Template
 	syms  map[string][]byte // sprite symbols by id: f-<glyph> file icons, i-<name> UI icons
 }
@@ -108,7 +109,22 @@ func (r *Renderer) Write(dir, rel, name string, p Page) error {
 	if err := t.ExecuteTemplate(&buf, "base", p); err != nil {
 		return fmt.Errorf("render %s: %w", rel, err)
 	}
-	return WriteFile(filepath.Join(dir, filepath.FromSlash(rel)), r.fillSprite(buf.Bytes()))
+	return WriteFile(filepath.Join(dir, filepath.FromSlash(rel)), r.rebase(r.fillSprite(buf.Bytes())))
+}
+
+// rootLink matches a root-relative href or src: html/template always quotes
+// attributes with ", and quotes inside text and values are escaped, so this
+// only finds real attributes. "//host" links are left alone.
+var rootLink = regexp.MustCompile(`(\s(?:href|src)=")/([^/])`)
+
+// rebase moves every root-relative link under r.Base. Templates and the
+// builder write links from the site root; this one pass keeps them all,
+// README links included, right when the pages live under a path.
+func (r *Renderer) rebase(b []byte) []byte {
+	if r.Base == "" {
+		return b
+	}
+	return rootLink.ReplaceAll(b, []byte("${1}"+r.Base+"/${2}"))
 }
 
 // WriteFile writes b to name, creating parent directories.

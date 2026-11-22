@@ -1,4 +1,4 @@
-// Command daumdev builds and serves the read-only daum.dev code site.
+// Command showcase builds and serves the read-only code site at site_url.
 package main
 
 import (

@@ -65,3 +65,33 @@ func TestOutputIsSafe(t *testing.T) {
 		t.Error("private repo directory exists")
 	}
 }
+
+// Under a base_path every page link stays inside it: anything root-relative
+// outside /projects/ would 404 on danieldaum.net. Downloads go to site_url.
+func TestBasePathLinks(t *testing.T) {
+	dir := t.TempDir()
+	b := testBuilder(t)
+	b.Cfg.BasePath = "/projects"
+	if err := b.Render(context.Background(), dir); err != nil {
+		t.Fatal(err)
+	}
+	link := regexp.MustCompile(`\s(?:href|src)="(/[^"]*)"`)
+	pages, downloads := 0, 0
+	filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".html") || strings.Contains(p, "/raw/") {
+			return err
+		}
+		pages++
+		s, _ := os.ReadFile(p)
+		for _, m := range link.FindAllStringSubmatch(string(s), -1) {
+			if !strings.HasPrefix(m[1], "/projects/") {
+				t.Errorf("%s links outside the base: %s", p, m[1])
+			}
+		}
+		downloads += strings.Count(string(s), `href="https://code.danieldaum.net/repo-a/releases/download/`)
+		return nil
+	})
+	if pages < 50 || downloads == 0 {
+		t.Errorf("checked %d pages and %d download links", pages, downloads)
+	}
+}

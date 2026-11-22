@@ -139,3 +139,40 @@ func TestClientIP(t *testing.T) {
 		t.Errorf("trusted peer: got %s", ip)
 	}
 }
+
+func TestBasePath(t *testing.T) {
+	s := testServer(t, true)
+	s.Cfg.BasePath = "/projects"
+	cases := []struct {
+		path     string
+		status   int
+		body     string // or the Location of a redirect
+		location string
+	}{
+		{"/projects/", 200, "home", ""},
+		{"/projects/repos/", 200, "all repos", ""},
+		{"/projects/repo-a/", 200, "repo page", ""},
+		{"/projects/repo-a/blob/main.go", 200, "main.go page", ""},
+		{"/projects/repo-a/raw/main.go", 200, "package main", ""},
+		{"/projects/static/style.css", 200, "body{}", ""},
+		{"/healthz", 200, "ok", ""},
+		{"/repo-a/sub/pkg?go-get=1", 200, "repo page", ""}, // module paths stay at the root
+		// redirects into the base, so old links keep working
+		{"/projects", 301, "", "/projects/"},
+		{"/", 301, "", "/projects/"},
+		{"/repo-a/log/", 301, "", "/projects/repo-a/log/"},
+		{"/projects/repos", 301, "", "/projects/repos/"},
+		{"/projects/repo-a", 301, "", "/projects/repo-a/"},
+		{"/projects/repo-a/tree/docs", 301, "", "/projects/repo-a/tree/docs/"},
+		// still 404 inside the base
+		{"/projects/secret/", 404, "not found", ""},
+		{"/projects/index.html", 404, "not found", ""},
+		{"/projects/../secret/", 404, "not found", ""},
+	}
+	for _, c := range cases {
+		w := do(s, "GET", c.path, nil)
+		if w.Code != c.status || !strings.Contains(w.Body.String(), c.body) || w.Header().Get("Location") != c.location {
+			t.Errorf("GET %s: %d %q location %q, want %d %q %q", c.path, w.Code, w.Body.String(), w.Header().Get("Location"), c.status, c.body, c.location)
+		}
+	}
+}

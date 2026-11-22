@@ -1,0 +1,15 @@
+# code.danieldaum.net: your reverse proxy terminates TLS and forwards to
+# 127.0.0.1:8080. Run from this folder, next to config.json.
+services:
+    showcase:
+        image: git.danieldaum.net/daniel/showcase:0.1.0
+        read_only: true
+        cap_drop: [ALL]
+        security_opt: ["no-new-privileges:true"]
+        volumes:
+            - showcase-data:/data
+            - ./config.json:/config.json:ro
+        ports: ["127.0.0.1:8080:8080"]
+        restart: unless-stopped
+volumes:
+    showcase-data:

@@ -25,9 +25,17 @@ digests:
     @echo "golang:1.27.4-alpine3.24 $(crane digest golang:1.27.4-alpine3.24)"
     @echo "alpine:3.24.4            $(crane digest alpine:3.24.4)"
 
-# Build the image (needs Docker, e.g. on the host)
-image:
-    docker build -t daumdev:latest .
+image_name := "git.danieldaum.net/daniel/showcase"
+
+# Build the image for this machine (needs Docker, e.g. on the host)
+image tag="dev":
+    docker build -t {{image_name}}:{{tag}} .
+
+# Push a tagged release: needs Docker, `docker login git.danieldaum.net`, a clean tree and HEAD tagged v<version>
+release version:
+    git diff --quiet HEAD || { echo "commit first"; exit 1; }
+    test "$(git describe --exact-match --tags HEAD 2>/dev/null)" = "v{{version}}" || { echo "tag HEAD as v{{version}} first"; exit 1; }
+    docker buildx build --platform linux/amd64,linux/arm64 -t {{image_name}}:{{version}} -t {{image_name}}:latest --push .
 
 # Regenerate the icons from extracted npm packages: material-icon-theme@5.40.0 and @primer/octicons@19.15.0
 icons material octicons:
@@ -36,20 +44,20 @@ icons material octicons:
 
 # Build the binary into ./bin
 build:
-    CGO_ENABLED=0 go build -trimpath -o bin/daumdev ./cmd/daumdev
+    CGO_ENABLED=0 go build -trimpath -o bin/showcase ./cmd/showcase
 
 # Render the site once into ./out (needs a config.json and access to Gitea)
 render config="config.json":
     rm -rf out
-    go run ./cmd/daumdev -config {{config}} -data .data -once -out out
+    go run ./cmd/showcase -config {{config}} -data .data -once -out out
 
 # Serve the finished build in ./out on localhost:8000 with the real server
 serve config="testdata/demo.json":
-    go run ./cmd/daumdev -config {{config}} -serve-dir out -listen 127.0.0.1:8000
+    go run ./cmd/showcase -config {{config}} -serve-dir out -listen 127.0.0.1:8000
 
 # Build from real Gitea every 10 minutes and serve on localhost:8000 (needs ./config.json)
 run config="config.json":
-    go run ./cmd/daumdev -config {{config}} -data .data -listen 127.0.0.1:8000
+    go run ./cmd/showcase -config {{config}} -data .data -listen 127.0.0.1:8000
 
 # Render from real Gitea (needs ./config.json) and serve it
 preview config="config.json": (render config)

@@ -39,9 +39,14 @@ func git(ctx context.Context, dir string, args ...string) ([]byte, error) {
 	return out, nil
 }
 
-// Mirror clones url into dir as a bare mirror, or fetches if it exists.
+// Mirror clones url into dir as a bare mirror, or fetches if it exists. The
+// remote is reset to url first, so changing gitea_url (say, to a tailnet
+// address) moves existing mirrors along instead of fetching the old host.
 func Mirror(ctx context.Context, url, dir string) (Repo, error) {
 	if _, err := os.Stat(dir); err == nil {
+		if _, err := git(ctx, dir, "remote", "set-url", "origin", url); err != nil {
+			return Repo{dir}, err
+		}
 		_, err := git(ctx, dir, "fetch", "--prune", "--quiet", "origin")
 		return Repo{dir}, err
 	}

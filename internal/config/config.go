@@ -14,9 +14,13 @@ import (
 )
 
 type Config struct {
-	GiteaURL string   `json:"gitea_url"`
-	User     string   `json:"user"`
-	SiteURL  string   `json:"site_url"`
+	GiteaURL string `json:"gitea_url"`
+	User     string `json:"user"`
+	SiteURL  string `json:"site_url"`
+	// BasePath ("/projects") puts the pages under one path segment, so a
+	// proxy can serve them at danieldaum.net/projects. Clone, go get, docker
+	// pull and /healthz stay at the root of site_url. Empty means the root.
+	BasePath string   `json:"base_path"`
 	Repos    []string `json:"repos"`
 	Images   []string `json:"images"`
 	// Featured repos for the profile, in order (up to 6). Empty means the
@@ -30,6 +34,7 @@ type Config struct {
 
 var (
 	nameRe  = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
+	baseRe  = regexp.MustCompile(`^(/[a-z0-9][a-z0-9-]*)?$`)
 	imageRe = regexp.MustCompile(`^[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*$`)
 	// Top-level names the site or router uses for itself.
 	reserved = []string{"static", "v2", "healthz", "api", "user", "repos", "index.html", "404.html"}
@@ -91,6 +96,9 @@ func (c *Config) validate() error {
 				return fmt.Errorf("bad trusted proxy %q", p)
 			}
 		}
+	}
+	if b := strings.TrimPrefix(c.BasePath, "/"); !baseRe.MatchString(c.BasePath) || slices.Contains(reserved, b) || seen[b] {
+		return fmt.Errorf("base_path %q must be empty or one lowercase segment like /projects, not a reserved or repo name", c.BasePath)
 	}
 	if c.Theme == "" {
 		c.Theme = "moss"

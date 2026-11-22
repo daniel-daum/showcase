@@ -40,6 +40,12 @@ type ExtraPage struct {
 // registry data.
 func (b *Builder) renderExtras(ctx context.Context, rd *render.Renderer, dir string, r *repo) error {
 	base := "/" + r.Name
+	// Downloads go through the proxy at the root of site_url. Under a
+	// base_path the pages may be served elsewhere, so link there directly.
+	dl := base
+	if b.Cfg.BasePath != "" {
+		dl = b.Cfg.SiteURL + base
+	}
 	rel := ExtraPage{Repo: r, Tab: "releases"}
 	for _, x := range r.Releases {
 		v := ReleaseView{Release: x}
@@ -48,7 +54,7 @@ func (b *Builder) renderExtras(ctx context.Context, rd *render.Renderer, dir str
 			return err
 		}
 		for _, a := range x.Assets {
-			v.Assets = append(v.Assets, Crumb{a.Name, base + "/releases/download/" + url.PathEscape(x.TagName) + "/" + url.PathEscape(a.Name)})
+			v.Assets = append(v.Assets, Crumb{a.Name, dl + "/releases/download/" + url.PathEscape(x.TagName) + "/" + url.PathEscape(a.Name)})
 		}
 		rel.Releases = append(rel.Releases, v)
 	}

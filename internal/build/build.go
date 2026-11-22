@@ -65,7 +65,7 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 		return err
 	}
 
-	rd.Theme = b.Cfg.Theme
+	rd.Theme, rd.Base = b.Cfg.Theme, b.Cfg.BasePath
 	p := Profile{User: user}
 	if img, ct, err := b.Gitea.Avatar(ctx, user.AvatarURL); err != nil {
 		b.Log.Warn("avatar", "err", err)

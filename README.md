@@ -1,6 +1,8 @@
-# daum.dev
+# showcase
 
-A small, read-only public view of selected Gitea repos. One Go binary
+A small, read-only public view of selected Gitea repos, served at
+[code.danieldaum.net](https://code.danieldaum.net) and styled as part of
+danieldaum.net. One Go binary
 rebuilds static HTML from Gitea on a timer, serves it, and passes `git clone`
 and `docker pull` through to Gitea. The public side can't write, log in, or
 reach Gitea's UI or API.
@@ -29,10 +31,10 @@ just run         # build from real Gitea every 10 min and serve on localhost:800
 
 ```json
 {
-    "gitea_url": "http://gitea.tailnet.example:3000",
+    "gitea_url": "https://git.danieldaum.net",
     "user": "daniel",
-    "site_url": "https://daum.dev",
-    "links": { "website": "https://danieldaum.net" },
+    "site_url": "https://code.danieldaum.net",
+    "base_path": "",
     "repos": ["repo-a", "repo-b"],
     "images": ["repo-a"],
     "featured": ["repo-a"],
@@ -44,27 +46,30 @@ just run         # build from real Gitea every 10 min and serve on localhost:800
 
 `featured` (optional) picks up to six repos for the profile, in order.
 Without it, the six most recently updated are shown. Every repo is listed
-at `/repos/`.
+at `/repos/`. `base_path` (optional, like `/projects`) serves the pages
+under one path, for danieldaum.net/projects; clone, `go get` and
+`docker pull` stay at the root of `site_url`.
 
 ## Deploy
 
+See [deploy/README.md](deploy/README.md): releasing an image, running it at
+code.danieldaum.net, moving Gitea to the tailnet, and serving it at
+danieldaum.net/projects.
+
 ```sh
-just image                       # docker build -t daumdev:latest . (needs Docker)
-docker compose up -d             # uses compose.yaml and ./config.json
+just image                       # build for this machine (needs Docker)
+just release 0.1.0               # push git.danieldaum.net/daniel/showcase:0.1.0
 ```
 
 The container runs as uid 10001 with a read-only root filesystem, no
 capabilities and `no-new-privileges`. Only `/data` is writable: git mirrors
-and site builds. It listens on plain HTTP `:8080`. Pangolin terminates TLS.
-
-Gitea must allow anonymous reads (`REQUIRE_SIGNIN_VIEW = false`, HTTP git
-not disabled) and has to be reachable from the container at `gitea_url`.
-Put Pangolin's address in `trusted_proxies` so logs show client IPs.
+and site builds. It listens on plain HTTP `:8080` behind a reverse proxy
+that terminates TLS.
 
 ## Layout
 
 ```
-cmd/daumdev/       entrypoint
+cmd/showcase/      entrypoint
 internal/config/   config.json loading and validation
 internal/gitea/    anonymous Gitea API client
 internal/gitx/     git CLI wrappers
@@ -75,7 +80,7 @@ web/               embedded templates and static assets
 testdata/          sample Gitea JSON and golden output
 docs/              spec and design decisions
 Dockerfile         golang build stage, alpine + git runtime, pinned by digest
-compose.yaml       example deployment
+deploy/            compose, production config, saturn patch and runbook
 ```
 
 ## Docs

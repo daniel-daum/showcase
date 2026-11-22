@@ -101,6 +101,22 @@ func (s *Server) route(w http.ResponseWriter, r *http.Request) {
 		s.notFound(w, r)
 		return
 	}
+	// Under a base_path the pages live at base/…; old root URLs redirect
+	// there. `go get` keeps asking at the root (the module path doesn't move).
+	base := s.Cfg.BasePath
+	if base != "" {
+		switch {
+		case strings.HasPrefix(p, base+"/"):
+			p = strings.TrimPrefix(p, base)
+		case r.URL.Query().Has("go-get"):
+		case p == base:
+			http.Redirect(w, r, base+"/", http.StatusMovedPermanently)
+			return
+		default:
+			http.Redirect(w, r, base+p, http.StatusMovedPermanently)
+			return
+		}
+	}
 	if !s.Ready() {
 		http.Error(w, "the site is being built, try again in a minute", http.StatusServiceUnavailable)
 		return
@@ -113,7 +129,7 @@ func (s *Server) route(w http.ResponseWriter, r *http.Request) {
 	case p == "/repos/": // every repo; the profile shows the featured ones
 		s.file(w, r, "repos/index.html", "text/html; charset=utf-8")
 	case p == "/repos":
-		http.Redirect(w, r, "/repos/", http.StatusMovedPermanently)
+		http.Redirect(w, r, base+"/repos/", http.StatusMovedPermanently)
 	case first == "static" && rest != "":
 		s.file(w, r, p, staticType(p))
 	case !s.Cfg.HasRepo(first):
@@ -125,7 +141,7 @@ func (s *Server) route(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(rest, "blob/"):
 		s.file(w, r, p+".html", "text/html; charset=utf-8")
 	case rest == "" && !strings.HasSuffix(p, "/"), !strings.HasSuffix(p, "/") && s.isDir(p):
-		http.Redirect(w, r, p+"/", http.StatusMovedPermanently)
+		http.Redirect(w, r, base+p+"/", http.StatusMovedPermanently)
 	case strings.HasSuffix(p, "/"):
 		s.file(w, r, p+"index.html", "text/html; charset=utf-8")
 	default:

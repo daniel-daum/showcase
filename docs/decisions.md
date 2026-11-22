@@ -739,3 +739,50 @@ allowlist of it.
   elements, and whatever is still open is closed at the end.
 - No new dependency: the tags are read with two regular expressions, which
   is enough because the output is built from scratch, never copied.
+
+## Release 0.1.0: name, deploy folder, base path
+
+- **Name:** the project is "showcase". The binary, `cmd/showcase`, the
+  compose service and the image (`git.danieldaum.net/daniel/showcase`) use
+  it. The Go module path stays `daum.dev/showcase`, since nothing imports
+  it from outside.
+- **Deploy folder:** `deploy/` holds the production `config.json` (no
+  secrets: the builder is anonymous), `compose.yaml`, the saturn patch and
+  the runbook. The root `config.json` stays gitignored, for `just run`.
+- **Images:** `just release <version>` builds linux/amd64 and linux/arm64
+  with buildx and pushes `<version>` and `latest`. It refuses a dirty tree
+  or a HEAD not tagged `v<version>`. The Dockerfile's build stage runs on
+  `$BUILDPLATFORM` and cross-compiles, so only the small runtime stage is
+  emulated. Both base digests are multi-arch indexes.
+- **Mirrors follow `gitea_url`:** `gitx.Mirror` resets `origin` to the
+  configured URL before each fetch. Before, a mirror kept fetching the
+  address it was cloned from, so moving Gitea to the tailnet would have
+  broken every repo until the volume was wiped.
+- **`base_path`** (`/projects`, or empty for the root) serves the pages under
+  one path segment, for danieldaum.net/projects through saturn's Pages
+  Function.
+  - Links: templates and the builder still write root-relative links. One
+    pass in `render.Write` prefixes every root-relative `href` and `src`
+    (`/repo-a/` → `/projects/repo-a/`), README links included, so no link
+    can be missed. html/template always quotes attributes with `"` and
+    escapes quotes in text and values, so only real attributes match.
+    `//host` links are left alone. `TestBasePathLinks` fails if any page
+    links outside the base.
+  - Server: paths under the base are served with it stripped. Anything
+    else redirects into the base (`/repo-a/` → `/projects/repo-a/`), so
+    old links keep working. Clone, `docker pull`, release downloads, `go get`
+    (`?go-get=1`) and `/healthz` stay at the root: module paths and image
+    refs can't move, and Pages Functions only forward GET and HEAD.
+  - Release downloads link to `site_url` when a base is set, since
+    danieldaum.net doesn't forward them.
+  - The webmanifest's paths are relative, so they work under either.
+  - Validation: one lowercase segment, not a reserved name or a repo name.
+- **Saturn side** (`deploy/saturn/saturn.patch`): `theme.js` shares the
+  palette through the `theme` cookie, `social/functions/projects/` redirects
+  `/projects/*` to code.danieldaum.net (`MODE = "redirect"`) or proxies it
+  (`"proxy"`), `_routes.json` adds `/projects`, and `isLikeable` drops
+  `/projects/`. The proxy forwards GET and HEAD only, to a fixed origin,
+  without cookies, and returns upstream redirects as they are. Showcase's
+  security headers pass through; saturn's `_headers` don't apply to
+  Function responses. Tested with Node in front of a `base_path` build:
+  all 66 pages and their links work through it.

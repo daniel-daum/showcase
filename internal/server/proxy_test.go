@@ -238,3 +238,21 @@ func TestCloneAndPush(t *testing.T) {
 		t.Fatal("cloned a repo that is not allowlisted")
 	}
 }
+
+// Clones, pulls and downloads stay at the root under a base_path.
+func TestProxyRoutesIgnoreBasePath(t *testing.T) {
+	u := &upstream{}
+	s := proxyServer(t, u, true)
+	s.Cfg.BasePath = "/projects"
+	for path, want := range map[string]string{
+		"/repo-a.git/info/refs?service=git-upload-pack": "/daniel/repo-a.git/info/refs?service=git-upload-pack",
+		"/v2/": "/v2/",
+		"/repo-a/releases/download/v1.0/app.tar.gz": "/daniel/repo-a/releases/download/v1.0/app.tar.gz",
+	} {
+		u.got = nil
+		w := do(s, "GET", path, nil)
+		if w.Code != 200 || len(u.got) != 1 || u.got[0].RequestURI != want {
+			t.Errorf("GET %s: %d, upstream %v, want %q", path, w.Code, u.got, want)
+		}
+	}
+}

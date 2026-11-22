@@ -1,0 +1,9 @@
+{
+    "gitea_url": "https://git.danieldaum.net",
+    "user": "daniel",
+    "site_url": "https://code.danieldaum.net",
+    "repos": ["showcase", "saturn", "holonet", "rhea", "minerva", "homelab", "dotfiles"],
+    "images": ["showcase"],
+    "max_commits": 50,
+    "theme": "moss"
+}

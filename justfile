@@ -29,9 +29,9 @@ digests:
 image:
     docker build -t daumdev:latest .
 
-# Regenerate the icons: a phosphor-colored-icons dir (dotfiles .config/zed/) and an extracted @phosphor-icons/core package dir
-icons colored core:
-    python3 -I scripts/icons.py {{colored}} {{core}}
+# Regenerate the icons from extracted npm packages: material-icon-theme@5.40.0 and @primer/octicons@19.15.0
+icons material octicons:
+    python3 -I scripts/icons.py {{material}} {{octicons}}
     gofmt -w internal/render/icons_gen.go
 
 # Build the binary into ./bin

@@ -238,38 +238,27 @@ func diffClass(kind byte) string {
 	return ""
 }
 
-// fileType is a file icon: a Phosphor glyph and a colour role (CSS r-*).
-type fileType struct{ glyph, role string }
-
-// fileIcon picks a Phosphor Colored icon (see scripts/icons.py) the way Zed
-// does: the whole name as a file name, then as a suffix, then each part after
-// a dot ("a.tar.gz" tries "tar.gz", then "gz"). A lowercase retry catches
-// names like README.MD. Folders and submodules get the closed folder, and
-// "tree-open" (the current folder in breadcrumbs) the open one.
+// fileIcon picks a material-icon-theme icon (see scripts/icons.py) by file
+// or folder name, then by extension, longest first ("test.ts" before "ts").
+// The current folder in breadcrumbs ("tree-open") gets the open folder.
 func fileIcon(name, typ string) template.HTML {
-	switch typ {
-	case "tree", "commit":
-		return iconSVG(fileType{"folder-closed", "folder"})
-	case "tree-open":
-		return iconSVG(fileType{"folder-open", "folder"})
-	}
-	return iconSVG(cmp.Or(lookupIcon(name), lookupIcon(strings.ToLower(name)), iconDefault))
-}
-
-func lookupIcon(name string) fileType {
-	for rest, ok := name, true; ok; _, rest, ok = strings.Cut(rest, ".") {
-		if t, found := iconStems[rest]; found {
-			return t
-		}
-		if t, found := iconSuffixes[rest]; found {
-			return t
+	n, icon := strings.ToLower(name), "file"
+	switch {
+	case typ == "tree-open":
+		icon = "folder-open"
+	case typ == "tree" || typ == "commit":
+		icon = cmp.Or(iconFolders[n], "folder")
+	case iconNames[n] != "":
+		icon = iconNames[n]
+	default:
+		for _, rest, ok := strings.Cut(n, "."); ok; _, rest, ok = strings.Cut(rest, ".") {
+			if i := iconExts[rest]; i != "" {
+				icon = i
+				break
+			}
 		}
 	}
-	return fileType{}
-}
-
-func iconSVG(t fileType) template.HTML {
-	return template.HTML(`<svg class="ficon r-` + t.role + `" width="16" height="16" aria-hidden="true" focusable="false"><use href="#f-` + t.glyph + `"></use></svg>`)
+	return template.HTML(`<svg class="ficon" width="16" height="16" aria-hidden="true" focusable="false"><use href="#f-` + icon + `"></use></svg>`)
 }
 
 // The page sprite: base.html emits it empty, and Write fills in the symbols
@@ -279,7 +268,8 @@ const spriteTag = `<svg class="sprite" width="0" height="0" aria-hidden="true" f
 
 var (
 	useRe     = regexp.MustCompile(`href="#([fi]-[a-z0-9-]+)"`)
-	viewBoxRe = regexp.MustCompile(`viewBox="([0-9 .]+)"`)
+	viewBoxRe = regexp.MustCompile(`viewBox="([0-9 .-]+)"`)
+	localIDRe = regexp.MustCompile(`(id="|href="#|url\(#)([A-Za-z][\w-]*)`) // ids inside one icon
 )
 
 func (r *Renderer) fillSprite(page []byte) []byte {
@@ -294,10 +284,12 @@ func (r *Renderer) fillSprite(page []byte) []byte {
 	return bytes.Replace(page, []byte(spriteTag), append([]byte(spriteTag), syms...), 1)
 }
 
-// loadSymbols turns the embedded Phosphor SVGs into <symbol>s.
+// loadSymbols turns the embedded icons into <symbol>s: Material file icons
+// (f-) and Octicons (i-). Ids inside an icon get its symbol id as a prefix,
+// since many icons reuse the same ids and they all share one page.
 func loadSymbols() (map[string][]byte, error) {
 	syms := map[string][]byte{}
-	for prefix, dir := range map[string]string{"f-": "static/icons/phosphor", "i-": "static/icons/phosphor/ui"} {
+	for prefix, dir := range map[string]string{"f-": "static/icons/material", "i-": "static/icons/octicons"} {
 		files, err := fs.Glob(web.FS, dir+"/*.svg")
 		if err != nil {
 			return nil, err
@@ -313,7 +305,8 @@ func loadSymbols() (map[string][]byte, error) {
 				return nil, fmt.Errorf("render: can't read icon %s", f)
 			}
 			id := prefix + strings.TrimSuffix(path.Base(f), ".svg")
-			syms[id] = fmt.Appendf(nil, `<symbol id="%s" viewBox="%s">%s</symbol>`, id, vb[1], b[start+1:end])
+			body := localIDRe.ReplaceAll(b[start+1:end], []byte("${1}x"+id+"-${2}"))
+			syms[id] = fmt.Appendf(nil, `<symbol id="%s" viewBox="%s">%s</symbol>`, id, vb[1], body)
 		}
 	}
 	return syms, nil

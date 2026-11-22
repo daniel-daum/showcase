@@ -282,6 +282,9 @@ plum, teal and flexoki get the same steps as moss.
 
 ### Phase 3: Phosphor icons
 
+> Replaced by Gitea's icons, see "Gitea's icons again" at the end. The
+> per-page sprite described here stays.
+
 - **One icon family.** File icons come from the Phosphor Colored set in
   Daniel's dotfiles (`.config/zed/phosphor-colored-icons`). UI icons (tabs,
   stats, clone, copy, CI, people) are Phosphor Regular from
@@ -576,3 +579,34 @@ The spec still says `daum.dev` throughout; read it as `site_url`.
   font part of `theme.js` once a font is chosen.
 - **Width:** repo pages (`page--code`) are up to 60rem wide, down from
   68rem. The profile keeps saturn's 78ch.
+
+## Gitea's icons again
+
+Phosphor read worse than the Material icons the site had before, so the
+icons are Gitea's own again: material-icon-theme for files and folders,
+Octicons for the UI.
+
+- **Files:** the same 153-icon subset of material-icon-theme as before
+  Phase 3, plus `folder-open` for the current folder in breadcrumbs. It is
+  npm `material-icon-theme@5.40.0`, which reproduces the old files and
+  tables byte for byte. Lookup is the old one: the lowercased name, then
+  extensions longest first (`a.test.ts` tries `test.ts`, then `ts`), and
+  folders by name (`docs`, `cmd`, `.github` get their own folder icons).
+  The icons keep their own colours, as on Gitea, so they don't follow
+  `data-theme`. The `.r-*` colour roles are gone.
+- **UI:** Octicons 16px from `@primer/octicons@19.15.0`, GitHub's set, which
+  Gitea uses too. Templates keep their own names (`pull`, `fire`, `user`…),
+  and `scripts/icons.py` maps them to Octicons (`git-pull-request`, `flame`,
+  `person`…). Document tabs use GitHub's glyphs where it has one: Code of
+  conduct `code-of-conduct`, Funding `heart`, Governance `organization`,
+  Support `comment-discussion`, Citation `quote`. CI pending is `dot-fill`.
+- **Still a per-page sprite**, not `<img>` as before Phase 3: icons are
+  `<symbol>`s inlined into the pages that use them, so nothing is fetched
+  and the CSP is unchanged. Material icons reuse ids (`a`, `folder`,
+  `motive`) and refer to them (`url(#a)`, `xlink:href="#a"`). The loader
+  prefixes every id inside an icon with its symbol id (`xf-kotlin-a`), so
+  they can't clash on one page. A test checks there are no bare ids and no
+  inline styles.
+- `just icons <material-icon-theme dir> <octicons dir>` regenerates both
+  sets from extracted npm packages. The repo home grew from 29.0 KB to 35.1 KB
+  before compression, since Material paths are longer.

@@ -1533,7 +1533,7 @@ h1, h2, h3,
     font-size: 0.9rem;
 }
 
-/* icons: Phosphor (256 grid, filled paths), coloured by currentColor */
+/* icons: Octicons (16px grid, filled paths), coloured by currentColor */
 .sprite {
     position: absolute;
     width: 0;
@@ -1551,28 +1551,15 @@ h1, h2, h3,
     border: 0;
 }
 
-/* file icons: Phosphor Colored glyphs, one colour role each. The roles are
-   the syntax colours, the same mapping as the set's palettes.json, so they
-   follow data-theme. */
+/* file icons: material-icon-theme, as on Gitea. They keep their own
+   colours, so they don't follow data-theme. */
 .ficon {
     display: inline-block;
     flex: none;
     width: 16px;
     height: 16px;
     vertical-align: -3px;
-    fill: currentColor;
 }
-
-.r-red { color: var(--syn-variable); }
-.r-orange { color: var(--syn-constant); }
-.r-yellow { color: var(--syn-type); }
-.r-green { color: var(--syn-string); }
-.r-cyan { color: var(--syn-builtin); }
-.r-blue { color: var(--syn-function); }
-.r-purple { color: var(--syn-keyword); }
-.r-magenta { color: color-mix(in oklab, var(--syn-variable), var(--syn-keyword)); }
-.r-neutral,
-.r-folder { color: var(--text-secondary); }
 
 /* avatars are images; saturn styles every img as a full-width bordered photo */
 img.avatar-xs,

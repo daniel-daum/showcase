@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en" data-theme="moss">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Add changelog · repo-a</title>
+<link rel="preload" href="/static/fonts/geistpixel/GeistPixel-Square.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="page--code">
+<a class="skip-link" href="#site-main">skip to content</a>
+<header class="site-header">
+  <a class="site-name" href="/">daum.dev</a>
+  <nav aria-label="site">
+    <a href="/">repos</a>
+    <a href="https://danieldaum.net">website</a>
+  </nav>
+</header>
+<main id="site-main">
+<header class="page-header">
+  <h1>repo-a</h1><p>A small Go service &amp; friends</p>
+  <div class="pills"><span class="pill">go</span><span class="pill">web</span>
+  </div>
+</header>
+<nav class="tabs" aria-label="repository">
+  <a href="/repo-a/">code</a>
+  <a href="/repo-a/log/" aria-current="page">commits</a>
+  <a href="/repo-a/releases/">releases</a>
+  <a href="/repo-a/pulls/">pulls</a>
+  <a href="/repo-a/packages/">packages</a>
+</nav>
+<section class="commit-head">
+  <h2>Add changelog</h2>
+  <p class="commit-body">With a body.</p>
+  <p class="meta meta-split">
+    <span>Daniel</span><span class="meta-sep" aria-hidden="true">·</span>
+    <time datetime="2026-11-19T08:30:00Z">19 Nov 26</time><span class="meta-sep" aria-hidden="true">·</span>
+    <span>3 files · <span class="hl-added">+2</span> <span class="hl-removed">-1</span></span>
+  </p>
+  <p class="meta commit-ids">
+    commit <code>3d795796b9b7ec4c803650d10e0e29d27dd41027</code> · parent <a href="/repo-a/commit/ec75ecddd0ca549fc7cca769182cebb680c2dc86/"><code>ec75ecddd0</code></a>
+  </p>
+</section>
+<div class="code-block diff">
+  <p class="code-label">
+    <span class="diff-path">CHANGELOG.md <span class="diff-status">added</span></span>
+    <span><span class="hl-added">+1</span> <span class="hl-removed">-0</span></span>
+  </p>
+  <pre class="lines"><code><span class="line hunk">@@ -0,0 &#43;1 @@</span><span class="line hl-added"><span class="ln"></span><span class="ln">1</span><span class="sign" aria-hidden="true">&#43;</span># Changes</span></code></pre>
+</div>
+<div class="code-block diff">
+  <p class="code-label">
+    <span class="diff-path">cmd/hello/main.go</span>
+    <span><span class="hl-added">+1</span> <span class="hl-removed">-1</span></span>
+  </p>
+  <pre class="lines"><code><span class="line hunk">@@ -2,4 &#43;2,4 @@ package main</span><span class="line "><span class="ln">2</span><span class="ln">2</span><span class="sign" aria-hidden="true"> </span></span><span class="line "><span class="ln">3</span><span class="ln">3</span><span class="sign" aria-hidden="true"> </span>import &#34;fmt&#34;</span><span class="line "><span class="ln">4</span><span class="ln">4</span><span class="sign" aria-hidden="true"> </span></span><span class="line hl-removed"><span class="ln">5</span><span class="ln"></span><span class="sign" aria-hidden="true">-</span>func main() { fmt.Println(&#34;hello&#34;) }</span><span class="line hl-added"><span class="ln"></span><span class="ln">5</span><span class="sign" aria-hidden="true">&#43;</span>func main() { fmt.Println(&#34;hello, world&#34;) }</span></code></pre>
+</div>
+<div class="code-block diff">
+  <p class="code-label">
+    <span class="diff-path">data.bin</span>
+    <span><span class="hl-added">+0</span> <span class="hl-removed">-0</span></span>
+  </p>
+  <p class="file-note">binary file, not shown.</p>
+</div>
+</main>
+<footer>
+  <nav aria-label="site links">
+    <p aria-hidden="true">//</p>
+    <a href="https://danieldaum.net" rel="me">website</a>
+    <a href="https://bsky.app/profile/daum.dev" rel="me">bluesky</a>
+    <a href="https://github.com/example" rel="me">github</a>
+  </nav>
+</footer>
+</body>
+</html>

@@ -98,6 +98,9 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 		if err := b.renderRepo(ctx, rd, dir, rp); err != nil {
 			return fmt.Errorf("%s: %w", rp.Name, err)
 		}
+		if err := b.renderLog(ctx, rd, dir, rp); err != nil {
+			return fmt.Errorf("%s log: %w", rp.Name, err)
+		}
 	}
 	return nil
 }

@@ -1,0 +1,40 @@
+{{define "content" -}}
+{{template "repohead" .}}
+<section class="commit-head">
+  <h2>{{.C.Subject}}</h2>
+  {{- with .C.Body}}
+  <p class="commit-body">{{.}}</p>
+  {{- end}}
+  <p class="meta meta-split">
+    <span>{{.C.Author}}</span><span class="meta-sep" aria-hidden="true">·</span>
+    <time datetime="{{.C.When.Format "2006-01-02T15:04:05Z07:00"}}">{{day .C.When}}</time><span class="meta-sep" aria-hidden="true">·</span>
+    <span>{{len .Files}} files · <span class="hl-added">+{{.Added}}</span> <span class="hl-removed">-{{.Deleted}}</span></span>
+  </p>
+  <p class="meta commit-ids">
+    commit <code>{{.C.Hash}}</code>
+    {{- range .Parents}} · parent {{if .Href}}<a href="{{.Href}}"><code>{{.Name}}</code></a>{{else}}<code>{{.Name}}</code>{{end}}{{end}}
+  </p>
+</section>
+{{- range .Files}}
+<div class="code-block diff">
+  <p class="code-label">
+    <span class="diff-path">{{with .OldPath}}{{.}} → {{end}}{{.Path}}{{with .Status}} <span class="diff-status">{{.}}</span>{{end}}</span>
+    <span><span class="hl-added">+{{.Added}}</span> <span class="hl-removed">-{{.Deleted}}</span></span>
+  </p>
+  {{- if .Binary}}
+  <p class="file-note">binary file, not shown.</p>
+  {{- else if .Lines}}
+  <pre class="lines"><code>
+    {{- range .Lines}}<span class="line {{diff .Kind}}">
+      {{- if eq .Kind 64}}{{.Text}}{{else}}<span class="ln">{{if .Old}}{{.Old}}{{end}}</span><span class="ln">{{if .New}}{{.New}}{{end}}</span><span class="sign" aria-hidden="true">{{printf "%c" .Kind}}</span>{{.Text}}{{end -}}
+    </span>{{end -}}
+  </code></pre>
+  {{- if .Truncated}}<p class="file-note">diff truncated. clone the repository for the full change.</p>{{end}}
+  {{- else if .Truncated}}
+  <p class="file-note">diff truncated. clone the repository for the full change.</p>
+  {{- else}}
+  <p class="file-note">no content changes.</p>
+  {{- end}}
+</div>
+{{- end}}
+{{- end}}

@@ -59,7 +59,9 @@ func fixtureRepos(t *testing.T) string {
 	run(t, work, "", "add", "-A", ":!CHANGELOG.md")
 	run(t, work, "2026-06-01T10:00:00Z", "commit", "-q", "--no-gpg-sign", "-m", "Initial commit")
 	os.WriteFile(filepath.Join(work, "CHANGELOG.md"), []byte("# Changes\n"), 0o644)
-	run(t, work, "", "add", "CHANGELOG.md")
+	os.WriteFile(filepath.Join(work, "cmd/hello/main.go"), []byte("package main\n\nimport \"fmt\"\n\nfunc main() { fmt.Println(\"hello, world\") }\n"), 0o644)
+	os.WriteFile(filepath.Join(work, "data.bin"), []byte("bin\x00ary2"), 0o644)
+	run(t, work, "", "add", "-A")
 	run(t, work, "2026-11-19T08:30:00Z", "commit", "-q", "--no-gpg-sign", "-m", "Add changelog", "-m", "With a body.")
 	run(t, root, "", "clone", "-q", "--bare", work, "daniel/repo-a.git")
 	run(t, root, "", "init", "-q", "--bare", "-b", "main", "daniel/repo-b.git")
@@ -153,7 +155,7 @@ func checkGolden(t *testing.T, dir, rel string) []byte {
 		t.Errorf("%s differs from %s; run `just golden` and review the diff", rel, golden)
 	}
 	bad := []string{"leaky", "should never render", "<script>", "tailnet.example"}
-	if !strings.Contains(rel, "/blob/") { // file pages show source text, escaped
+	if !strings.Contains(rel, "/blob/") && !strings.Contains(rel, "commit") { // source text, escaped
 		bad = append(bad, "javascript:", "tracker.example")
 	}
 	for _, bad := range bad {
@@ -179,10 +181,24 @@ func TestSiteGolden(t *testing.T) {
 		"repo-a/tree/docs/index.html", "repo-a/tree/cmd/hello/index.html",
 		"repo-a/blob/cmd/hello/main.go.html", "repo-a/blob/README.md.html",
 		"repo-a/blob/docs/logo.png.html", "repo-a/blob/data.bin.html", "repo-a/blob/big.txt.html",
+		"repo-a/log/index.html", "repo-b/log/index.html",
 	} {
 		checkGolden(t, dir, rel)
 	}
-	for _, f := range []string{"cmd/hello/main.go", "docs/logo.png", "big.txt", "data.bin"} {
+	commits, _ := filepath.Glob(filepath.Join(dir, "repo-a/commit/*/index.html"))
+	if len(commits) != 2 {
+		t.Fatalf("want 2 commit pages, got %d", len(commits))
+	}
+	for _, c := range commits {
+		b, _ := os.ReadFile(c)
+		if bytes.Contains(b, []byte("<h2>Add changelog</h2>")) {
+			os.Rename(c, filepath.Join(dir, "repo-a/commit-latest.html")) // hash-free golden name
+			checkGolden(t, dir, "repo-a/commit-latest.html")
+		} else if !bytes.Contains(b, []byte("diff truncated")) { // initial commit has 40k lines of big.txt
+			t.Error("initial commit page: big.txt diff should be truncated")
+		}
+	}
+	for _, f := range []string{"docs/logo.png", "go.mod"} {
 		want, _ := os.ReadFile(filepath.Join("../../testdata/repo-a", f))
 		got, err := os.ReadFile(filepath.Join(dir, "repo-a/raw", f))
 		if err != nil || (want != nil && !bytes.Equal(got, want)) {

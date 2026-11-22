@@ -44,6 +44,8 @@ func New(now time.Time) (*Renderer, error) {
 		"lang": langClass,
 		"size": humanSize,
 		"inc":  func(i int) int { return i + 1 },
+		"day":  func(t time.Time) string { return t.UTC().Format("02 Jan 06") },
+		"diff": diffClass,
 	}
 	names, err := fs.Glob(web.FS, "templates/*.html")
 	if err != nil {
@@ -142,4 +144,17 @@ func humanSize(n int64) string {
 		return fmt.Sprintf("%.1f MB", float64(n)/(1<<20))
 	}
 	return fmt.Sprintf("%.1f GB", float64(n)/(1<<30))
+}
+
+// diffClass maps a diff line kind to a CSS class; +/- reuse saturn's roles.
+func diffClass(kind byte) string {
+	switch kind {
+	case '+':
+		return "hl-added"
+	case '-':
+		return "hl-removed"
+	case '@':
+		return "hunk"
+	}
+	return ""
 }

@@ -1,0 +1,22 @@
+{{define "content" -}}
+{{template "repohead" .}}
+{{- $repo := .Repo.Name}}
+{{- if .Commits}}
+<div class="commit-log commit-log--inline">
+  <div class="commit-log-head">
+    <span>latest {{len .Commits}} commits on {{.Repo.DefaultBranch}}</span>
+  </div>
+  <ol class="commit-log-list">
+    {{- range .Commits}}
+    <li class="commit-log-row">
+      <a class="commit-log-hash" href="/{{$repo}}/commit/{{.Hash}}/">{{.Short}}</a>
+      <a class="commit-log-msg" href="/{{$repo}}/commit/{{.Hash}}/">{{.Subject}}</a>
+      <time class="commit-log-date" datetime="{{.When.Format "2006-01-02T15:04:05Z07:00"}}" title="{{.Author}}">{{day .When}}</time>
+    </li>
+    {{- end}}
+  </ol>
+</div>
+{{- else}}
+<p class="empty">no commits yet.</p>
+{{- end}}
+{{- end}}

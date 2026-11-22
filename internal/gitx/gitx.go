@@ -98,13 +98,14 @@ func (r Repo) Blob(ctx context.Context, hash string) ([]byte, error) {
 type Commit struct {
 	Hash, Author, Subject, Body string
 	When                        time.Time
+	Parents                     []string
 }
 
 func (c Commit) Short() string { return c.Hash[:min(len(c.Hash), 10)] }
 
 // Log returns up to n commits reachable from rev, optionally touching path.
 func (r Repo) Log(ctx context.Context, rev string, n int, path string) ([]Commit, error) {
-	args := []string{"log", "-n", strconv.Itoa(n), "--format=%H%x1f%an%x1f%at%x1f%s%x1f%b%x1e", "--end-of-options", rev}
+	args := []string{"log", "-n", strconv.Itoa(n), "--format=%H%x1f%an%x1f%at%x1f%s%x1f%b%x1f%P%x1e", "--end-of-options", rev}
 	if path != "" {
 		args = append(args, "--", ":(literal)"+path)
 	}
@@ -115,11 +116,12 @@ func (r Repo) Log(ctx context.Context, rev string, n int, path string) ([]Commit
 	var cs []Commit
 	for _, rec := range strings.Split(string(out), "\x1e") {
 		f := strings.Split(strings.TrimLeft(rec, "\n"), "\x1f")
-		if len(f) != 5 {
+		if len(f) != 6 {
 			continue
 		}
 		at, _ := strconv.ParseInt(f[2], 10, 64)
-		cs = append(cs, Commit{Hash: f[0], Author: f[1], When: time.Unix(at, 0).UTC(), Subject: f[3], Body: strings.TrimSpace(f[4])})
+		cs = append(cs, Commit{Hash: f[0], Author: f[1], When: time.Unix(at, 0).UTC(), Subject: f[3],
+			Body: strings.TrimSpace(f[4]), Parents: strings.Fields(f[5])})
 	}
 	return cs, nil
 }

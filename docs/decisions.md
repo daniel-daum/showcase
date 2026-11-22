@@ -74,3 +74,11 @@ details are in `docs/theme.md`. This replaces the spec's original
 - Folder pages show their own README, if they have one.
 - Highlighting: chroma tokens map to saturn's `hl-*` roles in
   `internal/render/highlight.go`. README code blocks use the same mapping.
+
+## Log and commit pages
+
+- Only the commits on the log page (the last `max_commits` on the default
+  branch) get commit pages. Parent links show only when the parent has a page.
+- Diffs are against the first parent (`--diff-merges=first-parent`), with
+  rename detection. At most 5,000 diff lines are kept per commit. The rest are
+  counted in the stats but not shown.

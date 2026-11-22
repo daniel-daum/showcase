@@ -1709,3 +1709,73 @@ pre.lines {
     max-width: 100%;
     margin: 0 auto;
 }
+
+/* commit log page */
+a.commit-log-msg:hover {
+    color: var(--accent);
+}
+
+/* commit page */
+.commit-head {
+    margin-bottom: 2rem;
+}
+
+.commit-head h2 {
+    margin-top: 0;
+}
+
+.commit-body {
+    white-space: pre-wrap;
+}
+
+.commit-head .meta {
+    margin: 0.25rem 0 0;
+}
+
+.commit-ids code {
+    font-size: 0.8rem;
+}
+
+.diff-path {
+    text-transform: none;
+    color: var(--text-headings);
+    overflow-wrap: anywhere;
+}
+
+.diff-status {
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.diff + .diff {
+    margin-top: 1.5rem;
+}
+
+.diff .ln {
+    width: 4ch;
+    margin-right: 0.75rem;
+}
+
+.diff .sign {
+    display: inline-block;
+    width: 1.5ch;
+    user-select: none;
+}
+
+.diff .line.hl-added {
+    background: color-mix(in oklab, var(--syn-string) 10%, transparent);
+}
+
+.diff .line.hl-removed {
+    background: color-mix(in oklab, var(--syn-variable) 10%, transparent);
+}
+
+.diff .hunk {
+    padding: 0.25rem 1.25rem;
+    color: var(--text-secondary);
+    background: var(--background-dark);
+}
+
+.diff .hunk:not(:first-child) {
+    margin-top: 0.5rem;
+}

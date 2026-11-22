@@ -18,6 +18,7 @@ var (
 	scriptTag    = regexp.MustCompile(`(?i)<script`)
 	// the one allowed script: same-origin copy buttons, no inline code
 	copyScript = regexp.MustCompile(`<script src="/static/copy\.js\?v=[0-9a-f]+" defer></script>`)
+	iconUse    = regexp.MustCompile(`<use href="#([fi]-[a-z0-9-]+)">`)
 )
 
 func TestOutputIsSafe(t *testing.T) {
@@ -47,6 +48,12 @@ func TestOutputIsSafe(t *testing.T) {
 		for name, re := range map[string]*regexp.Regexp{"inline style": inlineStyle, "event handler": eventHandler, "script": scriptTag} {
 			if m := re.FindString(s); m != "" {
 				t.Errorf("%s has an %s: %s", rel, name, m)
+			}
+		}
+		// every icon a page draws has its symbol in that page's sprite
+		for _, m := range iconUse.FindAllStringSubmatch(s, -1) {
+			if !strings.Contains(s, `<symbol id="`+m[1]+`"`) {
+				t.Errorf("%s uses icon %s but its sprite has no such symbol", rel, m[1])
 			}
 		}
 		return nil

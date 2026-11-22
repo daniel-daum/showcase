@@ -54,7 +54,7 @@
   <tbody>
   {{- range .}}
   <tr>
-    <td class="f-name"><img class="ficon" src="{{ficon .Base .Type}}" alt="" width="16" height="16">
+    <td class="f-name">{{ficon .Base .Type}}
       {{- if .Href}}<a href="{{.Href}}">{{.Base}}</a>{{else}}<span>{{.Base}}</span>{{end}}</td>
     <td class="f-msg">{{if .CommitHref}}<a href="{{.CommitHref}}">{{.Last.Subject}}</a>{{else}}<span>{{.Last.Subject}}</span>{{end}}</td>
     <td class="f-size">{{if eq .Type "blob"}}{{size .Size}}{{end}}</td>

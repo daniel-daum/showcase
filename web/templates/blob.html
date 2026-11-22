@@ -1,9 +1,9 @@
 {{define "content" -}}
 {{template "repohead" .}}
-{{template "crumbs" .Crumbs}}
+{{template "crumbs" (dict "C" .Crumbs)}}
 <section class="box">
   <div class="box-head file-head">
-    <img class="ficon" src="{{ficon .Name "blob"}}" alt="" width="16" height="16"><span class="file-name">{{.Name}}</span>
+    {{ficon .Name "blob"}}<span class="file-name">{{.Name}}</span>
     <span class="file-stats">{{size .Size}}{{with .Lines}} · {{len .}} line{{if ne (len .) 1}}s{{end}}{{end}}</span>
     {{- with .Raw}}<a class="button button--small" href="{{.}}">{{template "icon" "download"}}Raw</a>{{end}}
   </div>

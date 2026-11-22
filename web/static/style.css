@@ -1533,7 +1533,7 @@ h1, h2, h3,
     font-size: 0.9rem;
 }
 
-/* icons: drawn on a 16px grid, coloured by currentColor */
+/* icons: Phosphor (256 grid, filled paths), coloured by currentColor */
 .sprite {
     position: absolute;
     width: 0;
@@ -1547,24 +1547,34 @@ h1, h2, h3,
     width: 16px;
     height: 16px;
     vertical-align: -3px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.4;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    fill: currentColor;
     border: 0;
 }
 
-.icon .fill,
-.icon-folder,
-.icon-dot {
+/* file icons: Phosphor Colored glyphs, one colour role each. The roles are
+   the syntax colours, the same mapping as the set's palettes.json, so they
+   follow data-theme. */
+.ficon {
+    display: inline-block;
+    flex: none;
+    width: 16px;
+    height: 16px;
+    vertical-align: -3px;
     fill: currentColor;
-    stroke: none;
 }
 
-/* file-type icons (material-icon-theme) and avatars are images; saturn
-   styles every img as a full-width bordered photo */
-img.ficon,
+.r-red { color: var(--syn-variable); }
+.r-orange { color: var(--syn-constant); }
+.r-yellow { color: var(--syn-type); }
+.r-green { color: var(--syn-string); }
+.r-cyan { color: var(--syn-builtin); }
+.r-blue { color: var(--syn-function); }
+.r-purple { color: var(--syn-keyword); }
+.r-magenta { color: color-mix(in oklab, var(--syn-variable), var(--syn-keyword)); }
+.r-neutral,
+.r-folder { color: var(--text-secondary); }
+
+/* avatars are images; saturn styles every img as a full-width bordered photo */
 img.avatar-xs,
 img.avatar-sm,
 img.avatar-lg {
@@ -1572,12 +1582,6 @@ img.avatar-lg {
     flex: none;
     border: 0;
     border-radius: 0;
-}
-
-img.ficon {
-    width: 16px;
-    height: 16px;
-    vertical-align: -3px;
 }
 
 .avatar-xs,
@@ -2293,9 +2297,9 @@ a.ci:hover {
     color: var(--text-headings);
 }
 
-.ci--success .icon { color: var(--add); stroke-width: 2.2; }
+.ci--success .icon { color: var(--add); }
 .ci--failure .icon,
-.ci--error .icon { color: var(--del); stroke-width: 2.2; }
+.ci--error .icon { color: var(--del); }
 .ci--pending .icon,
 .ci--warning .icon { color: var(--syn-type); }
 
@@ -2321,7 +2325,7 @@ a.ci:hover {
     white-space: nowrap;
 }
 
-.f-name img.ficon {
+.f-name .ficon {
     margin-right: 0.6rem;
 }
 
@@ -2450,6 +2454,10 @@ a.ci:hover {
 
 .crumbs a:hover {
     text-decoration: underline;
+}
+
+.crumbs .ficon {
+    margin-right: 0.4rem;
 }
 
 .crumbs [aria-current] {
@@ -2661,9 +2669,9 @@ a.ln:hover {
     padding: 0.4rem 1rem;
 }
 
-.checks li.ci--success .icon { color: var(--add); stroke-width: 2.2; }
+.checks li.ci--success .icon { color: var(--add); }
 .checks li.ci--failure .icon,
-.checks li.ci--error .icon { color: var(--del); stroke-width: 2.2; }
+.checks li.ci--error .icon { color: var(--del); }
 .checks li.ci--pending .icon { color: var(--syn-type); }
 
 .checks b {

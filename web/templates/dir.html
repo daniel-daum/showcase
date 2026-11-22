@@ -1,6 +1,6 @@
 {{define "content" -}}
 {{template "repohead" .}}
-{{template "crumbs" .Crumbs}}
+{{template "crumbs" (dict "C" .Crumbs "Dir" true)}}
 <section class="box">
   {{template "files" .Rows}}
 </section>

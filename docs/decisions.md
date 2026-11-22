@@ -185,11 +185,7 @@ details are in `docs/theme.md`. This replaces the spec's original
   headings and the brand are Geist Pixel. Labels are sentence case.
   Everything sits in one bordered "box" component. Repo pages are up to 68rem
   wide.
-- **File icons:** a 153-icon subset of material-icon-theme (MIT, the set Gitea
-  uses), picked by `scripts/icons.py` (`just icons <pkg>`) into
-  `web/static/icons/`. The name and extension maps are generated into
-  `internal/render/icons_gen.go`. Icons are served as `<img>`, which can't
-  run scripts. UI icons are an inline SVG sprite drawn for this site.
+- **File icons:** replaced in polish pass 3 (Phase 3) by Phosphor icons.
 - **Copy buttons need JS**, which departs from the spec's "No JavaScript".
   `/static/copy.js` is about 15 lines, same-origin and progressive: without
   it, the buttons stay hidden and the read-only fields can still be copied by
@@ -283,3 +279,48 @@ plum, teal and flexoki get the same steps as moss.
   `.langs` section under the box is gone.
 - Empty repos show neither, as before: there's no code box and Gitea reports
   no languages.
+
+### Phase 3: Phosphor icons
+
+- **One icon family.** File icons come from the Phosphor Colored set in
+  Daniel's dotfiles (`.config/zed/phosphor-colored-icons`). UI icons (tabs,
+  stats, clone, copy, CI, people) are Phosphor Regular from
+  `@phosphor-icons/core` 2.1.1. Both are MIT. The 47 file glyphs and the set's
+  `LICENSE` live in `web/static/icons/phosphor/`, and the 17 UI glyphs in use
+  plus core's `LICENSE` live in `ui/` beneath it. The material icons and
+  their licence are gone.
+- **Mapping:** `scripts/icons.py` (`just icons <colored> <core>`) reads the
+  `ICONS` table from the set's `scripts/build.py` with `ast.literal_eval`,
+  without running it, and generates `internal/render/icons_gen.go`: exact
+  names (`iconStems`) and suffixes (`iconSuffixes`) mapped to (glyph, role).
+  When two keys claim the same suffix, the later one wins, as in build.py.
+  The UI name map (`book` → `book-bookmark` and so on) is in the script.
+  Zed's built-in mappings (`BUILTIN`) have no suffixes of their own in
+  build.py, so they aren't used.
+- **Lookup order** is Zed's, which build.py follows: the whole file name as
+  a stem, then as a suffix, then each part after a dot from the left
+  (`a.tar.gz` tries `tar.gz`, then `gz`), then `default` (the neutral
+  document). One addition: if nothing matches, the same lookup runs again on
+  the lowercased name, so `README.MD` still gets the markdown icon. Folders
+  and submodules use `folder-closed`, and the current folder in tree-page
+  breadcrumbs uses `folder-open`. Some common names fall through to the
+  default icon, because the table doesn't cover them: `go.mod`, `justfile`
+  and `.github`.
+- **Colour by role, not hex.** `.r-<role>` classes map roles to saturn's
+  syntax tokens, the same pairs as `palettes.json`: red → `--syn-variable`,
+  orange → `--syn-constant`, yellow → `--syn-type`, green → `--syn-string`,
+  cyan → `--syn-builtin`, blue → `--syn-function`, purple → `--syn-keyword`,
+  magenta → a mix of variable and keyword, neutral and folder →
+  `--text-secondary`. Icons follow `data-theme`.
+- **Per-page sprite.** Every icon is `<svg class="ficon r-ROLE"><use
+  href="#f-GLYPH">` or `<svg class="icon"><use href="#i-NAME">`. `base.html`
+  emits an empty sprite. `render.Write` scans the finished page for `#f-` and
+  `#i-` references and fills in only those `<symbol>`s, built once from the
+  embedded SVGs. Pages carry just their own icons. Nothing is fetched, there
+  are no `data:` URLs, and the CSP is unchanged. Phosphor paths are longer
+  than the old hand-drawn strokes, so the repo home went from 16.7 KB to
+  21.4 KB before compression, while the profile shrank. `static/icons/` isn't
+  copied into the output, since nothing fetches it. The safety test fails if
+  a page uses an icon its sprite lacks.
+- UI icons are filled paths now, so `.icon` uses `fill: currentColor` and
+  the stroke rules are gone. CI pending is `dot-outline`.

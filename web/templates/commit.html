@@ -27,7 +27,7 @@
 {{- range .Files}}
 <section class="box diff">
   <div class="box-head file-head">
-    <img class="ficon" src="{{ficon .Path "blob"}}" alt="" width="16" height="16">
+    {{ficon .Path "blob"}}
     <span class="file-name">{{with .OldPath}}{{.}} → {{end}}{{.Path}}</span>
     {{- with .Status}}<span class="badge">{{.}}</span>{{end}}
     <span class="diffstat"><span class="add">+{{.Added}}</span> <span class="del">−{{.Deleted}}</span></span>

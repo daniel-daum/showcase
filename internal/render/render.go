@@ -13,6 +13,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -26,6 +27,7 @@ type Renderer struct {
 	Theme string    // saturn palette name
 	Links []Link    // footer links
 	pages map[string]*template.Template
+	syms  map[string][]byte // sprite symbols by id: f-<glyph> file icons, i-<name> UI icons
 }
 
 type Link struct{ Name, URL string }
@@ -49,6 +51,9 @@ func New(now time.Time) (*Renderer, error) {
 	}
 	sum := sha256.Sum256(css)
 	r := &Renderer{Now: now, css: hex.EncodeToString(sum[:5]), pages: map[string]*template.Template{}}
+	if r.syms, err = loadSymbols(); err != nil {
+		return nil, err
+	}
 	funcs := template.FuncMap{
 		"ago":   r.ago,
 		"fresh": r.fresh,
@@ -101,7 +106,7 @@ func (r *Renderer) Write(dir, rel, name string, p Page) error {
 	if err := t.ExecuteTemplate(&buf, "base", p); err != nil {
 		return fmt.Errorf("render %s: %w", rel, err)
 	}
-	return WriteFile(filepath.Join(dir, filepath.FromSlash(rel)), buf.Bytes())
+	return WriteFile(filepath.Join(dir, filepath.FromSlash(rel)), r.fillSprite(buf.Bytes()))
 }
 
 // WriteFile writes b to name, creating parent directories.
@@ -117,6 +122,9 @@ func CopyStatic(dir string) error {
 	return fs.WalkDir(web.FS, "static", func(p string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
+		}
+		if strings.HasPrefix(p, "static/icons/") { // inlined into pages, never fetched
+			return nil
 		}
 		b, err := web.FS.ReadFile(p)
 		if err != nil {
@@ -222,27 +230,83 @@ func diffClass(kind byte) string {
 	return ""
 }
 
-// fileIcon picks a material-icon-theme icon (see scripts/icons.py) by file
-// or folder name, then by extension, longest first ("test.ts" before "ts").
-func fileIcon(name, typ string) string {
-	n := strings.ToLower(name)
-	icon := "file"
-	if typ == "tree" || typ == "commit" {
-		icon = cmp.Or(iconFolders[n], "folder")
-	} else if i, ok := iconNames[n]; ok {
-		icon = i
-	} else {
-		for rest := n; ; {
-			_, after, found := strings.Cut(rest, ".")
-			if !found {
-				break
-			}
-			if i, ok := iconExts[after]; ok {
-				icon = i
-				break
-			}
-			rest = after
+// fileType is a file icon: a Phosphor glyph and a colour role (CSS r-*).
+type fileType struct{ glyph, role string }
+
+// fileIcon picks a Phosphor Colored icon (see scripts/icons.py) the way Zed
+// does: the whole name as a file name, then as a suffix, then each part after
+// a dot ("a.tar.gz" tries "tar.gz", then "gz"). A lowercase retry catches
+// names like README.MD. Folders and submodules get the closed folder, and
+// "tree-open" (the current folder in breadcrumbs) the open one.
+func fileIcon(name, typ string) template.HTML {
+	switch typ {
+	case "tree", "commit":
+		return iconSVG(fileType{"folder-closed", "folder"})
+	case "tree-open":
+		return iconSVG(fileType{"folder-open", "folder"})
+	}
+	return iconSVG(cmp.Or(lookupIcon(name), lookupIcon(strings.ToLower(name)), iconDefault))
+}
+
+func lookupIcon(name string) fileType {
+	for rest, ok := name, true; ok; _, rest, ok = strings.Cut(rest, ".") {
+		if t, found := iconStems[rest]; found {
+			return t
+		}
+		if t, found := iconSuffixes[rest]; found {
+			return t
 		}
 	}
-	return "/static/icons/" + icon + ".svg"
+	return fileType{}
+}
+
+func iconSVG(t fileType) template.HTML {
+	return template.HTML(`<svg class="ficon r-` + t.role + `" width="16" height="16" aria-hidden="true" focusable="false"><use href="#f-` + t.glyph + `"></use></svg>`)
+}
+
+// The page sprite: base.html emits it empty, and Write fills in the symbols
+// the page refers to, so each page carries only the icons it shows. Symbols
+// are inline because the CSP blocks data: URLs and external sprites.
+const spriteTag = `<svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false">`
+
+var (
+	useRe     = regexp.MustCompile(`href="#([fi]-[a-z0-9-]+)"`)
+	viewBoxRe = regexp.MustCompile(`viewBox="([0-9 .]+)"`)
+)
+
+func (r *Renderer) fillSprite(page []byte) []byte {
+	var syms []byte
+	seen := map[string]bool{}
+	for _, m := range useRe.FindAllSubmatch(page, -1) {
+		if id := string(m[1]); !seen[id] {
+			seen[id] = true
+			syms = append(syms, r.syms[id]...) // unknown ids (a README's own #f-x link) add nothing
+		}
+	}
+	return bytes.Replace(page, []byte(spriteTag), append([]byte(spriteTag), syms...), 1)
+}
+
+// loadSymbols turns the embedded Phosphor SVGs into <symbol>s.
+func loadSymbols() (map[string][]byte, error) {
+	syms := map[string][]byte{}
+	for prefix, dir := range map[string]string{"f-": "static/icons/phosphor", "i-": "static/icons/phosphor/ui"} {
+		files, err := fs.Glob(web.FS, dir+"/*.svg")
+		if err != nil {
+			return nil, err
+		}
+		for _, f := range files {
+			b, err := web.FS.ReadFile(f)
+			if err != nil {
+				return nil, err
+			}
+			vb := viewBoxRe.FindSubmatch(b)
+			start, end := bytes.IndexByte(b, '>'), bytes.LastIndex(b, []byte("</svg>"))
+			if vb == nil || start < 0 || end < start {
+				return nil, fmt.Errorf("render: can't read icon %s", f)
+			}
+			id := prefix + strings.TrimSuffix(path.Base(f), ".svg")
+			syms[id] = fmt.Appendf(nil, `<symbol id="%s" viewBox="%s">%s</symbol>`, id, vb[1], b[start+1:end])
+		}
+	}
+	return syms, nil
 }

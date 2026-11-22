@@ -1,63 +1,89 @@
-"""Pick a subset of material-icon-theme (MIT, the set Gitea uses) for daum.dev.
+"""Bring in the Phosphor icons daum.dev uses.
 
-    python3 -I scripts/icons.py <extracted npm package dir>
+    python3 -I scripts/icons.py <phosphor-colored-icons dir> <@phosphor-icons/core package dir>
 
-Copies the chosen SVGs to web/static/icons/ and writes the name -> icon maps to
-internal/render/icons_gen.go. Every mapping that points at a chosen icon is
-kept, so coverage is wide while the icon count stays small.
+File icons come from the Phosphor Colored icon set (Daniel's Zed icon theme,
+dotfiles .config/zed/phosphor-colored-icons). Its scripts/build.py holds the
+ICONS table: file type -> (glyph, colour role, suffixes, file names). The table
+is read with ast, never executed. This copies glyphs/*.svg and LICENSE to
+web/static/icons/phosphor/ and writes internal/render/icons_gen.go, which maps
+file names and suffixes to (glyph, role). Roles are coloured in CSS (r-*).
+
+UI icons (tabs, stats, clone, copy, CI, activity) are Phosphor Regular from
+@phosphor-icons/core (MIT): only the ones in UI below are copied, to
+web/static/icons/phosphor/ui/<daum.dev name>.svg.
 """
-import json, os, shutil, sys
+import ast, os, re, shutil, sys
 
-FILES = """file go go-mod go-workspace markdown readme license changelog contributing authors
-css sass less html javascript typescript react react_ts vue svelte astro json yaml toml xml
-console python rust swift c cpp h hpp java kotlin ruby php lua nix docker makefile just git
-nodejs npm yarn pnpm lock image svg font pdf zip database settings document log certificate
-key tune editorconfig prettier eslint todo templ terraform graphql proto csharp dart elixir
-erlang haskell zig r julia powershell apple android gradle vim http table jupyter tex renovate
-caddy nginx hcl robots favicon webassembly assembly vite tailwindcss deno bun biome
-""".split()
-FOLDERS = """folder folder-src folder-docs folder-command folder-public folder-test folder-github
-folder-gitea folder-scripts folder-resource folder-images folder-config folder-lib folder-dist
-folder-node folder-git folder-vscode folder-docker folder-template folder-components
-folder-utils folder-api folder-server folder-client folder-android folder-app folder-css
-folder-font folder-javascript folder-include folder-tools folder-temp folder-content
-folder-database folder-ios folder-mock folder-log folder-routes folder-views folder-hook
-folder-theme folder-core folder-plugin folder-target folder-private folder-secure
-folder-claude folder-nix folder-ci folder-environment folder-examples folder-benchmark
-folder-markdown folder-svg folder-video folder-audio folder-desktop folder-mobile
-""".split()
+# daum.dev UI icon name -> Phosphor Regular name. Add only what a template uses.
+UI = {
+    "book": "book-bookmark",
+    "branch": "git-branch",
+    "check": "check",
+    "chevron": "caret-down",
+    "code": "code",
+    "commit": "git-commit",
+    "copy": "copy",
+    "dot": "dot-outline",
+    "download": "download-simple",
+    "history": "clock-counter-clockwise",
+    "law": "scales",
+    "link": "link-simple",
+    "package": "package",
+    "pull": "git-pull-request",
+    "tag": "tag",
+    "user": "user",
+    "x": "x",
+}
 
-pkg, out = sys.argv[1], "web/static/icons"
-m = json.load(open(os.path.join(pkg, "dist/material-icons.json")))
-have = {n for n in m["iconDefinitions"]}
-icons = [n for n in FILES + FOLDERS if n in have]
-missing = sorted(set(FILES + FOLDERS) - have)
-if missing:
-    print("not in this version:", " ".join(missing))
+colored, core = sys.argv[1], sys.argv[2]
+out = "web/static/icons/phosphor"
 
-shutil.rmtree(out, ignore_errors=True)
-os.makedirs(out)
-for n in icons:
-    src = os.path.normpath(os.path.join(pkg, "dist", m["iconDefinitions"][n]["iconPath"]))
-    shutil.copy(src, os.path.join(out, n + ".svg"))
-shutil.copy(os.path.join(pkg, "LICENSE"), os.path.join(out, "LICENSE"))
 
-def pick(table):
-    return {k.lower(): v for k, v in sorted(table.items()) if v in icons and '"' not in k}
+def table(src, name):
+    """The literal value of a top-level `name = {...}` assignment."""
+    for node in ast.parse(src).body:
+        if isinstance(node, ast.Assign) and any(getattr(t, "id", None) == name for t in node.targets):
+            return ast.literal_eval(node.value)
+    sys.exit(f"no {name} table in build.py")
 
-exts = pick(m["fileExtensions"])
-names = pick(m["fileNames"])
-folders = pick(m["folderNames"])
-for lang, icon in m.get("languageIds", {}).items():  # e.g. "go" for .go when only the language id maps
-    if icon in icons and lang not in exts:
-        exts[lang] = icon
+
+icons = table(open(os.path.join(colored, "scripts/build.py")).read(), "ICONS")
+glyph_dir = os.path.join(colored, "glyphs")
+glyphs = sorted(f[:-4] for f in os.listdir(glyph_dir) if f.endswith(".svg"))
+
+# Same as build.py: later keys win when two claim a suffix or file name.
+stems, suffixes = {}, {}
+for key, (glyph, role, sfx, stm) in icons.items():
+    if glyph not in glyphs:
+        sys.exit(f"{key}: no glyph {glyph}.svg")
+    for s in sfx.split():
+        suffixes[s] = (glyph, role)
+    for s in stm.split():
+        stems[s] = (glyph, role)
+default = icons["default"][:2]
+
+shutil.rmtree("web/static/icons", ignore_errors=True)  # also drops the old material icons
+os.makedirs(os.path.join(out, "ui"))
+for g in glyphs:
+    shutil.copy(os.path.join(glyph_dir, g + ".svg"), os.path.join(out, g + ".svg"))
+shutil.copy(os.path.join(colored, "LICENSE"), os.path.join(out, "LICENSE"))
+for name, src in UI.items():
+    svg = open(os.path.join(core, "assets/regular", src + ".svg")).read()
+    if not re.search(r'viewBox="0 0 256 256"', svg):
+        sys.exit(f"{src}: unexpected viewBox")
+    open(os.path.join(out, "ui", name + ".svg"), "w").write(svg)
+shutil.copy(os.path.join(core, "LICENSE"), os.path.join(out, "ui", "LICENSE"))
+
 
 def gomap(name, d):
-    body = "".join(f'\t"{k}": "{v}",\n' for k, v in sorted(d.items()))
-    return f"var {name} = map[string]string{{\n{body}}}\n"
+    body = "".join(f'\t"{k}": {{"{g}", "{r}"}},\n' for k, (g, r) in sorted(d.items()))
+    return f"var {name} = map[string]fileType{{\n{body}}}\n"
+
 
 with open("internal/render/icons_gen.go", "w") as f:
-    f.write("// Code generated by scripts/icons.py from material-icon-theme; DO NOT EDIT.\n\n")
+    f.write("// Code generated by scripts/icons.py from the Phosphor Colored icon set; DO NOT EDIT.\n\n")
     f.write("package render\n\n")
-    f.write(gomap("iconExts", exts) + "\n" + gomap("iconNames", names) + "\n" + gomap("iconFolders", folders))
-print(f"{len(icons)} icons, {len(exts)} extensions, {len(names)} file names, {len(folders)} folder names")
+    f.write(gomap("iconStems", stems) + "\n" + gomap("iconSuffixes", suffixes) + "\n")
+    f.write(f'var iconDefault = fileType{{"{default[0]}", "{default[1]}"}}\n')
+print(f"{len(glyphs)} file glyphs, {len(UI)} UI glyphs, {len(suffixes)} suffixes, {len(stems)} file names")

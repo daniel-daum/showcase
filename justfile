@@ -29,9 +29,10 @@ digests:
 image:
     docker build -t daumdev:latest .
 
-# Regenerate the file icon subset from a material-icon-theme npm package dir
-icons pkg:
-    python3 -I scripts/icons.py {{pkg}}
+# Regenerate the icons: a phosphor-colored-icons dir (dotfiles .config/zed/) and an extracted @phosphor-icons/core package dir
+icons colored core:
+    python3 -I scripts/icons.py {{colored}} {{core}}
+    gofmt -w internal/render/icons_gen.go
 
 # Build the binary into ./bin
 build:

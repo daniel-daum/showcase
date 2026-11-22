@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/netip"
 	"os"
 	"path"
@@ -27,6 +28,13 @@ type Server struct {
 	Root  func() string // directory of the current build
 	Ready func() bool
 	Log   *slog.Logger
+	proxy *httputil.ReverseProxy
+}
+
+func New(cfg *config.Config, root func() string, ready func() bool, log *slog.Logger) *Server {
+	s := &Server{Cfg: cfg, Root: root, Ready: ready, Log: log}
+	s.proxy = s.newProxy()
+	return s
 }
 
 // ListenAndServe serves until ctx ends, then shuts down gracefully.
@@ -64,6 +72,9 @@ func (s *Server) route(w http.ResponseWriter, r *http.Request) {
 	h.Set("X-Content-Type-Options", "nosniff")
 	h.Set("Referrer-Policy", "no-referrer")
 	h.Set("Content-Security-Policy", csp)
+	if s.proxyRoute(w, r) { // works before the first build, too
+		return
+	}
 
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		http.NotFound(w, r)

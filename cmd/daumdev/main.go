@@ -35,7 +35,7 @@ func main() {
 
 	b := build.New(cfg, *data)
 	if !*once {
-		srv := &server.Server{Cfg: cfg, Root: b.Current, Ready: b.Ready, Log: slog.Default()}
+		srv := server.New(cfg, b.Current, b.Ready, slog.Default())
 		if *serveDir != "" {
 			srv.Root, srv.Ready = func() string { return *serveDir }, func() bool { return true }
 		} else {

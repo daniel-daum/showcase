@@ -37,12 +37,9 @@ func testServer(t *testing.T, ready bool) *Server {
 		os.MkdirAll(filepath.Dir(p), 0o755)
 		os.WriteFile(p, []byte(body), 0o644)
 	}
-	return &Server{
-		Cfg:   &config.Config{Repos: []string{"repo-a"}, TrustedProxies: []string{"10.0.0.1"}},
-		Root:  func() string { return root },
-		Ready: func() bool { return ready },
-		Log:   slog.New(slog.NewTextHandler(io.Discard, nil)),
-	}
+	cfg := &config.Config{GiteaURL: "http://127.0.0.1:1", User: "daniel", SiteURL: "https://daum.dev",
+		Repos: []string{"repo-a"}, Images: []string{"repo-a", "tools/cli"}, TrustedProxies: []string{"10.0.0.1"}}
+	return New(cfg, func() string { return root }, func() bool { return ready }, slog.New(slog.NewTextHandler(io.Discard, nil)))
 }
 
 func do(s *Server, method, target string, body io.Reader) *httptest.ResponseRecorder {

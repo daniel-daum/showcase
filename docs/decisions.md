@@ -127,3 +127,26 @@ details are in `docs/theme.md`. This replaces the spec's original
   the TCP peer.
 - `-serve-dir DIR` (dev only) serves a finished build without building; `just
   serve` and `just demo` use it.
+
+## Git and registry proxy
+
+- Proxy routes are matched before anything else and work before the first
+  build. Within the `.git`, `/v2` and `releases/download` prefixes anything not
+  explicitly allowed is a 404. Any path or query containing
+  `git-receive-pack` is a 403.
+- Requests to Gitea never carry `Cookie` or `X-Forwarded-*`. `Authorization`
+  passes only when it is a `Bearer` token on a registry manifest or blob
+  route, which is the anonymous token Gitea just issued. Basic credentials
+  are never forwarded.
+- `/v2/token` is forwarded only when every `scope` is a pull of an
+  allowlisted image. `_catalog` and `tags/list` are 404.
+- Any 3xx from Gitea becomes a 502, so storage or tailnet URLs never reach
+  clients. With Gitea's local storage, blobs and assets are served directly,
+  so this doesn't happen in practice.
+- Release assets are always `application/octet-stream` with
+  `Content-Disposition: attachment`.
+- The `git-upload-pack` body is capped at 10 MB and must have the git
+  request content type.
+- Gitea must allow anonymous HTTP git and registry reads
+  (`REQUIRE_SIGNIN_VIEW = false`, HTTP git not disabled), or public clones and
+  pulls fail.

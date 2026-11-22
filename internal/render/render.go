@@ -267,9 +267,10 @@ func fileIcon(name, typ string) template.HTML {
 const spriteTag = `<svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false">`
 
 var (
-	useRe     = regexp.MustCompile(`href="#([fi]-[a-z0-9-]+)"`)
-	viewBoxRe = regexp.MustCompile(`viewBox="([0-9 .-]+)"`)
-	localIDRe = regexp.MustCompile(`(id="|href="#|url\(#)([A-Za-z][\w-]*)`) // ids inside one icon
+	useRe      = regexp.MustCompile(`href="#([fi]-[a-z0-9-]+)"`)
+	viewBoxRe  = regexp.MustCompile(`viewBox="([0-9 .-]+)"`)
+	localIDRe  = regexp.MustCompile(`(id="|href="#|url\(#)([A-Za-z][\w-]*)`) // ids inside one icon
+	rootAttrRe = regexp.MustCompile(`\s([a-z-]+)="([^"]*)"`)                 // fill="none" and such on <svg>
 )
 
 func (r *Renderer) fillSprite(page []byte) []byte {
@@ -305,8 +306,16 @@ func loadSymbols() (map[string][]byte, error) {
 				return nil, fmt.Errorf("render: can't read icon %s", f)
 			}
 			id := prefix + strings.TrimSuffix(path.Base(f), ".svg")
+			// the root's presentation attributes move to the symbol, so its
+			// content still inherits them (fill="none" hides a background)
+			var attrs []byte
+			for _, a := range rootAttrRe.FindAllSubmatch(b[:start], -1) {
+				if k := string(a[1]); k != "viewbox" && k != "width" && k != "height" && k != "xmlns" {
+					attrs = fmt.Appendf(attrs, ` %s="%s"`, k, a[2])
+				}
+			}
 			body := localIDRe.ReplaceAll(b[start+1:end], []byte("${1}x"+id+"-${2}"))
-			syms[id] = fmt.Appendf(nil, `<symbol id="%s" viewBox="%s">%s</symbol>`, id, vb[1], body)
+			syms[id] = fmt.Appendf(nil, `<symbol id="%s" viewBox="%s"%s>%s</symbol>`, id, vb[1], attrs, body)
 		}
 	}
 	return syms, nil

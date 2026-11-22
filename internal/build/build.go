@@ -4,6 +4,8 @@ package build
 import (
 	"cmp"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"html/template"
@@ -71,7 +73,8 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 	if img, ct, err := b.Gitea.Avatar(ctx, user.AvatarURL); err != nil {
 		b.Log.Warn("avatar", "err", err)
 	} else {
-		name := "/static/avatar." + strings.TrimPrefix(ct, "image/")
+		sum := sha256.Sum256(img) // a new avatar gets a new name, past caches
+		name := "/static/avatar-" + hex.EncodeToString(sum[:5]) + "." + strings.TrimPrefix(ct, "image/")
 		if err := render.WriteFile(filepath.Join(dir, name), img); err != nil {
 			return err
 		}

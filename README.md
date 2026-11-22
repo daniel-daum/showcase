@@ -90,8 +90,8 @@ compose.yaml       example deployment
 
 Styles and palettes come from [saturn](https://tangled.org/danieldaum.net/saturn)
 (danieldaum.net, MIT), which builds on Flexoki (MIT,
-[stephango.com/flexoki](https://stephango.com/flexoki)). Geist, Geist Mono and
-Geist Pixel are under the SIL Open Font License. Icons are the ones Gitea
+[stephango.com/flexoki](https://stephango.com/flexoki)). Geist Mono and Geist
+Pixel are under the SIL Open Font License. Icons are the ones Gitea
 uses: file icons from
 [material-icon-theme](https://github.com/material-extensions/vscode-material-icon-theme)
 (MIT) and UI icons from [Octicons](https://github.com/primer/octicons) (MIT,

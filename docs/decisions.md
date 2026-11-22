@@ -573,12 +573,16 @@ The spec still says `daum.dev` throughout; read it as `site_url`.
   (`script-src 'self'`, nothing inline). Without JS, the page keeps the
   palette from config. The cache-busting `?v=` hash now covers `style.css`,
   `theme.js` and `copy.js`.
-- **Font review (temporary):** a `font` button sets `data-font="pixel"` on
-  `<html>`, which points `--ui` at Geist Pixel. It's remembered in
-  `localStorage`. Code stays Geist Mono. Remove the button, its CSS and the
-  font part of `theme.js` once a font is chosen.
+- **Font: Geist Pixel for all text,** as on danieldaum.net, chosen after a
+  short review with a footer toggle (since removed). Code and hashes stay
+  Geist Mono, because pixel type is proportional and code columns would
+  drift. Geist Pixel is declared for every weight, as in saturn, so bold
+  text isn't faked and emphasis comes from colour. The Geist font is gone.
+  This reverses "Text is Geist" from the polish pass.
 - **Width:** repo pages (`page--code`) are up to 60rem wide, down from
-  68rem. The profile keeps saturn's 78ch.
+  68rem, and every other page (profile, repos, 404) is up to 50rem. Saturn's
+  78ch is gone here: `ch` follows the font, and with Geist Pixel it grew to
+  about 73rem.
 
 ## Gitea's icons again
 
@@ -607,6 +611,48 @@ Octicons for the UI.
   prefixes every id inside an icon with its symbol id (`xf-kotlin-a`), so
   they can't clash on one page. A test checks there are no bare ids and no
   inline styles.
+- **Root attributes:** six icons (document, readme, changelog, log,
+  settings, just) set `fill="none"` on their `<svg>` to hide a 24×24
+  background path, and editorconfig sets `clip-rule` there. The loader
+  copies the root's presentation attributes onto the `<symbol>`. Without
+  that, the background drew as a black square. The editorconfig logo
+  itself is black, as on Gitea.
 - `just icons <material-icon-theme dir> <octicons dir>` regenerates both
   sets from extracted npm packages. The repo home grew from 29.0 KB to 35.1 KB
   before compression, since Material paths are longer.
+
+## User name case and avatar caching
+
+- Gitea user names keep their case for display ("Daniel") but match in any
+  case, in the API and in git URLs. Image refs must be lowercase, so
+  `user` from config is lowercased when it loads. Clone paths, registry
+  routes and `docker pull` refs use the lowercase name. The profile shows
+  the login and full name as Gitea returns them.
+- The avatar is downloaded on every build and saved as
+  `/static/avatar-<hash>.<ext>`, a hash of its bytes. `/static/` is cached
+  for a day, so a fixed name would keep showing the old avatar after a
+  change.
+
+## Responsive pass after Geist Pixel
+
+Checked in headless Chromium at 1280px and 390px on the profile, repos,
+repo home, file, log, commit, releases and packages pages. No page scrolls
+sideways at either width.
+
+- **Repo cards:** the name keeps its width and the "N commits this week"
+  pill and release badge wrap under it, instead of the name shrinking to
+  "repo…". The pill doesn't wrap inside itself.
+- **Tabs:** saturn's `nav { flex-wrap: wrap }` made the repo tabs wrap into
+  ragged rows on phones. They now scroll sideways, like Gitea's and GitHub's
+  on mobile. Below 600px the repo tabs and the README box's document tabs
+  fade out at the right edge to show there's more, with room to scroll the
+  last tab clear of the fade.
+- **Clone menu:** stays anchored to the right of the Clone button at every
+  width, so it opens leftward and fits. The old small-screen rule anchored
+  it left and pushed it off screen.
+- **Commit rows:** below 600px the `+N −M`, CI and hash move to a second
+  line under the subject, so subjects aren't cut to a few letters.
+- **Avatar:** 160px, a rounded square (`--radius`) as on Gitea instead of a
+  circle. Small avatars stay round.
+- `just demo` used to 404 on the newest commit page: the golden test moved
+  that page to `commit-latest.html`. It copies it now.

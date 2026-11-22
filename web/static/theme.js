@@ -2,7 +2,7 @@
 // and the next visit gets the next one. On top of that, a `theme` cookie for
 // the parent domain carries the palette between danieldaum.net and this
 // site, both ways. This runs in <head>, before the first paint. Without JS
-// the page keeps the palette from config and the footer buttons stay hidden.
+// the page keeps the palette from config and the footer button stays hidden.
 const themes = ["moss", "ink", "wine", "plum", "teal"];
 const root = document.documentElement;
 
@@ -32,22 +32,9 @@ try {
 } catch {}
 use(current);
 
-// Font review (temporary): Geist Pixel for all text, remembered per browser.
-function font(name) {
-    if (name === "pixel") root.dataset.font = "pixel";
-    else delete root.dataset.font;
-    try {
-        localStorage.setItem("font", name);
-    } catch {}
-}
-try {
-    font(localStorage.getItem("font") || "geist");
-} catch {}
-
 document.addEventListener("DOMContentLoaded", () => {
-    for (const button of document.querySelectorAll(".theme-button, .font-button")) button.hidden = false;
+    for (const button of document.querySelectorAll(".theme-button")) button.hidden = false;
 });
 document.addEventListener("click", (event) => {
     if (event.target.closest(".theme-button")) use((current = after(current)));
-    if (event.target.closest(".font-button")) font(root.dataset.font === "pixel" ? "geist" : "pixel");
 });

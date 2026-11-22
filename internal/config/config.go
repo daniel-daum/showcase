@@ -66,6 +66,8 @@ func (c *Config) validate() error {
 	if !nameRe.MatchString(c.User) {
 		return fmt.Errorf("bad user %q", c.User)
 	}
+	// Gitea matches user names in any case, but image refs must be lowercase
+	c.User = strings.ToLower(c.User)
 	seen := map[string]bool{}
 	for _, r := range c.Repos {
 		l := strings.ToLower(r)

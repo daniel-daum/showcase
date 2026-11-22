@@ -20,6 +20,12 @@ func TestSymbolIDsArePrefixed(t *testing.T) {
 			t.Errorf("%s: ids not prefixed: %.200s", id, s)
 		}
 	}
+	// a root fill="none" keeps hiding the icon's background square
+	for _, id := range []string{"f-document", "f-readme", "f-changelog", "f-log", "f-settings", "f-just"} {
+		if !strings.HasPrefix(string(syms[id]), `<symbol id="`+id+`" viewBox="0 0 `) || !strings.Contains(string(syms[id][:60]), `fill="none"`) {
+			t.Errorf("%s lost its root fill: %.80s", id, syms[id])
+		}
+	}
 	bare := regexp.MustCompile(`id="[^x]|href="#[^x]|url\(#[^x]`)
 	for id, s := range syms {
 		if m := bare.Find(s[len(`<symbol id="`):]); m != nil {

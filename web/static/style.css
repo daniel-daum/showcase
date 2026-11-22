@@ -1412,20 +1412,12 @@ footer nav a,
 /*============================*/
 /* part 2: daum.dev only.
    saturn's tokens and palettes, with a type and component system for a code
-   browser: Geist for reading, Geist Mono for code and hashes, Geist Pixel
-   for headings and the brand. Sentence case, few capitals. */
+   browser: Geist Pixel for all text, as on danieldaum.net, and Geist Mono
+   for code and hashes. Sentence case, few capitals. */
 /*============================*/
 
-@font-face {
-    font-family: "Geist";
-    src: url("./fonts/geist/Geist-Variable.woff2") format("woff2");
-    font-weight: 100 900;
-    font-style: normal;
-    font-display: swap;
-}
-
 :root {
-    --ui: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --ui: "Geist Pixel", system-ui, -apple-system, "Segoe UI", sans-serif;
     --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
     --pixel: "Geist Pixel", ui-monospace, monospace;
     --radius: 10px;
@@ -1497,8 +1489,13 @@ input:focus-visible {
     outline-offset: 2px;
 }
 
+/* rem, not saturn's 78ch: ch follows the font, and Geist Pixel is wide */
+body {
+    max-width: 50rem;
+}
+
 body.page--code {
-    max-width: min(60rem, 94vw);
+    max-width: 60rem;
 }
 
 h1, h2, h3,
@@ -1572,15 +1569,22 @@ img.avatar-lg {
 }
 
 .avatar-xs,
-.avatar-sm,
-.avatar-lg {
+.avatar-sm {
     border-radius: 50% !important;
     object-fit: cover;
 }
 
 .avatar-xs { width: 20px; height: 20px; }
 .avatar-sm { width: 24px; height: 24px; }
-.avatar-lg { width: 120px; height: 120px; box-shadow: 0 0 0 1px var(--edge); }
+
+/* the profile picture: a rounded square, as on Gitea */
+.avatar-lg {
+    width: 160px;
+    height: 160px;
+    border-radius: var(--radius) !important;
+    object-fit: cover;
+    box-shadow: 0 0 0 1px var(--edge);
+}
 
 .avatar-none {
     display: inline-grid;
@@ -2279,9 +2283,12 @@ a.row-title:hover,
     font-size: 0.7rem;
     font-weight: 500;
     line-height: 1.5;
+    white-space: nowrap;
 }
 
 .repo-card-title {
+    min-width: 0;
+    max-width: calc(100% - 1.5rem);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -2531,10 +2538,12 @@ a.tl-sha:hover {
     transform: translateY(-1px);
 }
 
+/* the name keeps its width; the pills wrap under it when the card is narrow */
 .repo-card-name {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem 0.5rem;
     color: var(--text-headings);
     font-weight: 600;
 }
@@ -2686,6 +2695,7 @@ a.tl-sha:hover {
 /* repo tabs */
 .tabs {
     display: flex;
+    flex-wrap: nowrap; /* saturn's nav wraps; tabs scroll instead */
     gap: 0.25rem;
     margin: 0 0 1.25rem;
     overflow-x: auto;
@@ -2929,15 +2939,6 @@ a.ci:hover {
         width: auto;
     }
 
-    .clone {
-        margin-left: 0;
-    }
-
-    .clone-pop {
-        right: auto;
-        left: 0;
-    }
-
     .commit-msg {
         order: 9;
         flex-basis: 100%;
@@ -3022,6 +3023,16 @@ a.ci:hover {
     padding-inline: 0.4rem;
     overflow-x: auto;
     scrollbar-width: none;
+}
+
+/* phones: tab rows scroll sideways, with a fade on the right as a hint and
+   room to scroll the last tab clear of it */
+@media (max-width: 600px) {
+    .tabs,
+    .doc-tabs {
+        padding-right: 2rem;
+        mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+    }
 }
 
 .doc-tabs label {
@@ -3585,6 +3596,22 @@ a.stat-pill--release:hover {
     white-space: nowrap;
 }
 
+/* phones: stats, checks and hash drop to a second line under the subject */
+@media (max-width: 600px) {
+    .commit-item {
+        flex-wrap: wrap;
+        row-gap: 0.35rem;
+    }
+
+    .commit-item .row-main {
+        flex-basis: calc(100% - 2rem);
+    }
+
+    .commit-item .row-main + * {
+        margin-left: 2rem;
+    }
+}
+
 /* empty states: an icon, one line, a muted hint */
 .empty-state {
     display: grid;
@@ -3675,28 +3702,8 @@ a.stat-pill--release:hover {
     border-bottom-right-radius: calc(var(--radius) - 1px);
 }
 
-/* footer buttons: theme.js unhides them. The theme is shared with
-   danieldaum.net; the font button is a temporary Geist Pixel review. */
-.theme-button[hidden],
-.font-button[hidden] {
+/* footer: theme.js unhides the button. The theme is shared with
+   danieldaum.net. */
+.theme-button[hidden] {
     display: none;
-}
-
-.font-button {
-    padding: 0;
-    border: 0;
-    border-bottom: 1px solid transparent;
-    background: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    align-self: flex-start;
-}
-
-.font-button:hover {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-}
-
-:root[data-font="pixel"] {
-    --ui: var(--pixel);
 }

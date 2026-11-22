@@ -232,7 +232,7 @@ func TestSiteGolden(t *testing.T) {
 		b, _ := os.ReadFile(c)
 		switch {
 		case bytes.Contains(b, []byte(">Add changelog</h2>")):
-			os.Rename(c, filepath.Join(dir, "repo-a/commit-latest.html")) // hash-free golden name
+			os.WriteFile(filepath.Join(dir, "repo-a/commit-latest.html"), b, 0o644) // hash-free golden name; a copy, so -keep output keeps the page
 			checkGolden(t, dir, "repo-a/commit-latest.html")
 		case bytes.Contains(b, []byte(">Initial commit</h2>")) && !bytes.Contains(b, []byte("Diff truncated")): // 40k lines of big.txt
 			t.Error("initial commit page: big.txt diff should be truncated")
@@ -245,7 +245,7 @@ func TestSiteGolden(t *testing.T) {
 			t.Errorf("raw %s: wrong or missing (%v)", f, err)
 		}
 	}
-	for _, f := range []string{"static/style.css", "static/avatar.png", "static/fonts/geistpixel/GeistPixel-Square.woff2", "static/fonts/geistmono/GeistMono-Regular.woff2"} {
+	for _, f := range []string{"static/style.css", "static/avatar-65da4c2ded.png", "static/theme.js", "static/fonts/geistpixel/GeistPixel-Square.woff2", "static/fonts/geistmono/GeistMono-Regular.woff2"} {
 		if _, err := os.Stat(filepath.Join(dir, f)); err != nil {
 			t.Error(err)
 		}

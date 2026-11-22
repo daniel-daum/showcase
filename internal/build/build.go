@@ -129,7 +129,7 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 	if err := rd.Write(dir, "repos/index.html", "repos", render.Page{Title: "Repositories · " + title, D: p}); err != nil {
 		return fmt.Errorf("repos page: %w", err)
 	}
-	if err := rd.Write(dir, "404.html", "notfound", render.Page{Title: "not found"}); err != nil {
+	if err := rd.Write(dir, "404.html", "notfound", render.Page{Title: "not found", D: p}); err != nil {
 		return err
 	}
 	for _, rp := range repos {

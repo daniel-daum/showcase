@@ -1,24 +1,28 @@
 {{define "content" -}}
 {{template "repohead" .}}
 {{- $r := .Repo}}
-{{- if .Commits}}
-<section class="box">
-  <h2 class="box-head">{{template "icon" "history"}}Latest {{len .Commits}} of {{$r.Commits}} commits on <span class="chip chip--inline">{{$r.DefaultBranch}}</span></h2>
-  <ol class="rows">
+{{- if .Days}}
+<p class="log-summary">{{template "icon" "history"}}Latest {{len .Commits}} of {{$r.Commits}} commits on <span class="chip chip--inline">{{$r.DefaultBranch}}</span></p>
+{{- range .Days}}
+<section class="log-group">
+  <h2 class="log-day">{{template "icon" "commit"}}{{.Title}}</h2>
+  <ol class="box rows">
     {{- range .Commits}}{{$href := printf "/%s/commit/%s/" $r.Name .Hash}}
     <li class="row commit-item">
       {{template "who" (dict "R" $r "Name" .Author)}}
       <div class="row-main">
-        <a class="row-title" href="{{$href}}">{{.Subject}}</a>
+        <span class="row-title"><a href="{{$href}}">{{.Subject}}</a>{{if isnew .When}}<span class="badge badge--new">new</span>{{end}}</span>
         <span class="row-sub">{{.Author}} committed <time class="{{fresh .When}}" datetime="{{.When.Format "2006-01-02T15:04:05Z07:00"}}" title="{{.When.Format "2006-01-02 15:04 MST"}}">{{ago .When}}</time></span>
       </div>
+      {{- if or .Added .Deleted}}<span class="diffstat" title="{{.Added}} added, {{.Deleted}} removed"><span class="add">+{{.Added}}</span> <span class="del">&minus;{{.Deleted}}</span></span>{{end}}
       {{- if eq .Hash $r.Head}}{{template "ci" (dict "S" $r.Status "Href" $href)}}{{end}}
       <a class="sha" href="{{$href}}">{{slice .Hash 0 7}}</a>
     </li>
     {{- end}}
   </ol>
 </section>
+{{- end}}
 {{- else}}
-<p class="empty">No commits yet.</p>
+{{template "emptystate" (dict "Icon" "commit" "Title" "No commits yet." "Hint" "Nothing has been pushed to the default branch.")}}
 {{- end}}
 {{- end}}

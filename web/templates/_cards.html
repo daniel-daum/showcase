@@ -1,8 +1,8 @@
 {{/* repocard: one repo in the profile's featured grid and on the repos page */}}
 {{define "repocard" -}}
-<a class="repo-card{{if .Active}} repo-card--active{{end}}" href="/{{.Name}}/">
+<a class="repo-card{{if .Week}} repo-card--active{{end}}" href="/{{.Name}}/">
   <span class="repo-card-name">{{template "icon" "book"}}<span class="repo-card-title">{{.Name}}</span>
-    {{- if .Active}}<span class="pill-active" title="commits in the last week">{{template "icon" "pulse"}}active</span>{{end}}
+    {{- with .Week}}<span class="pill-active" title="commits in the last 7 days">{{.}} commit{{if ne . 1}}s{{end}} this week</span>{{end}}
     {{- with .Release}}<span class="badge badge--release">{{.}}</span>{{end}}</span>
   {{if .Description}}<span class="repo-card-desc">{{.Description}}</span>{{else}}<span class="repo-card-desc repo-card-desc--none">No description.</span>{{end}}
   <span class="repo-card-foot">

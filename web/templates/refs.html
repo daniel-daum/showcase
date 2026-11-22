@@ -21,7 +21,7 @@
     {{- end}}
   </ol>
   {{- else}}
-  <p class="box-note">None yet.</p>
+  <p class="box-note empty-inline">{{template "icon" (or (and (eq $kind "tags") "tag") "branch")}}None yet.</p>
   {{- end}}
 </section>
 {{- if eq $kind "branches"}}<p class="hint">Only the default branch is browsable here. Clone the repository for the others.</p>{{end}}

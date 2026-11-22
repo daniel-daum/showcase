@@ -57,6 +57,8 @@ func New(now time.Time) (*Renderer, error) {
 	funcs := template.FuncMap{
 		"ago":   r.ago,
 		"fresh": r.fresh,
+		"live":  func(t time.Time) bool { return !t.IsZero() && r.Now.Sub(t) < 24*time.Hour },
+		"isnew": func(t time.Time) bool { return !t.IsZero() && r.Now.Sub(t) < 7*24*time.Hour },
 		"ficon": fileIcon,
 		"dec":   func(i int) int { return i - 1 },
 		"dict": func(kv ...any) map[string]any {

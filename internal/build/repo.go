@@ -75,6 +75,14 @@ func (r *repo) CommitHref(hash string) string {
 	return "/" + r.Name + "/commit/" + hash + "/"
 }
 
+// LastCommit is the newest commit on the default branch, nil if none.
+func (r *repo) LastCommit() *gitx.Commit {
+	if len(r.Recent) == 0 {
+		return nil
+	}
+	return &r.Recent[0]
+}
+
 // PackageCount counts what the packages page lists: registry images plus
 // non-container packages from the API.
 func (r *repo) PackageCount() int {

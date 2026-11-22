@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -188,6 +189,36 @@ func (r Repo) LastChanges(ctx context.Context, rev string) (map[string]Commit, e
 		}
 	}
 	return last, nil
+}
+
+// Stat is a commit's line counts against its first parent.
+type Stat struct{ Added, Deleted int }
+
+var (
+	insRe = regexp.MustCompile(`(\d+) insertion`)
+	delRe = regexp.MustCompile(`(\d+) deletion`)
+)
+
+// ShortStats returns line counts for the newest n commits on rev, measured
+// against the first parent like the commit pages.
+func (r Repo) ShortStats(ctx context.Context, rev string, n int) (map[string]Stat, error) {
+	out, err := r.run(ctx, "log", "-n", strconv.Itoa(n), "--format=%x1e%H", "--shortstat", "--diff-merges=first-parent", "--end-of-options", rev)
+	if err != nil {
+		return nil, err
+	}
+	stats := map[string]Stat{}
+	for _, rec := range strings.Split(string(out), "\x1e")[1:] {
+		hash, rest, _ := strings.Cut(rec, "\n")
+		var s Stat
+		if m := insRe.FindStringSubmatch(rest); m != nil {
+			s.Added, _ = strconv.Atoi(m[1])
+		}
+		if m := delRe.FindStringSubmatch(rest); m != nil {
+			s.Deleted, _ = strconv.Atoi(m[1])
+		}
+		stats[strings.TrimSpace(hash)] = s
+	}
+	return stats, nil
 }
 
 // CommitsSince returns the commits on rev since a time, newest first, with

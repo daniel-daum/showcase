@@ -72,6 +72,6 @@
 </section>
 {{- end}}
 {{- if and (not .Images) (not .Packages)}}
-<p class="empty">No packages.</p>
+{{template "emptystate" (dict "Icon" "package" "Title" "No packages." "Hint" "Container images published for this repository show up here, with a docker pull command.")}}
 {{- end}}
 {{- end}}

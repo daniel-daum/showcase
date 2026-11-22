@@ -419,8 +419,8 @@ are in the data, so nothing else can appear.
   config (in order, each must be in `repos`), or the six most recently
   updated. "All N repositories →" links to `/repos/`, a new top-level page
   that lists every allowlisted repo. The server has one extra route for it,
-  and `repos` is now a reserved repo name. A repo with a commit in the last
-  week gets an accent "active" pill and an accent edge. Cards also carry
+  and `repos` is now a reserved repo name. A repo with commits in the last
+  week gets a "N commits this week" pill and an accent edge (see Phase 5). Cards also carry
   the 12-week sparkline and the latest release tag.
 - **Activity feed:** a text timeline, modelled on Tangled's and styled
   after the comment threads on danieldaum.net: no boxes, a dashed rule
@@ -446,3 +446,47 @@ are in the data, so nothing else can appear.
 - The repo-a fixture gains 25 dated commits across five months (on
   `docs/notes.md`, four of them on one day), repo `created_at` dates, and a
   merged pull (#5), so the goldens and `just demo` show a real shape.
+
+### Phase 5: more life on every page
+
+No JS was added for any of it.
+
+- **Freshness:** a still green dot marks a commit in the last 24 hours:
+  on the "updated" pill in the repo header and on tree rows. A pulsing
+  version was tried and dropped, since motion doesn't fit the static look.
+  Repo cards with commits in the last 7 days show a plain "N commits this
+  week" pill and an accent edge. An earlier "active"/"live" label said too
+  little. Releases and commits under 7 days old get an accent "new" badge.
+  The warm age colours stay, and they are mixes of `--syn-constant` and
+  `--text-secondary`, both well over 4.5:1 on boxes and hovers.
+- **Repo header:** stats are compact pills on every repo page: the latest
+  release (an accent badge), commits, branches, tags, "updated … ago" in its
+  freshness colour (or the live dot), and the CI result of HEAD linked to
+  its checks. The code box no longer repeats branches, tags and commits.
+  Its top bar keeps the branch chip and the clone menu. Website, licence
+  and packages stay on the meta line, which is left out when empty.
+- **Reuse key:** pages reused across builds (tree, blob, commit) show the
+  header too, so the reuse key now includes the CI status and the newest
+  commit's age bucket (days for the first week, then weeks, months,
+  years). Those pages are rebuilt when the pill's text or the live dot
+  would change. Within the first day the hours can lag on reused pages; the
+  repo home and log are rebuilt every time.
+- **Commit log:** commits are grouped by day (UTC) under sticky headers
+  ("Today", "Yesterday", "Nov 14", with the year when it differs), one box
+  per day. Each row has a coloured `+N −M` from one `git log --shortstat
+  --diff-merges=first-parent` pass, matching the commit pages.
+- **Hover and focus:** cards lift onto a lighter background with an accent
+  edge, and asset rows highlight like other rows. Focus rings inside boxes
+  sit inside the edge so they aren't clipped. The ring itself is the shared
+  `--accent-bright` one from Phase 1.
+- **Empty states** (no releases, pulls, packages or commits, an empty repo,
+  no branches or tags) have a round icon, one line and a muted hint.
+- **Motion:** hover transitions are 120–180 ms, and the clone menu chevron
+  rotates. Saturn's reduced-motion rule turns all of it off.
+- **404:** the pixel "404" in `--accent-bright`, links to the featured
+  repos, and buttons back home and to all repositories.
+- **Clone menu:** the code box no longer clips the menu (`overflow:
+  visible`). Its first child and last file row take the rounded corners
+  instead.
+- The fixture's newest commit moves to the morning of the fixed build day,
+  so the goldens and `just demo` show live dots, "Today" and "new".

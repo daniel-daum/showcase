@@ -7,6 +7,7 @@
   <div class="box-head release-head">
     {{template "icon" "tag"}}<a class="release-tag" href="#{{.TagName}}">{{.TagName}}</a>
     {{- if .Prerelease}}<span class="badge badge--pre">pre-release</span>{{else if eq .TagName $r.LatestTag}}<span class="badge badge--latest">latest</span>{{end}}
+    {{- if isnew .PublishedAt}}<span class="badge badge--new">new</span>{{end}}
     <time class="release-date" datetime="{{.PublishedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{day .PublishedAt}}</time>
   </div>
   <div class="release-body">
@@ -21,6 +22,6 @@
 </article>
 {{- end}}
 {{- else}}
-<p class="empty">No releases yet.</p>
+{{template "emptystate" (dict "Icon" "tag" "Title" "No releases yet." "Hint" "Tags are on the tags page. Published releases, with notes and downloads, show up here.")}}
 {{- end}}
 {{- end}}

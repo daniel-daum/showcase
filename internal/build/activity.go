@@ -27,7 +27,7 @@ type RepoCard struct {
 	*gitea.Repo
 	Spark   template.HTML // 12-week commit sparkline
 	Release string        // latest release tag
-	Active  bool          // a commit in the last week
+	Week    int           // commits in the last 7 days
 }
 
 // FeedItem is one event: "push", "created", "release", "opened" or "merged".
@@ -76,7 +76,12 @@ func (b *Builder) activity(p *Profile, repos []*repo, login string) {
 			ts = append(ts, c.When)
 		}
 		c := RepoCard{Repo: r.Repo, Spark: render.Sparkline(render.Weeks(ts, now, sparkWeeks)), Release: r.LatestTag()}
-		c.Active = len(r.Recent) > 0 && now.Sub(r.Recent[0].When) < activeFor
+		for _, cm := range r.Year { // newest first
+			if now.Sub(cm.When) >= activeFor {
+				break
+			}
+			c.Week++
+		}
 		p.Repos = append(p.Repos, c)
 	}
 	slices.SortStableFunc(p.Repos, func(a, c RepoCard) int { return c.UpdatedAt.Compare(a.UpdatedAt) })

@@ -10,12 +10,27 @@
   {{- with $r.Topics}}
   <div class="pills topics">{{range .}}<span class="pill">{{.}}</span>{{end}}</div>
   {{- end}}
+  {{- if $r.Head}}
+  <ul class="repo-stats" aria-label="repository stats">
+    {{- with $r.LatestTag}}<li><a class="stat-pill stat-pill--release" href="{{$base}}/releases/#{{.}}" title="latest release">{{template "icon" "tag"}}{{.}}</a></li>{{end}}
+    <li><a class="stat-pill" href="{{$base}}/log/">{{template "icon" "history"}}<b>{{$r.Commits}}</b> commit{{if ne $r.Commits 1}}s{{end}}</a></li>
+    <li><a class="stat-pill" href="{{$base}}/branches/">{{template "icon" "branch"}}<b>{{len $r.Branches}}</b> branch{{if ne (len $r.Branches) 1}}es{{end}}</a></li>
+    <li><a class="stat-pill" href="{{$base}}/tags/">{{template "icon" "tag"}}<b>{{len $r.Tags}}</b> tag{{if ne (len $r.Tags) 1}}s{{end}}</a></li>
+    {{- with $r.LastCommit}}
+    <li><span class="stat-pill">{{if live .When}}<span class="live" title="changed in the last 24 hours"></span>{{else}}{{template "icon" "pulse"}}{{end}}updated <time class="{{fresh .When}}" datetime="{{.When.Format "2006-01-02T15:04:05Z07:00"}}" title="{{.When.Format "2006-01-02 15:04 MST"}}">{{ago .When}}</time></span></li>
+    {{- end}}
+    {{- with $r.Status}}
+    <li><a class="stat-pill ci ci--{{.State}}" href="/{{$r.Name}}/commit/{{$r.Head}}/#checks" title="checks on the latest commit: {{.State}}">{{if eq .State "success"}}{{template "icon" "check"}}{{else if or (eq .State "failure") (eq .State "error")}}{{template "icon" "x"}}{{else}}{{template "icon" "dot"}}{{end}}CI <b>{{.Passed}}/{{.TotalCount}}</b></a></li>
+    {{- end}}
+  </ul>
+  {{- end}}
+  {{- if or $r.Website $r.License $r.PackageCount}}
   <ul class="repo-meta">
     {{- with $r.Website}}<li>{{template "icon" "link"}}<a href="{{.}}">{{trimScheme .}}</a></li>{{end}}
     {{- with $r.License}}<li>{{template "icon" "law"}}<a href="{{$r.LicenseHref}}">{{.}}</a></li>{{end}}
-    {{- with $r.LatestTag}}<li>{{template "icon" "tag"}}<a href="{{$base}}/releases/#{{.}}">{{.}}</a><span class="badge badge--latest">latest</span></li>{{end}}
     {{- with $r.PackageCount}}<li>{{template "icon" "package"}}<a href="{{$base}}/packages/">{{.}} package{{if gt . 1}}s{{end}}</a></li>{{end}}
   </ul>
+  {{- end}}
 </header>
 <nav class="tabs" aria-label="repository">
   {{- $tab := .Tab}}
@@ -55,7 +70,8 @@
   {{- range .}}
   <tr>
     <td class="f-name">{{ficon .Base .Type}}
-      {{- if .Href}}<a href="{{.Href}}">{{.Base}}</a>{{else}}<span>{{.Base}}</span>{{end}}</td>
+      {{- if .Href}}<a href="{{.Href}}">{{.Base}}</a>{{else}}<span>{{.Base}}</span>{{end}}
+      {{- if live .Last.When}}<span class="live" title="changed in the last 24 hours"></span>{{end}}</td>
     <td class="f-msg">{{if .CommitHref}}<a href="{{.CommitHref}}">{{.Last.Subject}}</a>{{else}}<span>{{.Last.Subject}}</span>{{end}}</td>
     <td class="f-size">{{if eq .Type "blob"}}{{size .Size}}{{end}}</td>
     <td class="f-age"><time class="{{fresh .Last.When}}" datetime="{{.Last.When.Format "2006-01-02T15:04:05Z07:00"}}">{{ago .Last.When}}</time></td>
@@ -92,5 +108,14 @@
 <div class="copyfield">
   <input id="{{.ID}}" readonly value="{{.Value}}" aria-label="{{.Label}}">
   <button class="copy" type="button" data-copy="{{.ID}}" hidden title="copy">{{template "icon" "copy"}}{{template "icon" "check"}}<span class="sr-only">copy</span></button>
+</div>
+{{- end}}
+
+{{/* emptystate: an icon, one line, a muted hint. Takes Icon, Title, Hint. */}}
+{{define "emptystate" -}}
+<div class="box empty-state">
+  <span class="empty-icon">{{template "icon" .Icon}}</span>
+  <p class="empty-title">{{.Title}}</p>
+  {{- with .Hint}}<p class="empty-hint">{{.}}</p>{{end}}
 </div>
 {{- end}}

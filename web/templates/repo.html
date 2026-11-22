@@ -7,17 +7,14 @@
   {{- range .}}<li><span class="dot {{if eq .Name "other"}}lang-other{{else}}{{lang .Name}}{{end}}" aria-hidden="true"></span>{{.Name}}<span class="lang-pct">{{pct .Pct}}%</span></li>{{end}}
 </ul>
 {{- end}}
-<section class="box">
+<section class="box box--code">
   {{- with $r.Langs}}
   <svg class="langbar" width="100%" height="4" viewBox="0 0 1000 4" preserveAspectRatio="none" aria-hidden="true">
     {{- range .}}<rect class="{{if eq .Name "other"}}lang-other{{else}}{{lang .Name}}{{end}}" x="{{printf "%.2f" .X}}" width="{{printf "%.2f" .W}}" height="4"></rect>{{end -}}
   </svg>
   {{- end}}
   <div class="box-bar">
-    <a class="chip" href="/{{$r.Name}}/branches/">{{template "icon" "branch"}}{{$r.DefaultBranch}}</a>
-    <a class="stat" href="/{{$r.Name}}/branches/">{{template "icon" "branch"}}<b>{{len $r.Branches}}</b> branch{{if ne (len $r.Branches) 1}}es{{end}}</a>
-    <a class="stat" href="/{{$r.Name}}/tags/">{{template "icon" "tag"}}<b>{{len $r.Tags}}</b> tag{{if ne (len $r.Tags) 1}}s{{end}}</a>
-    <a class="stat" href="/{{$r.Name}}/log/">{{template "icon" "history"}}<b>{{$r.Commits}}</b> commit{{if ne $r.Commits 1}}s{{end}}</a>
+    <a class="chip" href="/{{$r.Name}}/branches/" title="default branch">{{template "icon" "branch"}}{{$r.DefaultBranch}}</a>
     <details class="clone">
       <summary class="button button--primary">{{template "icon" "code"}}Clone{{template "icon" "chevron"}}</summary>
       <div class="clone-pop">
@@ -34,8 +31,10 @@
   {{template "files" .Rows}}
 </section>
 {{- else}}
-<section class="box box-empty">
-  <p>This repository is empty.</p>
+<section class="box empty-state">
+  <span class="empty-icon">{{template "icon" "book"}}</span>
+  <p class="empty-title">This repository is empty.</p>
+  <p class="empty-hint">Nothing has been pushed yet. Once it has, you can clone it with:</p>
   {{template "copyfield" (dict "ID" "clone-https" "Value" (printf "git clone %s" .CloneURL) "Label" "clone command")}}
 </section>
 {{- end}}

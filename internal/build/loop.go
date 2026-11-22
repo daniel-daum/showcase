@@ -114,7 +114,7 @@ func (b *Builder) prune(keep ...string) {
 func (b *Builder) reuse(r *repo, dir string, dirs ...string) bool {
 	// everything the shared repo header and tabs show
 	h, _ := json.Marshal([]any{r.Head, r.Description, r.Website, r.Topics, r.Archived, r.DefaultBranch, r.LatestTag(),
-		len(r.Branches), len(r.Tags), len(r.Releases), len(r.Pulls), r.PackageCount(), r.License, r.Avatar})
+		len(r.Branches), len(r.Tags), len(r.Releases), len(r.Pulls), r.PackageCount(), r.License, r.Avatar, r.Status, b.ageKey(r)})
 	key := fmt.Sprintf("%x", sha256.Sum256(h))
 	if b.st.next == nil { // -once mode: no previous build
 		return false
@@ -152,4 +152,24 @@ func linkTree(src, dst string) error {
 		}
 		return os.Link(p, target)
 	})
+}
+
+// ageKey buckets the age of the newest commit like the "updated … ago" pill
+// shows it past the first day (days, then weeks, months, years), so reused
+// pages are rebuilt when that text or the live dot would change.
+func (b *Builder) ageKey(r *repo) string {
+	lc := r.LastCommit()
+	if lc == nil {
+		return ""
+	}
+	switch d := int(b.Now().Sub(lc.When).Hours() / 24); {
+	case d < 7:
+		return fmt.Sprintf("d%d", d)
+	case d < 30:
+		return fmt.Sprintf("w%d", d/7)
+	case d < 365:
+		return fmt.Sprintf("m%d", d/30)
+	default:
+		return fmt.Sprintf("y%d", d/365)
+	}
 }

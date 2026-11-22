@@ -2,6 +2,11 @@
 <section class="notfound">
   <h1>404</h1>
   <p>Nothing lives at this address.</p>
-  <p><a class="button" href="/">Back to the repositories</a></p>
+  {{- with .}}{{with .Featured}}
+  <ul class="nf-repos" aria-label="repositories">
+    {{- range .}}<li><a class="chip" href="/{{.Name}}/">{{template "icon" "book"}}{{.Name}}</a></li>{{end}}
+  </ul>
+  {{- end}}{{end}}
+  <p class="nf-links"><a class="button button--primary" href="/">Back home</a><a class="button" href="/repos/">All repositories</a></p>
 </section>
 {{- end}}

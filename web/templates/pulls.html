@@ -22,6 +22,6 @@
   </ol>
 </section>
 {{- else}}
-<p class="empty">No pull requests.</p>
+{{template "emptystate" (dict "Icon" "pull" "Title" "No pull requests." "Hint" "This mirror is read-only. Clone the repository to work on it.")}}
 {{- end}}
 {{- end}}

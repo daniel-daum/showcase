@@ -2,6 +2,7 @@ package build
 
 import (
 	"context"
+	"time"
 
 	"daum.dev/showcase/internal/gitea"
 
@@ -13,6 +14,17 @@ type LogPage struct {
 	Repo    *repo
 	Tab     string
 	Commits []gitx.Commit
+	Days    []LogDay // the same commits, grouped by day (UTC)
+}
+
+type LogDay struct {
+	Title   string // "Today", "Yesterday", "Nov 14", "Nov 14, 2025"
+	Commits []LogCommit
+}
+
+type LogCommit struct {
+	gitx.Commit
+	gitx.Stat
 }
 
 type CommitPage struct {
@@ -33,6 +45,18 @@ func (b *Builder) renderLog(ctx context.Context, rd *render.Renderer, dir string
 		var err error
 		if p.Commits, err = r.Git.Log(ctx, r.Head, b.Cfg.MaxCommits, ""); err != nil {
 			return err
+		}
+		stats, err := r.Git.ShortStats(ctx, r.Head, b.Cfg.MaxCommits)
+		if err != nil {
+			return err
+		}
+		last := ""
+		for _, c := range p.Commits {
+			if d := c.When.Format("2006-01-02"); d != last {
+				p.Days, last = append(p.Days, LogDay{Title: dayTitle(c.When, b.Now())}), d
+			}
+			day := &p.Days[len(p.Days)-1]
+			day.Commits = append(day.Commits, LogCommit{c, stats[c.Hash]})
 		}
 	}
 	if err := rd.Write(dir, r.Name+"/log/index.html", "log", render.Page{Title: "commits · " + r.Name, Wide: true, D: &p}); err != nil {
@@ -72,4 +96,18 @@ func (b *Builder) renderLog(ctx context.Context, rd *render.Renderer, dir string
 		}
 	}
 	return nil
+}
+
+// dayTitle names a day relative to now (UTC).
+func dayTitle(t, now time.Time) string {
+	t, now = t.UTC(), now.UTC()
+	switch d := t.Format("2006-01-02"); {
+	case d == now.Format("2006-01-02"):
+		return "Today"
+	case d == now.AddDate(0, 0, -1).Format("2006-01-02"):
+		return "Yesterday"
+	case t.Year() != now.Year():
+		return t.Format("Jan 2, 2006")
+	}
+	return t.Format("Jan 2")
 }

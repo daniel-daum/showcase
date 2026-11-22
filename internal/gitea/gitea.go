@@ -16,6 +16,9 @@ import (
 
 const maxBody = 8 << 20
 
+// ErrNotFound is returned for a 404, e.g. a repo with that feature turned off.
+var ErrNotFound = errors.New("gitea: not found")
+
 type Client struct {
 	base string
 	user string
@@ -104,6 +107,9 @@ func (c *Client) get(ctx context.Context, path string, v any) error {
 		return err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return fmt.Errorf("GET %s: %w", path, ErrNotFound)
+	}
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("gitea: GET %s: %s", path, resp.Status)
 	}

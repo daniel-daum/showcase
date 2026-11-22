@@ -3,6 +3,7 @@ package build
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 	"log/slog"
@@ -84,6 +85,17 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 		repos = append(repos, r)
 		p.Repos = append(p.Repos, r.Repo)
 	}
+	pkgs, err := b.Gitea.Packages(ctx, b.Cfg.Repos)
+	if err != nil && !errors.Is(err, gitea.ErrNotFound) {
+		return fmt.Errorf("packages: %w", err)
+	}
+	for _, pk := range pkgs {
+		for _, r := range repos {
+			if pk.Repository.Name == r.Name {
+				r.Packages = append(r.Packages, pk)
+			}
+		}
+	}
 	slices.SortStableFunc(p.Repos, func(a, c *gitea.Repo) int { return c.UpdatedAt.Compare(a.UpdatedAt) })
 
 	p.Heatmap, p.Total = render.Heatmap(days, b.Now())
@@ -100,6 +112,9 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 		}
 		if err := b.renderLog(ctx, rd, dir, rp); err != nil {
 			return fmt.Errorf("%s log: %w", rp.Name, err)
+		}
+		if err := b.renderExtras(rd, dir, rp); err != nil {
+			return fmt.Errorf("%s: %w", rp.Name, err)
 		}
 	}
 	return nil

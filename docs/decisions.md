@@ -82,3 +82,18 @@ details are in `docs/theme.md`. This replaces the spec's original
 - Diffs are against the first parent (`--diff-merges=first-parent`), with
   rename detection. At most 5,000 diff lines are kept per commit. The rest are
   counted in the stats but not shown.
+
+## Releases, pulls and packages
+
+- If Gitea returns 404 for releases, pulls or packages (for example, the
+  feature is turned off for that repo), the page is empty. Any other API error
+  fails the build.
+- Draft releases are never shown. The repo header shows the newest
+  non-prerelease tag.
+- Release assets link to `/<repo>/releases/download/<tag>/<file>`, which the
+  proxy (step 8) forwards.
+- PR bodies sit in `<details>`, so they open without JS.
+- Packages: container images are listed only when the image is in `images`
+  (so every `docker pull` shown actually works), and untagged `sha256:`
+  versions are hidden. Other package types are listed with no install command,
+  because their registries aren't proxied.

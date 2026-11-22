@@ -119,6 +119,7 @@ func testBuilder(t *testing.T) *Builder {
 			"atproto": "https://bsky.app/profile/daum.dev",
 		},
 		Repos:      []string{"repo-b", "leaky", "missing", "repo-a"},
+		Images:     []string{"repo-a"},
 		MaxCommits: 50,
 		Theme:      "moss",
 	}
@@ -154,7 +155,7 @@ func checkGolden(t *testing.T, dir, rel string) []byte {
 	if !bytes.Equal(got, want) {
 		t.Errorf("%s differs from %s; run `just golden` and review the diff", rel, golden)
 	}
-	bad := []string{"leaky", "should never render", "<script>", "tailnet.example"}
+	bad := []string{"leaky", "should never render", "should-never-render", "unlisted-image", "sha256:0123", "<script>", "tailnet.example"}
 	if !strings.Contains(rel, "/blob/") && !strings.Contains(rel, "commit") { // source text, escaped
 		bad = append(bad, "javascript:", "tracker.example")
 	}
@@ -182,6 +183,8 @@ func TestSiteGolden(t *testing.T) {
 		"repo-a/blob/cmd/hello/main.go.html", "repo-a/blob/README.md.html",
 		"repo-a/blob/docs/logo.png.html", "repo-a/blob/data.bin.html", "repo-a/blob/big.txt.html",
 		"repo-a/log/index.html", "repo-b/log/index.html",
+		"repo-a/releases/index.html", "repo-a/pulls/index.html", "repo-a/packages/index.html",
+		"repo-b/releases/index.html",
 	} {
 		checkGolden(t, dir, rel)
 	}

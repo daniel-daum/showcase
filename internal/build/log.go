@@ -3,19 +3,18 @@ package build
 import (
 	"context"
 
-	"daum.dev/showcase/internal/gitea"
 	"daum.dev/showcase/internal/gitx"
 	"daum.dev/showcase/internal/render"
 )
 
 type LogPage struct {
-	Repo    *gitea.Repo
+	Repo    *repo
 	Tab     string
 	Commits []gitx.Commit
 }
 
 type CommitPage struct {
-	Repo           *gitea.Repo
+	Repo           *repo
 	Tab            string
 	C              gitx.Commit
 	Parents        []Crumb // Href is "" when the parent has no page
@@ -26,7 +25,7 @@ type CommitPage struct {
 // renderLog writes the log page and one page per listed commit. Only those
 // commits get pages, so the site's size stays bounded.
 func (b *Builder) renderLog(ctx context.Context, rd *render.Renderer, dir string, r *repo) error {
-	p := LogPage{Repo: r.Repo, Tab: "log"}
+	p := LogPage{Repo: r, Tab: "log"}
 	if r.Head != "" {
 		var err error
 		if p.Commits, err = r.Git.Log(ctx, r.Head, b.Cfg.MaxCommits, ""); err != nil {
@@ -42,7 +41,7 @@ func (b *Builder) renderLog(ctx context.Context, rd *render.Renderer, dir string
 		listed[c.Hash] = true
 	}
 	for _, c := range p.Commits {
-		cp := CommitPage{Repo: r.Repo, Tab: "log", C: c}
+		cp := CommitPage{Repo: r, Tab: "log", C: c}
 		for _, h := range c.Parents {
 			cr := Crumb{Name: h[:min(len(h), 10)]}
 			if listed[h] {

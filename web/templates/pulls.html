@@ -1,0 +1,21 @@
+{{define "content" -}}
+{{template "repohead" .}}
+{{- if .Pulls}}
+<ol class="pull-list">
+  {{- range .Pulls}}
+  <li id="pr-{{.Number}}">
+    <details>
+      <summary>
+        <span class="pull-title">#{{.Number}} {{.Title}}</span>
+        <span class="pill pill--{{if .Merged}}merged{{else}}{{.State}}{{end}}">{{if .Merged}}merged{{else}}{{.State}}{{end}}</span>
+        <span class="meta">{{.User.Login}} · {{day .CreatedAt}}</span>
+      </summary>
+      {{- if .Body}}<div class="pull-body">{{.Body}}</div>{{else}}<p class="empty">no description.</p>{{end}}
+    </details>
+  </li>
+  {{- end}}
+</ol>
+{{- else}}
+<p class="empty">no pull requests.</p>
+{{- end}}
+{{- end}}

@@ -3,8 +3,9 @@
   <h1>{{.Repo.Name}}</h1>
   {{- with .Repo.Description}}<p>{{.}}</p>{{end}}
   {{- with .Repo.Website}}<p><a href="{{.}}">{{.}}</a></p>{{end}}
-  {{- if or .Repo.Topics .Repo.Archived}}
+  {{- if or .Repo.Topics .Repo.Archived .Repo.LatestTag}}
   <div class="pills">
+    {{- with .Repo.LatestTag}}<a class="pill pill--release" href="/{{$.Repo.Name}}/releases/">{{.}}</a>{{end}}
     {{- if .Repo.Archived}}<span class="pill">archived</span>{{end}}
     {{- range .Repo.Topics}}<span class="pill">{{.}}</span>{{end}}
   </div>

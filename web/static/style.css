@@ -1779,3 +1779,94 @@ a.commit-log-msg:hover {
 .diff .hunk:not(:first-child) {
     margin-top: 0.5rem;
 }
+
+/* releases */
+a.pill--release {
+    color: var(--accent);
+    border-color: var(--accent-muted);
+}
+
+a.pill--release:hover {
+    border-color: var(--accent);
+}
+
+.release-assets {
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+    font-size: 0.85rem;
+}
+
+.release-assets a::before {
+    content: "↓ ";
+    color: var(--text-secondary);
+}
+
+/* pulls: titles open the body, no js */
+.pull-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.pull-list > li {
+    margin: 0;
+    border-bottom: 1px solid var(--borders);
+}
+
+.pull-list > li:first-child {
+    border-top: 1px solid var(--borders);
+}
+
+.pull-list summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+    padding: 0.75rem 0;
+    cursor: pointer;
+    list-style: none;
+}
+
+.pull-list summary::-webkit-details-marker {
+    display: none;
+}
+
+.pull-list summary:hover .pull-title {
+    color: var(--accent);
+}
+
+.pull-title {
+    color: var(--text-headings);
+    flex: 1 1 20rem;
+}
+
+.pull-list .meta {
+    margin: 0;
+}
+
+.pull-body {
+    padding: 0 0 1rem;
+}
+
+.pill--open {
+    color: var(--syn-string);
+}
+
+.pill--merged {
+    color: var(--syn-keyword);
+}
+
+/* packages */
+.packages .table-title {
+    text-transform: none;
+}
+
+.packages .table-row:hover {
+    cursor: default;
+}
+
+.packages code {
+    font-size: 0.78rem;
+    white-space: nowrap;
+}

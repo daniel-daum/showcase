@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/url"
@@ -26,8 +27,21 @@ const (
 // repo is one allowlisted repo with its API metadata and local mirror.
 type repo struct {
 	*gitea.Repo
-	Git  gitx.Repo
-	Head string // "" for an empty repo
+	Git      gitx.Repo
+	Head     string // "" for an empty repo
+	Releases []gitea.Release
+	Pulls    []gitea.PullRequest
+	Packages []gitea.Package
+}
+
+// LatestTag is the newest non-prerelease tag, for the repo header.
+func (r *repo) LatestTag() string {
+	for _, rel := range r.Releases {
+		if !rel.Prerelease {
+			return rel.TagName
+		}
+	}
+	return ""
 }
 
 type Row struct {
@@ -40,7 +54,7 @@ type Row struct {
 type Crumb struct{ Name, Href string }
 
 type RepoPage struct {
-	Repo     *gitea.Repo
+	Repo     *repo
 	Tab      string
 	CloneURL string
 	Latest   *gitx.Commit
@@ -50,7 +64,7 @@ type RepoPage struct {
 }
 
 type BlobPage struct {
-	Repo          *gitea.Repo
+	Repo          *repo
 	Tab           string
 	Crumbs        []Crumb
 	Path, Raw     string
@@ -71,6 +85,12 @@ func (b *Builder) loadRepo(ctx context.Context, name string) (*repo, error) {
 		return nil, fmt.Errorf("api returned repo %q", meta.Name)
 	}
 	r := &repo{Repo: meta}
+	if r.Releases, err = b.Gitea.Releases(ctx, name); err != nil && !errors.Is(err, gitea.ErrNotFound) {
+		return nil, err
+	}
+	if r.Pulls, err = b.Gitea.Pulls(ctx, name); err != nil && !errors.Is(err, gitea.ErrNotFound) {
+		return nil, err
+	}
 	src := b.Cfg.GiteaURL + "/" + url.PathEscape(b.Cfg.User) + "/" + url.PathEscape(name) + ".git"
 	if r.Git, err = gitx.Mirror(ctx, src, filepath.Join(b.Data, "mirrors", name+".git")); err != nil {
 		return nil, err
@@ -84,7 +104,7 @@ func (b *Builder) loadRepo(ctx context.Context, name string) (*repo, error) {
 }
 
 func (b *Builder) renderRepo(ctx context.Context, rd *render.Renderer, dir string, r *repo) error {
-	p := RepoPage{Repo: r.Repo, Tab: "code", CloneURL: b.Cfg.SiteURL + "/" + r.Name + ".git"}
+	p := RepoPage{Repo: r, Tab: "code", CloneURL: b.Cfg.SiteURL + "/" + r.Name + ".git"}
 	page := render.Page{Title: r.Name, D: &p}
 	if r.Head == "" {
 		return rd.Write(dir, r.Name+"/index.html", "repo", page)
@@ -129,7 +149,7 @@ func (b *Builder) renderRepo(ctx context.Context, rd *render.Renderer, dir strin
 	for _, e := range entries {
 		switch {
 		case e.Type == "tree":
-			tp := RepoPage{Repo: r.Repo, Tab: "code", Crumbs: crumbs(r.Name, e.Name)}
+			tp := RepoPage{Repo: r, Tab: "code", Crumbs: crumbs(r.Name, e.Name)}
 			if tp.Rows, tp.Readme, err = b.listing(ctx, r, e.Name, kids[e.Name], last); err != nil {
 				return err
 			}
@@ -179,7 +199,7 @@ func (b *Builder) listing(ctx context.Context, r *repo, dir string, entries []gi
 }
 
 func (b *Builder) renderBlob(ctx context.Context, rd *render.Renderer, dir string, r *repo, e gitx.Entry) error {
-	p := BlobPage{Repo: r.Repo, Tab: "code", Crumbs: crumbs(r.Name, e.Name), Path: e.Name, Size: e.Size}
+	p := BlobPage{Repo: r, Tab: "code", Crumbs: crumbs(r.Name, e.Name), Path: e.Name, Size: e.Size}
 	p.Image = isImage(e.Name)
 	if e.Size <= maxRaw {
 		src, err := r.Git.Blob(ctx, e.Hash)

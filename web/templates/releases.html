@@ -1,0 +1,25 @@
+{{define "content" -}}
+{{template "repohead" .}}
+{{- if .Releases}}
+<ol class="version-list">
+  {{- range .Releases}}
+  <li id="{{.TagName}}">
+    <p class="version-meta">
+      <span class="version-date">{{day .PublishedAt}}</span>
+      <span>{{.TagName}}</span>
+      {{- if .Prerelease}}<span class="pill">pre-release</span>{{end}}
+    </p>
+    <h3>{{or .Name .TagName}}</h3>
+    {{- with .Notes}}<div class="release-notes">{{.}}</div>{{end}}
+    {{- with .Assets}}
+    <ul class="release-assets">
+      {{- range .}}<li><a href="{{.Href}}">{{.Name}}</a></li>{{end}}
+    </ul>
+    {{- end}}
+  </li>
+  {{- end}}
+</ol>
+{{- else}}
+<p class="empty">no releases yet.</p>
+{{- end}}
+{{- end}}

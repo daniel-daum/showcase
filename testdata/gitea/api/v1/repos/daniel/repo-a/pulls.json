@@ -1,0 +1,20 @@
+[
+  {
+    "number": 2,
+    "title": "Add a flag",
+    "body": "Adds `-v`.\n\n![shot](http://tracker.example/pixel.gif)",
+    "state": "open",
+    "merged": false,
+    "created_at": "2026-11-18T10:00:00Z",
+    "user": {"login": "friend"}
+  },
+  {
+    "number": 1,
+    "title": "Fix typo",
+    "body": "",
+    "state": "closed",
+    "merged": true,
+    "created_at": "2026-07-01T10:00:00Z",
+    "user": {"login": "daniel"}
+  }
+]

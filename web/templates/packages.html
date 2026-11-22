@@ -1,0 +1,20 @@
+{{define "content" -}}
+{{template "repohead" .}}
+{{- if .Packages}}
+<table class="table packages">
+  <thead><tr><th>name</th><th class="table-col-tag">type</th><th class="table-col-date">version</th><th>install</th></tr></thead>
+  <tbody>
+  {{- range .Packages}}
+  <tr class="table-row">
+    <td><span class="table-title">{{.Name}}</span></td>
+    <td class="table-tag">{{.Type}}</td>
+    <td class="table-date">{{.Version}}</td>
+    <td>{{with .Command}}<code>{{.}}</code>{{end}}</td>
+  </tr>
+  {{- end}}
+  </tbody>
+</table>
+{{- else}}
+<p class="empty">no packages.</p>
+{{- end}}
+{{- end}}

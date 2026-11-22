@@ -34,12 +34,9 @@ func New(cfg *config.Config, data string) *Builder {
 	}
 }
 
-type Link struct{ Name, URL string }
-
 type Profile struct {
 	User    *gitea.User
 	Avatar  string
-	Links   []Link
 	Heatmap template.HTML
 	Total   int
 	Repos   []*gitea.Repo
@@ -59,7 +56,8 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 		return err
 	}
 
-	p := Profile{User: user, Links: links(b.Cfg.Links)}
+	rd.Theme, rd.Links = b.Cfg.Theme, links(b.Cfg.Links)
+	p := Profile{User: user}
 	if img, ct, err := b.Gitea.Avatar(ctx, user.AvatarURL); err != nil {
 		b.Log.Warn("avatar", "err", err)
 	} else {
@@ -105,9 +103,9 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 }
 
 var linkOrder = []string{"website", "atproto", "tangled", "github"}
-var linkNames = map[string]string{"website": "Website", "atproto": "Bluesky", "tangled": "Tangled", "github": "GitHub"}
+var linkNames = map[string]string{"website": "website", "atproto": "bluesky", "tangled": "tangled", "github": "github"}
 
-func links(m map[string]string) []Link {
+func links(m map[string]string) []render.Link {
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
@@ -124,13 +122,13 @@ func links(m map[string]string) []Link {
 		}
 		return strings.Compare(a, c)
 	})
-	out := make([]Link, 0, len(keys))
+	out := make([]render.Link, 0, len(keys))
 	for _, k := range keys {
 		name := linkNames[k]
 		if name == "" {
 			name = k
 		}
-		out = append(out, Link{name, m[k]})
+		out = append(out, render.Link{Name: name, URL: m[k]})
 	}
 	return out
 }

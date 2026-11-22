@@ -1,16 +1,18 @@
 {{define "content" -}}
 {{template "repohead" .}}
 <div class="clone">
-  <label for="clone-url">HTTPS</label>
+  <label for="clone-url">clone</label>
   <input id="clone-url" readonly value="{{.CloneURL}}">
 </div>
 {{- if .Latest}}
 {{template "latest" .}}
+<h2 class="section-label">files</h2>
 {{template "tree" .Rows}}
 {{- else}}
-<p class="empty">This repository is empty.</p>
+<p class="empty">this repository is empty.</p>
 {{- end}}
 {{- with .Readme}}
-<article class="readme markdown">{{.}}</article>
+<h2 class="section-label">readme</h2>
+<article class="readme">{{.}}</article>
 {{- end}}
 {{- end}}

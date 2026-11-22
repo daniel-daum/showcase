@@ -1,37 +1,28 @@
 {{define "content" -}}
-<section class="profile">
+<header class="page-header page-header--home profile">
   {{- with .Avatar}}<img class="avatar" src="{{.}}" alt="" width="96" height="96">{{end}}
   <div>
     <h1>{{or .User.FullName .User.Login}}</h1>
-    {{- if .User.FullName}}<p class="muted">{{.User.Login}}</p>{{end}}
-    {{- with .User.Description}}<p class="bio">{{.}}</p>{{end}}
-    {{- with .User.Location}}<p class="muted">{{.}}</p>{{end}}
-    {{- with .Links}}
-    <ul class="links">
-      {{- range .}}<li><a href="{{.URL}}" rel="me">{{.Name}}</a></li>{{end}}
-    </ul>
-    {{- end}}
+    <p class="meta meta-split">
+      <span>{{.User.Login}}</span>
+      {{- with .User.Location}}<span class="meta-sep" aria-hidden="true">·</span><span>{{.}}</span>{{end}}
+    </p>
+    {{- with .User.Description}}<p>{{.}}</p>{{end}}
   </div>
-</section>
+</header>
 
-<section>
-  <h2>{{.Total}} commits in the last year</h2>
-  <div class="heatmap-wrap">{{.Heatmap}}</div>
-</section>
+<h2 class="section-label">{{.Total}} commits in the last year</h2>
+<div class="heatmap-wrap">{{.Heatmap}}</div>
 
-<section>
-  <h2>Repositories</h2>
-  <ul class="repos">
-    {{- range .Repos}}
-    <li>
-      <a class="repo-name" href="/{{.Name}}/">{{.Name}}</a>
-      {{- with .Description}}<p>{{.}}</p>{{end}}
-      <p class="meta">
-        {{- with .Language}}<span class="lang"><span class="dot {{lang .}}"></span>{{.}}</span>{{end}}
-        <span>Updated {{ago .UpdatedAt}}</span>
-      </p>
-    </li>
-    {{- end}}
-  </ul>
-</section>
+<h2 class="section-label">repositories</h2>
+<div class="card-grid">
+  {{- range .Repos}}
+  <a class="card" href="/{{.Name}}/">
+    <span class="card-title">{{.Name}}</span>
+    {{- with .Description}}<span class="card-desc">{{.}}</span>{{end}}
+    <span class="card-type">
+      {{- with .Language}}<span class="dot {{lang .}}" aria-hidden="true"></span>{{.}} · {{end}}updated {{ago .UpdatedAt}}</span>
+  </a>
+  {{- end}}
+</div>
 {{- end}}

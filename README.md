@@ -33,7 +33,8 @@ just render      # render the site once into ./out from ./config.json
     "links": { "website": "https://danieldaum.net" },
     "repos": ["repo-a", "repo-b"],
     "images": ["repo-a"],
-    "max_commits": 50
+    "max_commits": 50,
+    "theme": "moss"
 }
 ```
 
@@ -61,6 +62,8 @@ docs/              spec and design decisions
 
 ## Licences
 
-The Flexoki palette is MIT ([stephango.com/flexoki](https://stephango.com/flexoki)).
-Geist Pixel is under the SIL Open Font License, see
-`web/static/fonts/GeistPixel-LICENSE.txt`.
+Styles and palettes come from [saturn](https://tangled.org/danieldaum.net/saturn)
+(danieldaum.net, MIT), which builds on Flexoki (MIT,
+[stephango.com/flexoki](https://stephango.com/flexoki)). Geist Pixel and Geist
+Mono are under the SIL Open Font License; the licence files are in
+`web/static/fonts/`.

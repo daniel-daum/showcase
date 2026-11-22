@@ -18,14 +18,22 @@ import (
 
 type Renderer struct {
 	Now   time.Time // fixed per build so output is deterministic
+	Theme string    // saturn palette name
+	Links []Link    // footer links
 	pages map[string]*template.Template
 }
+
+type Link struct{ Name, URL string }
 
 // Page is what every template receives.
 type Page struct {
 	Title    string
 	GoImport string // optional go-import meta content
+	Wide     bool   // code layout (page--code)
 	D        any
+
+	Theme string // filled in by Write
+	Links []Link
 }
 
 func New(now time.Time) (*Renderer, error) {
@@ -60,6 +68,7 @@ func (r *Renderer) Write(dir, rel, name string, p Page) error {
 	if !ok {
 		return fmt.Errorf("render: no template %q", name)
 	}
+	p.Theme, p.Links = r.Theme, r.Links
 	var buf bytes.Buffer
 	if err := t.ExecuteTemplate(&buf, "base", p); err != nil {
 		return fmt.Errorf("render %s: %w", rel, err)

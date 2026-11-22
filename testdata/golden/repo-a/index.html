@@ -1,65 +1,85 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="moss">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
 <title>repo-a</title>
 <meta name="go-import" content="daum.dev/repo-a git https://daum.dev/repo-a.git">
+<link rel="preload" href="/static/fonts/geistpixel/GeistPixel-Square.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<header class="site"><a href="/">daum.dev</a></header>
-<main>
-<section class="repohead">
-  <h1><a href="/repo-a/">repo-a</a></h1><p class="desc">A small Go service &amp; friends</p>
-  <ul class="topics"><li>go</li><li>web</li></ul>
-</section>
-<nav class="tabs">
-  <a href="/repo-a/" aria-current="page">Code</a>
-  <a href="/repo-a/log/">Commits</a>
-  <a href="/repo-a/releases/">Releases</a>
-  <a href="/repo-a/pulls/">Pulls</a>
-  <a href="/repo-a/packages/">Packages</a>
+<a class="skip-link" href="#site-main">skip to content</a>
+<header class="site-header">
+  <a class="site-name" href="/">daum.dev</a>
+  <nav aria-label="site">
+    <a href="/">repos</a>
+    <a href="https://danieldaum.net">website</a>
+  </nav>
+</header>
+<main id="site-main">
+<header class="page-header">
+  <h1>repo-a</h1><p>A small Go service &amp; friends</p>
+  <div class="pills"><span class="pill">go</span><span class="pill">web</span>
+  </div>
+</header>
+<nav class="tabs" aria-label="repository">
+  <a href="/repo-a/" aria-current="page">code</a>
+  <a href="/repo-a/log/">commits</a>
+  <a href="/repo-a/releases/">releases</a>
+  <a href="/repo-a/pulls/">pulls</a>
+  <a href="/repo-a/packages/">packages</a>
 </nav>
 <div class="clone">
-  <label for="clone-url">HTTPS</label>
+  <label for="clone-url">clone</label>
   <input id="clone-url" readonly value="https://daum.dev/repo-a.git">
 </div>
 
-<div class="latest">
-  <a class="sha" href="/repo-a/commit/5dd0c68a0a26442ffe65aaf0989dd021dd4f9010/">5dd0c68a0a</a>
-  <span class="subject">Add changelog</span>
-  <span class="muted">Daniel · <time datetime="2026-11-19T08:30:00Z">2 days ago</time></span>
+<div class="commit-log commit-log--inline">
+  <div class="commit-log-head">
+    <span>latest commit · Daniel</span>
+    <a href="/repo-a/log/">history</a>
+  </div>
+  <ol class="commit-log-list">
+    <li class="commit-log-row">
+      <a class="commit-log-hash" href="/repo-a/commit/5dd0c68a0a26442ffe65aaf0989dd021dd4f9010/">5dd0c68a0a</a>
+      <span class="commit-log-msg">Add changelog</span>
+      <time class="commit-log-date" datetime="2026-11-19T08:30:00Z">2 days ago</time>
+    </li>
+  </ol>
 </div>
-<table class="tree">
-  <tr>
-    <td class="name tree"><a href="/repo-a/tree/cmd/">cmd</a></td>
-    <td class="msg">Initial commit</td>
-    <td class="age">5 months ago</td>
+<h2 class="section-label">files</h2>
+<table class="table tree">
+  <tbody>
+  <tr class="table-row">
+    <td><a class="table-title" href="/repo-a/tree/cmd/">cmd<span class="tree-dir">/</span></a></td>
+    <td class="table-desc">Initial commit</td>
+    <td class="table-date">5 months ago</td>
   </tr>
-  <tr>
-    <td class="name tree"><a href="/repo-a/tree/docs/">docs</a></td>
-    <td class="msg">Initial commit</td>
-    <td class="age">5 months ago</td>
+  <tr class="table-row">
+    <td><a class="table-title" href="/repo-a/tree/docs/">docs<span class="tree-dir">/</span></a></td>
+    <td class="table-desc">Initial commit</td>
+    <td class="table-date">5 months ago</td>
   </tr>
-  <tr>
-    <td class="name blob"><a href="/repo-a/blob/CHANGELOG.md">CHANGELOG.md</a></td>
-    <td class="msg">Add changelog</td>
-    <td class="age">2 days ago</td>
+  <tr class="table-row">
+    <td><a class="table-title" href="/repo-a/blob/CHANGELOG.md">CHANGELOG.md</a></td>
+    <td class="table-desc">Add changelog</td>
+    <td class="table-date">2 days ago</td>
   </tr>
-  <tr>
-    <td class="name blob"><a href="/repo-a/blob/go.mod">go.mod</a></td>
-    <td class="msg">Initial commit</td>
-    <td class="age">5 months ago</td>
+  <tr class="table-row">
+    <td><a class="table-title" href="/repo-a/blob/go.mod">go.mod</a></td>
+    <td class="table-desc">Initial commit</td>
+    <td class="table-date">5 months ago</td>
   </tr>
-  <tr>
-    <td class="name blob"><a href="/repo-a/blob/README.md">README.md</a></td>
-    <td class="msg">Initial commit</td>
-    <td class="age">5 months ago</td>
+  <tr class="table-row">
+    <td><a class="table-title" href="/repo-a/blob/README.md">README.md</a></td>
+    <td class="table-desc">Initial commit</td>
+    <td class="table-date">5 months ago</td>
   </tr>
+  </tbody>
 </table>
-<article class="readme markdown"><h1 id="repo-a">repo-a</h1>
+<h2 class="section-label">readme</h2>
+<article class="readme"><h1 id="repo-a">repo-a</h1>
 <p>A tiny fixture repo. See the <a href="/repo-a/blob/docs/guide.md">guide</a>, the <a href="/repo-a/tree/docs/">docs folder</a>
 and <a href="#usage">the section below</a>.</p>
 <p><img src="/repo-a/raw/docs/logo.png" alt="logo">
@@ -72,5 +92,13 @@ tracker</p>
 </code></pre>
 </article>
 </main>
+<footer>
+  <nav aria-label="site links">
+    <p aria-hidden="true">//</p>
+    <a href="https://danieldaum.net" rel="me">website</a>
+    <a href="https://bsky.app/profile/daum.dev" rel="me">bluesky</a>
+    <a href="https://github.com/example" rel="me">github</a>
+  </nav>
+</footer>
 </body>
 </html>

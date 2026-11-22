@@ -116,6 +116,7 @@ func testBuilder(t *testing.T) *Builder {
 		},
 		Repos:      []string{"repo-b", "leaky", "missing", "repo-a"},
 		MaxCommits: 50,
+		Theme:      "moss",
 	}
 	now := time.Date(2026, 11, 21, 12, 0, 0, 0, time.UTC)
 	return &Builder{
@@ -170,7 +171,7 @@ func TestSiteGolden(t *testing.T) {
 	for _, rel := range []string{"index.html", "repo-a/index.html", "repo-b/index.html"} {
 		checkGolden(t, dir, rel)
 	}
-	for _, f := range []string{"static/style.css", "static/avatar.png", "static/fonts/GeistPixel-Square.woff2"} {
+	for _, f := range []string{"static/style.css", "static/avatar.png", "static/fonts/geistpixel/GeistPixel-Square.woff2", "static/fonts/geistmono/GeistMono-Regular.woff2"} {
 		if _, err := os.Stat(filepath.Join(dir, f)); err != nil {
 			t.Error(err)
 		}

@@ -82,4 +82,5 @@ Saturn's no-JS default is moss. Options here, all JS-free:
 2. Config sets a site default, and each repo may pick its own.
 3. Each repo gets a palette from a hash of its name.
 
-Not decided yet; until then, moss everywhere.
+For now it's option 1: `"theme"` in config sets the palette for the whole
+site (default `moss`). Options 2 and 3 can build on that later.

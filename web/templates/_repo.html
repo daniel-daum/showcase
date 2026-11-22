@@ -1,40 +1,53 @@
 {{define "repohead" -}}
-<section class="repohead">
-  <h1><a href="/{{.Repo.Name}}/">{{.Repo.Name}}</a>{{if .Repo.Archived}} <span class="badge">archived</span>{{end}}</h1>
-  {{- with .Repo.Description}}<p class="desc">{{.}}</p>{{end}}
+<header class="page-header">
+  <h1>{{.Repo.Name}}</h1>
+  {{- with .Repo.Description}}<p>{{.}}</p>{{end}}
   {{- with .Repo.Website}}<p><a href="{{.}}">{{.}}</a></p>{{end}}
-  {{- with .Repo.Topics}}
-  <ul class="topics">{{range .}}<li>{{.}}</li>{{end}}</ul>
+  {{- if or .Repo.Topics .Repo.Archived}}
+  <div class="pills">
+    {{- if .Repo.Archived}}<span class="pill">archived</span>{{end}}
+    {{- range .Repo.Topics}}<span class="pill">{{.}}</span>{{end}}
+  </div>
   {{- end}}
-</section>
-<nav class="tabs">
+</header>
+<nav class="tabs" aria-label="repository">
   {{- $tab := .Tab}}{{$base := printf "/%s" .Repo.Name}}
-  <a href="{{$base}}/"{{if eq $tab "code"}} aria-current="page"{{end}}>Code</a>
-  <a href="{{$base}}/log/"{{if eq $tab "log"}} aria-current="page"{{end}}>Commits</a>
-  <a href="{{$base}}/releases/"{{if eq $tab "releases"}} aria-current="page"{{end}}>Releases</a>
-  <a href="{{$base}}/pulls/"{{if eq $tab "pulls"}} aria-current="page"{{end}}>Pulls</a>
-  <a href="{{$base}}/packages/"{{if eq $tab "packages"}} aria-current="page"{{end}}>Packages</a>
+  <a href="{{$base}}/"{{if eq $tab "code"}} aria-current="page"{{end}}>code</a>
+  <a href="{{$base}}/log/"{{if eq $tab "log"}} aria-current="page"{{end}}>commits</a>
+  <a href="{{$base}}/releases/"{{if eq $tab "releases"}} aria-current="page"{{end}}>releases</a>
+  <a href="{{$base}}/pulls/"{{if eq $tab "pulls"}} aria-current="page"{{end}}>pulls</a>
+  <a href="{{$base}}/packages/"{{if eq $tab "packages"}} aria-current="page"{{end}}>packages</a>
 </nav>
 {{- end}}
 
 {{define "latest" -}}
 {{- $repo := .Repo.Name}}{{with .Latest}}
-<div class="latest">
-  <a class="sha" href="/{{$repo}}/commit/{{.Hash}}/">{{.Short}}</a>
-  <span class="subject">{{.Subject}}</span>
-  <span class="muted">{{.Author}} · <time datetime="{{.When.Format "2006-01-02T15:04:05Z07:00"}}">{{ago .When}}</time></span>
+<div class="commit-log commit-log--inline">
+  <div class="commit-log-head">
+    <span>latest commit · {{.Author}}</span>
+    <a href="/{{$repo}}/log/">history</a>
+  </div>
+  <ol class="commit-log-list">
+    <li class="commit-log-row">
+      <a class="commit-log-hash" href="/{{$repo}}/commit/{{.Hash}}/">{{.Short}}</a>
+      <span class="commit-log-msg">{{.Subject}}</span>
+      <time class="commit-log-date" datetime="{{.When.Format "2006-01-02T15:04:05Z07:00"}}">{{ago .When}}</time>
+    </li>
+  </ol>
 </div>
 {{- end}}
 {{- end}}
 
 {{define "tree" -}}
-<table class="tree">
+<table class="table tree">
+  <tbody>
   {{- range .}}
-  <tr>
-    <td class="name {{.Type}}">{{if .Href}}<a href="{{.Href}}">{{.Name}}</a>{{else}}{{.Name}}{{end}}</td>
-    <td class="msg">{{.Last.Subject}}</td>
-    <td class="age">{{ago .Last.When}}</td>
+  <tr class="table-row">
+    <td>{{if .Href}}<a class="table-title" href="{{.Href}}">{{.Name}}{{if eq .Type "tree"}}<span class="tree-dir">/</span>{{end}}</a>{{else}}<span class="table-title">{{.Name}}</span>{{end}}</td>
+    <td class="table-desc">{{.Last.Subject}}</td>
+    <td class="table-date">{{ago .Last.When}}</td>
   </tr>
   {{- end}}
+  </tbody>
 </table>
 {{- end}}

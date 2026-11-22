@@ -20,6 +20,7 @@ type Config struct {
 	Repos      []string          `json:"repos"`
 	Images     []string          `json:"images"`
 	MaxCommits int               `json:"max_commits"`
+	Theme      string            `json:"theme"` // saturn palette, default moss
 }
 
 var (
@@ -27,6 +28,7 @@ var (
 	imageRe = regexp.MustCompile(`^[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*$`)
 	// Top-level names the site or router uses for itself.
 	reserved = []string{"static", "v2", "healthz", "api", "user", "index.html"}
+	themes   = []string{"moss", "ink", "wine", "plum", "teal", "flexoki"}
 )
 
 func Load(path string) (*Config, error) {
@@ -75,6 +77,12 @@ func (c *Config) validate() error {
 		if p, err := url.Parse(v); err != nil || p.Scheme != "https" {
 			return fmt.Errorf("link %q must be an https url", k)
 		}
+	}
+	if c.Theme == "" {
+		c.Theme = "moss"
+	}
+	if !slices.Contains(themes, c.Theme) {
+		return fmt.Errorf("unknown theme %q", c.Theme)
 	}
 	if c.MaxCommits <= 0 {
 		c.MaxCommits = 50

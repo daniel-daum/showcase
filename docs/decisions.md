@@ -18,12 +18,21 @@ Gitea package visibility follows the owner, not the linked repo, so a package
 linked to a private repo is public. Only packages linked to an allowlisted
 repo are listed.
 
-## Change detection is keyed on HEAD only
+## Change detection: reuse git pages when nothing they show changed
 
-Repo `updated_at` doesn't reliably change when PRs or releases change. API
-pages (profile, releases, pulls, packages) are re-fetched and re-rendered
-every build. Only git-derived pages (tree, blob, log, commit) are reused when
-HEAD is unchanged.
+Repo `updated_at` doesn't reliably change when PRs or releases change, so it
+isn't used. Every build re-fetches the API and re-renders the profile, each
+repo's root page, the log page and the releases, pulls and packages pages.
+File, folder, raw and commit pages are hard-linked from the previous build
+when the reuse key is unchanged. The key is HEAD plus the repo header data
+(description, website, topics, archived, default branch, latest tag), because
+every page shows that header. Keys live in memory, so a restart (which is
+also how config or template changes ship) re-renders everything.
+
+Builds are written to `site/.tmp-<ts>`, renamed to `site/<ts>`, and published
+by renaming a fresh `current.new` symlink over `current`. The newest and the
+previous build are kept, and anything else (including temp dirs left by a
+crash) is removed after each swap.
 
 ## Tailnet URLs never reach the page
 

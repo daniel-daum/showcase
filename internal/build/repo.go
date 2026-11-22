@@ -146,6 +146,9 @@ func (b *Builder) renderRepo(ctx context.Context, rd *render.Renderer, dir strin
 		return err
 	}
 
+	if b.reuse(r, dir, "tree", "blob", "raw") {
+		return nil
+	}
 	for _, e := range entries {
 		switch {
 		case e.Type == "tree":

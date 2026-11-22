@@ -36,6 +36,9 @@ func (b *Builder) renderLog(ctx context.Context, rd *render.Renderer, dir string
 		return err
 	}
 
+	if b.reuse(r, dir, "commit") {
+		return nil
+	}
 	listed := map[string]bool{}
 	for _, c := range p.Commits {
 		listed[c.Hash] = true

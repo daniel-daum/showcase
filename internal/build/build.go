@@ -23,6 +23,7 @@ type Builder struct {
 	Data  string // holds mirrors/ (and later site/)
 	Now   func() time.Time
 	Log   *slog.Logger
+	st    state
 }
 
 func New(cfg *config.Config, data string) *Builder {

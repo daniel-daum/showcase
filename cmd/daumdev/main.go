@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"daum.dev/showcase/internal/build"
 	"daum.dev/showcase/internal/config"
@@ -19,6 +20,7 @@ func main() {
 	once := flag.Bool("once", false, "render the site once into -out and exit")
 	out := flag.String("out", "", "output directory for -once (must not exist)")
 	data := flag.String("data", "/data", "data directory (git mirrors, site builds)")
+	every := flag.Duration("interval", 10*time.Minute, "time between builds")
 	flag.Parse()
 
 	cfg, err := config.Load(*cfgPath)
@@ -28,8 +30,11 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	b := build.New(cfg, *data)
 	if !*once {
-		fatal(errors.New("server mode is not implemented yet; use -once -out DIR"))
+		slog.Warn("server not implemented yet; only building", "site", b.Current())
+		b.Run(ctx, *every)
+		return
 	}
 	if *out == "" {
 		fatal(errors.New("-once needs -out"))
@@ -37,7 +42,7 @@ func main() {
 	if err := os.Mkdir(*out, 0o755); err != nil {
 		fatal(err)
 	}
-	if err := build.New(cfg, *data).Render(ctx, *out); err != nil {
+	if err := b.Render(ctx, *out); err != nil {
 		fatal(err)
 	}
 }

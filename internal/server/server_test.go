@@ -18,6 +18,7 @@ func testServer(t *testing.T, ready bool) *Server {
 	root := t.TempDir()
 	files := map[string]string{
 		"index.html":                  "home",
+		"repos/index.html":            "all repos",
 		"404.html":                    "<h1>not found</h1>",
 		"static/style.css":            "body{}",
 		"static/fonts/x.woff2":        "font",
@@ -59,6 +60,9 @@ func TestRoutes(t *testing.T) {
 		{"GET", "/", 200, "text/html", "home"},
 		{"HEAD", "/", 200, "text/html", ""},
 		{"GET", "/healthz", 200, "", "ok"},
+		{"GET", "/repos/", 200, "text/html", "all repos"},
+		{"GET", "/repos", 301, "", ""},
+		{"GET", "/repos/x", 404, "", ""},
 		{"GET", "/static/style.css", 200, "text/css", "body{}"},
 		{"GET", "/static/fonts/x.woff2", 200, "font/woff2", ""},
 		{"GET", "/repo-a/", 200, "text/html", "repo page"},

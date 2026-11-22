@@ -55,6 +55,7 @@ type Repo struct {
 	Topics        []string  `json:"topics"`
 	Language      string    `json:"language"`
 	UpdatedAt     time.Time `json:"updated_at"`
+	CreatedAt     time.Time `json:"created_at"`
 	Private       bool      `json:"private"`
 	Empty         bool      `json:"empty"`
 	Archived      bool      `json:"archived"`
@@ -75,12 +76,13 @@ type Release struct {
 }
 
 type PullRequest struct {
-	Number    int       `json:"number"`
-	Title     string    `json:"title"`
-	Body      string    `json:"body"`
-	State     string    `json:"state"`
-	Merged    bool      `json:"merged"`
-	CreatedAt time.Time `json:"created_at"`
+	Number    int        `json:"number"`
+	Title     string     `json:"title"`
+	Body      string     `json:"body"`
+	State     string     `json:"state"`
+	Merged    bool       `json:"merged"`
+	CreatedAt time.Time  `json:"created_at"`
+	MergedAt  *time.Time `json:"merged_at"`
 	User      struct {
 		Login string `json:"login"`
 	} `json:"user"`

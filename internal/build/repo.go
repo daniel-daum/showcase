@@ -32,6 +32,7 @@ type repo struct {
 	Releases []gitea.Release
 	Pulls    []gitea.PullRequest
 	Packages []gitea.Package
+	Images   []ImageView // allowlisted container images, from the registry
 
 	Owner, OwnerName, Avatar string // for the header and commit rows
 	Commits                  int
@@ -40,6 +41,8 @@ type repo struct {
 	Langs                    []Lang
 	License, LicenseHref     string
 	Listed                   map[string]bool // commits that have their own page
+	Recent                   []gitx.Commit   // the log page's commits, newest first
+	Year                     []gitx.Commit   // the last year's commits, for activity
 }
 
 // Lang is one segment of the language bar, X and W on a 0..1000 scale.
@@ -70,6 +73,18 @@ func (r *repo) CommitHref(hash string) string {
 		return ""
 	}
 	return "/" + r.Name + "/commit/" + hash + "/"
+}
+
+// PackageCount counts what the packages page lists: registry images plus
+// non-container packages from the API.
+func (r *repo) PackageCount() int {
+	n := len(r.Images)
+	for _, p := range r.Packages {
+		if p.Type != "container" {
+			n++
+		}
+	}
+	return n
 }
 
 // LatestTag is the newest non-prerelease tag, for the repo header.
@@ -109,9 +124,10 @@ type Doc struct {
 	HTML             template.HTML
 }
 
-// docKinds are the tabs next to the README, in tab order, found by file
-// stem (any case, extension "", .md, .markdown or .txt) in the repo root,
-// .github/ or docs/. License names match by prefix (LICENSE-MIT).
+// docKinds are the tabs next to the README, in tab order: GitHub's
+// community files plus the usual project documents. Each is found by file
+// stem (any case) in the repo root, .github/ or docs/, with no extension or
+// one in docExts. License names match by prefix (LICENSE-MIT).
 var docKinds = []struct {
 	key, label, icon string
 	stems            []string
@@ -119,9 +135,18 @@ var docKinds = []struct {
 	{"license", "License", "law", []string{"LICENSE", "LICENCE", "COPYING"}},
 	{"security", "Security", "shield", []string{"SECURITY"}},
 	{"contributing", "Contributing", "users", []string{"CONTRIBUTING"}},
-	{"conduct", "Code of conduct", "heart", []string{"CODE_OF_CONDUCT"}},
-	{"changelog", "Changelog", "history", []string{"CHANGELOG", "CHANGES"}},
+	{"conduct", "Code of conduct", "heart", []string{"CODE_OF_CONDUCT", "CODE-OF-CONDUCT"}},
+	{"support", "Support", "lifebuoy", []string{"SUPPORT"}},
+	{"governance", "Governance", "bank", []string{"GOVERNANCE"}},
+	{"funding", "Funding", "coins", []string{"FUNDING"}},
+	{"citation", "Citation", "quotes", []string{"CITATION"}},
+	{"authors", "Authors", "user", []string{"AUTHORS", "CONTRIBUTORS", "MAINTAINERS"}},
+	{"notice", "Notice", "info", []string{"NOTICE"}},
+	{"changelog", "Changelog", "history", []string{"CHANGELOG", "CHANGES", "HISTORY", "NEWS", "RELEASES"}},
 }
+
+// docExts: Markdown renders, the rest are shown as plain text.
+var docExts = []string{"", "MD", "MARKDOWN", "TXT", "RST", "ADOC", "YML", "YAML", "CFF", "BIB"}
 
 type BlobPage struct {
 	Repo          *repo
@@ -183,7 +208,7 @@ func (b *Builder) loadRepo(ctx context.Context, name string) (*repo, error) {
 		return nil, err
 	}
 	log, err := r.Git.Log(ctx, r.Head, b.Cfg.MaxCommits, "")
-	r.Listed = map[string]bool{}
+	r.Listed, r.Recent = map[string]bool{}, log
 	for _, c := range log {
 		r.Listed[c.Hash] = true
 	}
@@ -311,9 +336,7 @@ func (b *Builder) docs(ctx context.Context, r *repo, readme template.HTML, kids 
 
 func isDoc(name string, stems []string, prefix bool) bool {
 	stem, ext, _ := strings.Cut(strings.ToUpper(name), ".")
-	switch ext {
-	case "", "MD", "MARKDOWN", "TXT":
-	default:
+	if !slices.Contains(docExts, ext) {
 		return false
 	}
 	for _, s := range stems {

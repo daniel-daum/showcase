@@ -1878,6 +1878,166 @@ a.row-title:hover,
     max-width: 36rem;
 }
 
+/* container images: one box per image, one <details> per digest */
+.image-ref {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+}
+
+.image-count {
+    margin-left: auto;
+    color: var(--text-secondary);
+    font-weight: 400;
+    font-size: 0.8rem;
+}
+
+.image-pull {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--rule);
+}
+
+.image-pull .copyfield,
+.image-body .copyfield {
+    max-width: 44rem;
+}
+
+.image-version summary {
+    list-style: none;
+    cursor: pointer;
+}
+
+.image-version summary::-webkit-details-marker {
+    display: none;
+}
+
+.image-version summary .icon-chevron {
+    color: var(--text-secondary);
+    transition: transform 150ms ease;
+}
+
+.image-version[open] summary .icon-chevron {
+    transform: rotate(180deg);
+}
+
+.image-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    white-space: normal;
+}
+
+.image-body {
+    display: grid;
+    gap: 0.9rem;
+    padding: 0.25rem 1rem 1rem 3.1rem;
+}
+
+.digest {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-headings);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    overflow-wrap: anywhere;
+}
+
+.meta-list {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.35rem 1.25rem;
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.meta-list dt {
+    color: var(--text-secondary);
+}
+
+.meta-list dd {
+    margin: 0;
+    min-width: 0;
+    color: var(--body-text);
+    overflow-wrap: anywhere;
+}
+
+.meta-list a {
+    color: var(--text-headings);
+    border-bottom: 1px solid var(--accent-edge);
+}
+
+.meta-list a:hover {
+    color: var(--accent-bright);
+}
+
+.platforms {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.platforms li {
+    display: grid;
+    grid-template-columns: 9rem 1fr auto;
+    gap: 0.25rem 1rem;
+    align-items: baseline;
+    margin: 0;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-sm);
+    background: var(--box-head);
+    font-size: 0.85rem;
+}
+
+.plat-name {
+    color: var(--text-headings);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.plat-os {
+    color: var(--body-text);
+}
+
+.plat-size {
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.platforms .digest {
+    grid-column: 1 / -1;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 600px) {
+    .image-body {
+        padding-left: 1rem;
+    }
+
+    .meta-list {
+        grid-template-columns: 1fr;
+        gap: 0.1rem;
+    }
+
+    .meta-list dd + dt {
+        margin-top: 0.5rem;
+    }
+
+    .platforms li {
+        grid-template-columns: 1fr auto;
+    }
+
+    .plat-os {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+}
+
 /* site header */
 .site-header {
     padding-inline: 0;
@@ -1938,11 +2098,11 @@ a.row-title:hover,
     font-size: 9px;
 }
 
-.heatmap .h0, .heat-legend .h0 { fill: var(--hover); background: var(--hover); }
-.heatmap .h1, .heat-legend .h1 { fill: var(--heat-1); background: var(--heat-1); }
-.heatmap .h2, .heat-legend .h2 { fill: var(--heat-2); background: var(--heat-2); }
-.heatmap .h3, .heat-legend .h3 { fill: var(--heat-3); background: var(--heat-3); }
-.heatmap .h4, .heat-legend .h4 { fill: var(--accent); background: var(--accent); }
+.heatmap .h0, .weekly .h0, .heat-legend .h0 { fill: var(--hover); background: var(--hover); }
+.heatmap .h1, .weekly .h1, .heat-legend .h1 { fill: var(--heat-1); background: var(--heat-1); }
+.heatmap .h2, .weekly .h2, .heat-legend .h2 { fill: var(--heat-2); background: var(--heat-2); }
+.heatmap .h3, .weekly .h3, .heat-legend .h3 { fill: var(--heat-3); background: var(--heat-3); }
+.heatmap .h4, .weekly .h4, .heat-legend .h4 { fill: var(--accent); background: var(--accent); }
 
 .heat-legend {
     display: flex;
@@ -1958,6 +2118,357 @@ a.row-title:hover,
     width: 10px;
     height: 10px;
     border-radius: 2px;
+}
+
+/* activity: stats in the box head, weekly bars over the heatmap */
+.activity-stats {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin-left: auto;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+.activity-stats b {
+    color: var(--text-headings);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.streak {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.streak .icon {
+    color: var(--syn-constant);
+}
+
+.weekly-wrap {
+    margin-bottom: 1rem;
+}
+
+.weekly {
+    display: block;
+    width: 100%;
+    height: 44px;
+    border: 0;
+}
+
+.weekly-labels {
+    display: flex;
+    justify-content: space-between;
+    margin: 0.3rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+}
+
+/* sparklines: the accent line over a faint area */
+.spark {
+    display: block;
+    flex: none;
+    width: 96px;
+    height: 24px;
+    border: 0;
+    overflow: visible;
+}
+
+.spark-line {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.spark-area {
+    fill: color-mix(in oklab, var(--accent) 16%, transparent);
+}
+
+.spark--flat .spark-line {
+    stroke: var(--edge);
+}
+
+.spark--flat .spark-area {
+    fill: none;
+}
+
+/* featured repos: a head row with a link to the repos page */
+.section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.25rem 1rem;
+}
+
+.section-link {
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    transition: color 150ms ease;
+}
+
+.section-link:hover {
+    color: var(--accent-bright);
+}
+
+.page-title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin: 0 0 1.25rem;
+}
+
+.page-count {
+    color: var(--text-secondary);
+    font-family: var(--ui);
+    font-size: 1rem;
+}
+
+/* recently active: a small accent pill on the card, and an accent edge */
+.repo-card--active {
+    border-color: var(--accent-edge);
+}
+
+.pill-active {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.05rem 0.45rem 0.05rem 0.35rem;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--accent) 16%, var(--box));
+    color: var(--accent-bright);
+    font-size: 0.7rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.pill-active .icon {
+    width: 12px;
+    height: 12px;
+}
+
+.repo-card-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* activity feed: a compact text timeline, styled after saturn's comment
+   threads (meta line, body, small links, a rule for nested lines) */
+.feed {
+    margin-top: 2rem;
+    padding-top: 0.25rem;
+    border-top: 1px dashed var(--rule);
+}
+
+.timeline {
+    margin: 0.25rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tl-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 3rem 1.25rem minmax(0, 1fr);
+    grid-template-areas: "time who main";
+    gap: 0 0.7rem;
+    margin: 0;
+    padding: 0.2rem 0;
+}
+
+/* the thread line through the avatars */
+.tl-item:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    top: 1.75rem;
+    bottom: -0.2rem;
+    left: calc(3rem + 0.7rem + 0.625rem);
+    width: 1px;
+    background: var(--rule);
+}
+
+.tl-time {
+    grid-area: time;
+    padding-top: 0.1rem;
+    color: var(--text-secondary);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    white-space: nowrap;
+}
+
+.tl-who {
+    grid-area: who;
+    position: relative;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.tl-who .avatar-sm {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.tl-who .avatar-none .icon {
+    width: 10px;
+    height: 10px;
+}
+
+.tl-badge {
+    position: absolute;
+    right: -0.3rem;
+    bottom: -0.25rem;
+    display: grid;
+    place-items: center;
+    width: 0.85rem;
+    height: 0.85rem;
+    border: 1px solid var(--rule);
+    border-radius: 50%;
+    background: var(--page);
+    color: var(--text-secondary);
+}
+
+.tl-badge .icon {
+    width: 9px;
+    height: 9px;
+}
+
+.tl--merged .tl-badge { color: var(--syn-keyword); }
+.tl--opened .tl-badge { color: var(--add); }
+.tl--release .tl-badge { color: var(--syn-type); }
+.tl--created .tl-badge { color: var(--syn-function); }
+
+.tl-main {
+    grid-area: main;
+    min-width: 0;
+}
+
+.tl-text {
+    margin: 0;
+    color: var(--body-text);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.tl-actor {
+    color: var(--text-headings);
+    font-weight: 600;
+}
+
+.tl-text a {
+    color: var(--text-headings);
+    font-weight: 600;
+    transition: color 150ms ease;
+}
+
+.tl-text a.tl-title {
+    font-weight: 400;
+    border-bottom: 1px solid var(--rule);
+}
+
+.tl-text a:hover {
+    color: var(--accent-bright);
+}
+
+.tl-ref,
+.tl-text a.tl-ref {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-secondary);
+    font-family: var(--mono);
+    font-size: 0.85em;
+    font-weight: 400;
+}
+
+/* commit lines sit on a rule, like saturn's comment replies */
+.tl-commits {
+    display: grid;
+    margin: 0.1rem 0 0;
+    padding: 0 0 0 0.75rem;
+    border-left: 1px solid var(--rule);
+    list-style: none;
+}
+
+.tl-commits li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    min-width: 0;
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.tl-sha {
+    flex: none;
+    color: var(--syn-function);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+}
+
+a.tl-sha:hover {
+    color: var(--accent-bright);
+}
+
+.tl-subject {
+    overflow: hidden;
+    color: var(--text-secondary);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tl-commits .tl-foot {
+    gap: 0.6rem;
+    font-size: 0.72rem;
+}
+
+/* like saturn's .comment-author tag */
+.tl-chip {
+    padding: 0 0.4rem;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    color: var(--text-secondary);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+}
+
+/* like saturn's .comment-link */
+.tl-link {
+    color: var(--syn-function);
+    transition: color 150ms ease;
+}
+
+.tl-link:hover {
+    color: var(--accent-bright);
+}
+
+@media (max-width: 600px) {
+    .tl-item {
+        grid-template-columns: 1.25rem minmax(0, 1fr);
+        grid-template-areas: "who time" "who main";
+        gap: 0 0.6rem;
+    }
+
+    .tl-item:not(:last-child)::before {
+        left: 0.625rem;
+        top: 1.6rem;
+    }
+
+    .tl-time {
+        padding: 0;
+        font-size: 0.68rem;
+    }
+
+    .activity-stats {
+        margin-left: 0;
+        flex-basis: 100%;
+    }
 }
 
 /* repository cards */
@@ -2013,6 +2524,22 @@ a.row-title:hover,
 
 .repo-card-desc--none {
     color: var(--text-secondary);
+}
+
+.repo-card-foot {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.badge--release {
+    margin-left: auto;
+    color: var(--accent-bright);
+    border-color: var(--accent-edge);
+    font-family: var(--mono);
+    font-weight: 500;
 }
 
 .repo-card-meta {
@@ -2525,7 +3052,14 @@ a.ci:hover {
     .docs:has(.d2:checked) .p2,
     .docs:has(.d3:checked) .p3,
     .docs:has(.d4:checked) .p4,
-    .docs:has(.d5:checked) .p5 {
+    .docs:has(.d5:checked) .p5,
+    .docs:has(.d6:checked) .p6,
+    .docs:has(.d7:checked) .p7,
+    .docs:has(.d8:checked) .p8,
+    .docs:has(.d9:checked) .p9,
+    .docs:has(.d10:checked) .p10,
+    .docs:has(.d11:checked) .p11,
+    .docs:has(.d12:checked) .p12 {
         display: block;
     }
 }

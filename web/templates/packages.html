@@ -1,22 +1,77 @@
 {{define "content" -}}
 {{template "repohead" .}}
+{{- range $n, $img := .Images}}
+<section class="box image">
+  <h2 class="box-head">{{template "icon" "package"}}<span class="image-ref">{{.Ref}}</span><span class="badge">container</span>
+    {{- with .Versions}}<span class="image-count">{{len .}} version{{if ne (len .) 1}}s{{end}}</span>{{end}}</h2>
+  <div class="image-pull">{{template "copyfield" (dict "ID" (printf "img-%d" $n) "Value" .Pull "Label" "docker pull command")}}</div>
+  {{- if .Missing}}
+  <p class="box-note">Image details aren't available right now. The pull command still works.</p>
+  {{- end}}
+  {{- with .Versions}}
+  <ol class="rows">
+    {{- range $i, $v := .}}
+    <li>
+      <details class="image-version"{{if not $i}} open{{end}}>
+        <summary class="row">
+          <span class="pkg-icon">{{template "icon" "tag"}}</span>
+          <div class="row-main">
+            <span class="row-title image-tags">{{range .Tags}}<span class="chip chip--inline">{{.}}</span>{{end}}</span>
+            <span class="row-sub"><span class="sha">{{slice .Digest 7 19}}</span> · {{len .Platforms}} platform{{if ne (len .Platforms) 1}}s{{end}} · {{.Kind}}</span>
+          </div>
+          {{- if not .Created.IsZero}}
+          <time class="{{fresh .Created}}" datetime="{{.Created.Format "2006-01-02T15:04:05Z07:00"}}" title="{{.Created.Format "2006-01-02 15:04 MST"}}">{{ago .Created}}</time>
+          {{- end}}
+          {{template "icon" "chevron"}}
+        </summary>
+        <div class="image-body">
+          <dl class="meta-list">
+            <dt>Digest</dt><dd><code class="digest">{{.Digest}}</code></dd>
+            {{- if not .Created.IsZero}}<dt>Created</dt><dd><time datetime="{{.Created.Format "2006-01-02T15:04:05Z07:00"}}">{{.Created.Format "2006-01-02 15:04 MST"}}</time></dd>{{end}}
+            <dt>Type</dt><dd>{{.Kind}}</dd>
+            {{- range .Meta}}
+            <dt>{{.Key}}</dt><dd>{{if .Href}}<a href="{{.Href}}">{{.Value}}</a>{{else}}{{.Value}}{{end}}</dd>
+            {{- end}}
+          </dl>
+          {{template "copyfield" (dict "ID" (printf "img-%d-%d" $n $i) "Value" .Pull "Label" "docker pull by digest")}}
+          <ul class="platforms" aria-label="platforms">
+            {{- range .Platforms}}
+            <li>
+              <span class="plat-name">{{.Name}}</span>
+              <span class="plat-os">{{or .Distro "No os-release (scratch or distroless)"}}</span>
+              <span class="plat-size">{{size .Size}} · {{.Layers}} layer{{if ne .Layers 1}}s{{end}}</span>
+              <code class="digest">{{.Digest}}</code>
+            </li>
+            {{- end}}
+          </ul>
+        </div>
+      </details>
+    </li>
+    {{- end}}
+  </ol>
+  {{- end}}
+  {{- with .More}}
+  <p class="box-note">{{.}} older version{{if ne . 1}}s{{end}} not shown.</p>
+  {{- end}}
+</section>
+{{- end}}
 {{- if .Packages}}
 <section class="box">
-  <h2 class="box-head">{{template "icon" "package"}}{{len .Packages}} package{{if ne (len .Packages) 1}}s{{end}}</h2>
+  <h2 class="box-head">{{template "icon" "package"}}{{if .Images}}Other packages{{else}}{{len .Packages}} package{{if ne (len .Packages) 1}}s{{end}}{{end}}</h2>
   <ol class="rows">
-    {{- range $i, $p := .Packages}}
+    {{- range .Packages}}
     <li class="row package">
       <span class="pkg-icon">{{template "icon" "package"}}</span>
       <div class="row-main">
         <span class="row-title">{{.Name}}</span>
         <span class="row-sub"><span class="badge">{{.Type}}</span> {{.Version}}</span>
-        {{- with .Command}}{{template "copyfield" (dict "ID" (printf "pkg-%d" $i) "Value" . "Label" "install command")}}{{end}}
       </div>
     </li>
     {{- end}}
   </ol>
 </section>
-{{- else}}
+{{- end}}
+{{- if and (not .Images) (not .Packages)}}
 <p class="empty">No packages.</p>
 {{- end}}
 {{- end}}

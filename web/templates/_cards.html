@@ -1,0 +1,16 @@
+{{/* repocard: one repo in the profile's featured grid and on the repos page */}}
+{{define "repocard" -}}
+<a class="repo-card{{if .Active}} repo-card--active{{end}}" href="/{{.Name}}/">
+  <span class="repo-card-name">{{template "icon" "book"}}<span class="repo-card-title">{{.Name}}</span>
+    {{- if .Active}}<span class="pill-active" title="commits in the last week">{{template "icon" "pulse"}}active</span>{{end}}
+    {{- with .Release}}<span class="badge badge--release">{{.}}</span>{{end}}</span>
+  {{if .Description}}<span class="repo-card-desc">{{.Description}}</span>{{else}}<span class="repo-card-desc repo-card-desc--none">No description.</span>{{end}}
+  <span class="repo-card-foot">
+    <span class="repo-card-meta">
+      {{- with .Language}}<span><span class="dot {{lang .}}" aria-hidden="true"></span>{{.}}</span>{{end}}
+      <span>Updated <time class="{{fresh .UpdatedAt}}" datetime="{{.UpdatedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{ago .UpdatedAt}}</time></span>
+    </span>
+    {{.Spark}}
+  </span>
+</a>
+{{- end}}

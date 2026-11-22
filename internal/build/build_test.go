@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"flag"
+	"fmt"
 	"image"
 	"image/png"
 	"io"
@@ -62,12 +63,23 @@ func fixtureRepos(t *testing.T) string {
 	run(t, work, "", "init", "-q", "-b", "main")
 	run(t, work, "", "add", "-A", ":!CHANGELOG.md")
 	run(t, work, "2026-06-01T10:00:00Z", "commit", "-q", "--no-gpg-sign", "-m", "Initial commit")
+	// a few months of small commits, so the activity views have a shape
+	start := time.Date(2026, 6, 8, 9, 0, 0, 0, time.UTC)
+	subjects := []string{"Tidy the guide", "Document the flags", "Fix a typo in the notes", "Add a section on deploys", "Explain the image tags"}
+	var notes strings.Builder
+	for i, day := range []int{0, 1, 9, 23, 30, 31, 58, 59, 61, 86, 100, 114, 115, 116, 128, 135, 142, 149, 156, 156, 156, 156, 157, 158, 160} {
+		fmt.Fprintf(&notes, "- note %d\n", i+1)
+		os.WriteFile(filepath.Join(work, "docs/notes.md"), []byte("# Notes\n\n"+notes.String()), 0o644)
+		run(t, work, "", "add", "docs/notes.md")
+		when := start.AddDate(0, 0, day).Add(time.Duration(i) * 7 * time.Minute)
+		run(t, work, when.Format(time.RFC3339), "commit", "-q", "--no-gpg-sign", "-m", subjects[i%len(subjects)])
+	}
 	os.WriteFile(filepath.Join(work, "CHANGELOG.md"), []byte("# Changes\n"), 0o644)
 	os.WriteFile(filepath.Join(work, "cmd/hello/main.go"), []byte("package main\n\nimport \"fmt\"\n\nfunc main() { fmt.Println(\"hello, world\") }\n"), 0o644)
 	os.WriteFile(filepath.Join(work, "data.bin"), []byte("bin\x00ary2"), 0o644)
 	run(t, work, "", "add", "-A")
 	run(t, work, "2026-11-19T08:30:00Z", "commit", "-q", "--no-gpg-sign", "-m", "Add changelog", "-m", "With a body.")
-	run(t, work, "", "tag", "v0.1.0", "HEAD~1")
+	run(t, work, "", "tag", "v0.1.0", "HEAD~26")
 	run(t, work, "2026-11-19T09:00:00Z", "tag", "-a", "-m", "v0.2.0", "v0.2.0")
 	run(t, work, "", "branch", "feature/flag")
 	run(t, root, "", "clone", "-q", "--bare", work, "daniel/repo-a.git")
@@ -80,17 +92,28 @@ func fixtureRepos(t *testing.T) string {
 // credentials.
 func fakeGitea(t *testing.T) *httptest.Server {
 	t.Helper()
+	root := fixtureRepos(t)
+	rev, err := exec.Command("git", "--git-dir", filepath.Join(root, "daniel/repo-a.git"), "rev-parse", "main").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	registry := fakeRegistry(strings.TrimSpace(string(rev)))
 	gitBackend := &cgi.Handler{
 		Path: "git",
 		Args: []string{"http-backend"},
-		Env:  append([]string{"GIT_PROJECT_ROOT=" + fixtureRepos(t), "GIT_HTTP_EXPORT_ALL=1"}, gitEnv...),
+		Env:  append([]string{"GIT_PROJECT_ROOT=" + root, "GIT_HTTP_EXPORT_ALL=1"}, gitEnv...),
 	}
 	if p, err := exec.LookPath("git"); err == nil {
 		gitBackend.Path = p
 	}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Authorization") != "" || r.Header.Get("Cookie") != "" {
+		// the registry's own anonymous pull token is the one allowed header
+		if a := r.Header.Get("Authorization"); a != "" && !(strings.HasPrefix(r.URL.Path, "/v2/") && a == "Bearer "+anonToken) || r.Header.Get("Cookie") != "" {
 			t.Errorf("request to %s carried credentials", r.URL)
+		}
+		if strings.HasPrefix(r.URL.Path, "/v2/") {
+			registry(w, r)
+			return
 		}
 		if needToken[r.URL.Path] {
 			http.Error(w, `{"message":"token is required"}`, http.StatusUnauthorized)
@@ -190,7 +213,7 @@ func TestSiteGolden(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, rel := range []string{
-		"index.html", "repo-a/index.html", "repo-b/index.html",
+		"index.html", "repos/index.html", "repo-a/index.html", "repo-b/index.html",
 		"repo-a/tree/docs/index.html", "repo-a/tree/cmd/hello/index.html",
 		"repo-a/blob/cmd/hello/main.go.html", "repo-a/blob/README.md.html",
 		"repo-a/blob/docs/logo.png.html", "repo-a/blob/data.bin.html", "repo-a/blob/big.txt.html",
@@ -202,15 +225,16 @@ func TestSiteGolden(t *testing.T) {
 		checkGolden(t, dir, rel)
 	}
 	commits, _ := filepath.Glob(filepath.Join(dir, "repo-a/commit/*/index.html"))
-	if len(commits) != 2 {
-		t.Fatalf("want 2 commit pages, got %d", len(commits))
+	if len(commits) != 27 {
+		t.Fatalf("want 27 commit pages, got %d", len(commits))
 	}
 	for _, c := range commits {
 		b, _ := os.ReadFile(c)
-		if bytes.Contains(b, []byte(">Add changelog</h2>")) {
+		switch {
+		case bytes.Contains(b, []byte(">Add changelog</h2>")):
 			os.Rename(c, filepath.Join(dir, "repo-a/commit-latest.html")) // hash-free golden name
 			checkGolden(t, dir, "repo-a/commit-latest.html")
-		} else if !bytes.Contains(b, []byte("Diff truncated")) { // initial commit has 40k lines of big.txt
+		case bytes.Contains(b, []byte(">Initial commit</h2>")) && !bytes.Contains(b, []byte("Diff truncated")): // 40k lines of big.txt
 			t.Error("initial commit page: big.txt diff should be truncated")
 		}
 	}
@@ -240,8 +264,9 @@ func TestPackagesNeedToken(t *testing.T) {
 	if err := testBuilder(t).Render(context.Background(), dir); err != nil {
 		t.Fatalf("build failed when the packages API wants a token: %v", err)
 	}
+	// images still come from the registry; API-only packages (npm) are gone
 	b, _ := os.ReadFile(filepath.Join(dir, "repo-a/packages/index.html"))
-	if !bytes.Contains(b, []byte("No packages")) {
-		t.Error("packages page should be empty")
+	if !bytes.Contains(b, []byte("daum.dev/daniel/repo-a")) || bytes.Contains(b, []byte("@daniel/repo-a")) {
+		t.Error("packages page should list the registry image and nothing from the API")
 	}
 }

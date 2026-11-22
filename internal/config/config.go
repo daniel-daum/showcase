@@ -14,14 +14,17 @@ import (
 )
 
 type Config struct {
-	GiteaURL   string            `json:"gitea_url"`
-	User       string            `json:"user"`
-	SiteURL    string            `json:"site_url"`
-	Links      map[string]string `json:"links"`
-	Repos      []string          `json:"repos"`
-	Images     []string          `json:"images"`
-	MaxCommits int               `json:"max_commits"`
-	Theme      string            `json:"theme"` // saturn palette, default moss
+	GiteaURL string            `json:"gitea_url"`
+	User     string            `json:"user"`
+	SiteURL  string            `json:"site_url"`
+	Links    map[string]string `json:"links"`
+	Repos    []string          `json:"repos"`
+	Images   []string          `json:"images"`
+	// Featured repos for the profile, in order (up to 6). Empty means the
+	// most recently updated ones.
+	Featured   []string `json:"featured"`
+	MaxCommits int      `json:"max_commits"`
+	Theme      string   `json:"theme"` // saturn palette, default moss
 	// Proxies (IPs or CIDRs) whose X-Forwarded-For is believed, for logs only.
 	TrustedProxies []string `json:"trusted_proxies"`
 }
@@ -30,7 +33,7 @@ var (
 	nameRe  = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
 	imageRe = regexp.MustCompile(`^[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*$`)
 	// Top-level names the site or router uses for itself.
-	reserved = []string{"static", "v2", "healthz", "api", "user", "index.html", "404.html"}
+	reserved = []string{"static", "v2", "healthz", "api", "user", "repos", "index.html", "404.html"}
 	themes   = []string{"moss", "ink", "wine", "plum", "teal", "flexoki"}
 )
 
@@ -70,6 +73,11 @@ func (c *Config) validate() error {
 			return fmt.Errorf("bad or duplicate repo name %q", r)
 		}
 		seen[l] = true
+	}
+	for _, f := range c.Featured {
+		if !c.HasRepo(f) {
+			return fmt.Errorf("featured repo %q is not in repos", f)
+		}
 	}
 	for _, im := range c.Images {
 		if !imageRe.MatchString(im) {

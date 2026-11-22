@@ -190,16 +190,21 @@ func (r Repo) LastChanges(ctx context.Context, rev string) (map[string]Commit, e
 	return last, nil
 }
 
-// CommitDays counts commits reachable from rev per UTC day since since.
-func (r Repo) CommitDays(ctx context.Context, rev string, since time.Time, into map[string]int) error {
-	out, err := r.run(ctx, "log", "--format=%at", "--since="+since.UTC().Format(time.RFC3339), "--end-of-options", rev)
+// CommitsSince returns the commits on rev since a time, newest first, with
+// hash, author, time (UTC) and subject only.
+func (r Repo) CommitsSince(ctx context.Context, rev string, since time.Time) ([]Commit, error) {
+	out, err := r.run(ctx, "log", "--format=%H%x1f%an%x1f%at%x1f%s%x1e", "--since="+since.UTC().Format(time.RFC3339), "--end-of-options", rev)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	for _, line := range strings.Fields(string(out)) {
-		if at, err := strconv.ParseInt(line, 10, 64); err == nil {
-			into[time.Unix(at, 0).UTC().Format("2006-01-02")]++
+	var cs []Commit
+	for _, rec := range strings.Split(string(out), "\x1e") {
+		f := strings.Split(strings.TrimLeft(rec, "\n"), "\x1f")
+		if len(f) != 4 {
+			continue
 		}
+		at, _ := strconv.ParseInt(f[2], 10, 64)
+		cs = append(cs, Commit{Hash: f[0], Author: f[1], When: time.Unix(at, 0).UTC(), Subject: f[3]})
 	}
-	return nil
+	return cs, nil
 }

@@ -14,7 +14,7 @@
     {{- with $r.Website}}<li>{{template "icon" "link"}}<a href="{{.}}">{{trimScheme .}}</a></li>{{end}}
     {{- with $r.License}}<li>{{template "icon" "law"}}<a href="{{$r.LicenseHref}}">{{.}}</a></li>{{end}}
     {{- with $r.LatestTag}}<li>{{template "icon" "tag"}}<a href="{{$base}}/releases/#{{.}}">{{.}}</a><span class="badge badge--latest">latest</span></li>{{end}}
-    {{- with $r.Packages}}<li>{{template "icon" "package"}}<a href="{{$base}}/packages/">{{len .}} package{{if gt (len .) 1}}s{{end}}</a></li>{{end}}
+    {{- with $r.PackageCount}}<li>{{template "icon" "package"}}<a href="{{$base}}/packages/">{{.}} package{{if gt . 1}}s{{end}}</a></li>{{end}}
   </ul>
 </header>
 <nav class="tabs" aria-label="repository">
@@ -23,7 +23,7 @@
   <a href="{{$base}}/log/"{{if eq $tab "log"}} aria-current="page"{{end}}>{{template "icon" "commit"}}Commits{{with $r.Commits}}<span class="count">{{.}}</span>{{end}}</a>
   <a href="{{$base}}/releases/"{{if eq $tab "releases"}} aria-current="page"{{end}}>{{template "icon" "tag"}}Releases{{with $r.Releases}}<span class="count">{{len .}}</span>{{end}}</a>
   <a href="{{$base}}/pulls/"{{if eq $tab "pulls"}} aria-current="page"{{end}}>{{template "icon" "pull"}}Pulls{{with $r.Pulls}}<span class="count">{{len .}}</span>{{end}}</a>
-  <a href="{{$base}}/packages/"{{if eq $tab "packages"}} aria-current="page"{{end}}>{{template "icon" "package"}}Packages{{with $r.Packages}}<span class="count">{{len .}}</span>{{end}}</a>
+  <a href="{{$base}}/packages/"{{if eq $tab "packages"}} aria-current="page"{{end}}>{{template "icon" "package"}}Packages{{with $r.PackageCount}}<span class="count">{{.}}</span>{{end}}</a>
 </nav>
 {{- end}}
 

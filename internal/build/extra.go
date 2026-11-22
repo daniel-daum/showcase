@@ -1,9 +1,9 @@
 package build
 
 import (
+	"context"
 	"html/template"
 	"net/url"
-	"strings"
 
 	"daum.dev/showcase/internal/gitea"
 	"daum.dev/showcase/internal/gitx"
@@ -23,7 +23,6 @@ type PullView struct {
 
 type PackageView struct {
 	gitea.Package
-	Command string // only for images the registry proxy serves
 }
 
 type ExtraPage struct {
@@ -31,13 +30,15 @@ type ExtraPage struct {
 	Tab      string
 	Releases []ReleaseView
 	Pulls    []PullView
-	Packages []PackageView
-	Kind     string // "branches" or "tags" on the refs pages
+	Packages []PackageView // other package types, from the API
+	Images   []ImageView   // container images, from the registry
+	Kind     string        // "branches" or "tags" on the refs pages
 	Refs     []gitx.Ref
 }
 
-// renderExtras writes the releases, pulls and packages pages from API data.
-func (b *Builder) renderExtras(rd *render.Renderer, dir string, r *repo) error {
+// renderExtras writes the releases, pulls and packages pages from API and
+// registry data.
+func (b *Builder) renderExtras(ctx context.Context, rd *render.Renderer, dir string, r *repo) error {
 	base := "/" + r.Name
 	rel := ExtraPage{Repo: r, Tab: "releases"}
 	for _, x := range r.Releases {
@@ -61,19 +62,12 @@ func (b *Builder) renderExtras(rd *render.Renderer, dir string, r *repo) error {
 		pulls.Pulls = append(pulls.Pulls, PullView{x, body})
 	}
 
-	pkgs := ExtraPage{Repo: r, Tab: "packages"}
+	pkgs := ExtraPage{Repo: r, Tab: "packages", Images: r.Images}
 	for _, x := range r.Packages {
-		if strings.HasPrefix(x.Version, "sha256:") {
-			continue // untagged image manifests
-		}
-		v := PackageView{Package: x}
 		if x.Type == "container" {
-			if !b.Cfg.HasImage(x.Name) {
-				continue // not pullable through the proxy, so don't advertise it
-			}
-			v.Command = "docker pull " + siteHost(b.Cfg.SiteURL) + "/" + b.Cfg.User + "/" + x.Name + ":" + x.Version
+			continue // images come from the registry, and only allowlisted ones
 		}
-		pkgs.Packages = append(pkgs.Packages, v)
+		pkgs.Packages = append(pkgs.Packages, PackageView{Package: x})
 	}
 
 	for _, p := range []ExtraPage{rel, pulls, pkgs} {

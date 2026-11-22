@@ -109,6 +109,10 @@ func (s *Server) route(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case p == "/":
 		s.file(w, r, "index.html", "text/html; charset=utf-8")
+	case p == "/repos/": // every repo; the profile shows the featured ones
+		s.file(w, r, "repos/index.html", "text/html; charset=utf-8")
+	case p == "/repos":
+		http.Redirect(w, r, "/repos/", http.StatusMovedPermanently)
 	case first == "static" && rest != "":
 		s.file(w, r, p, staticType(p))
 	case !s.Cfg.HasRepo(first):

@@ -1,0 +1,8 @@
+{{define "content" -}}
+<h1 class="page-title">Repositories <span class="page-count">{{len .Repos}}</span></h1>
+<div class="repo-grid">
+  {{- range .Repos}}
+  {{template "repocard" .}}
+  {{- end}}
+</div>
+{{- end}}

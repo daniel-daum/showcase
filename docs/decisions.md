@@ -328,12 +328,16 @@ plum, teal and flexoki get the same steps as moss.
 ### Extra: document tabs in the README box
 
 - On the repo root, the README box gets a tab bar when the repo has more than
-  the README: README, License (named when recognised, such as "MIT
-  license"), Security, Contributing, Code of conduct and Changelog, in that
-  order, and only those the repo has. Each is the first file matching the
-  stem (`SECURITY`, `CONTRIBUTING`, `CODE_OF_CONDUCT`, `CHANGELOG`/`CHANGES`,
-  and `LICENSE`/`LICENCE`/`COPYING` by prefix) with no extension or `.md`,
-  `.markdown` or `.txt`, in the root, then `.github/`, then `docs/`. Files
+  the README. In tab order: README, License (named when recognised, such as
+  "MIT license"), Security, Contributing, Code of conduct, Support,
+  Governance, Funding, Citation, Authors (also `CONTRIBUTORS`,
+  `MAINTAINERS`), Notice and Changelog (also `CHANGES`, `HISTORY`, `NEWS`,
+  `RELEASES`). Only the ones the repo has are shown. Each is the first file
+  matching the stem, in any case (`LICENSE`/`LICENCE`/`COPYING` by prefix),
+  with no extension or one of md, markdown, txt, rst, adoc, yml, yaml, cff
+  or bib, in the root, then `.github/`, then `docs/`. The table is
+  `docKinds` in `internal/build/repo.go`, and the CSS has panel rules for up
+  to 13 tabs. Files
   over 512 KB are skipped. Markdown renders like the README, with relative
   links resolved from the file's own folder. Plain text, such as most
   LICENSE files, is a wrapping monospace block. Folder pages keep their
@@ -345,6 +349,100 @@ plum, teal and flexoki get the same steps as moss.
   (arrow keys) and a focus ring for free. The CSP is unchanged.
 - Known limits: heading anchors inside a hidden tab don't scroll there, and
   two documents may produce the same heading id.
-- New UI icons: `shield` (shield-check), `users` and `heart`.
-- The repo-a fixture gains `SECURITY.md`, `CONTRIBUTING.md` and
-  `.github/CODE_OF_CONDUCT.md`, so the goldens cover all six tabs.
+- New UI icons: `shield` (shield-check), `users`, `heart`, `lifebuoy`,
+  `bank`, `coins`, `quotes` and `info`.
+- The repo-a fixture gains `SECURITY.md`, `CONTRIBUTING.md`,
+  `.github/CODE_OF_CONDUCT.md` and `.github/FUNDING.yml` (plain text).
+
+### Extra: container images read from the registry
+
+- Gitea 28's packages API wants a token, so anonymously the packages page
+  was empty. Container images now come from Gitea's registry itself, which
+  serves public images anonymously: `/v2/` answers with a bearer challenge,
+  and `/v2/token` hands out a pull token without credentials. That token can
+  only do what any `docker pull` can, so the builder stays anonymous (rule
+  1). The token is requested from the configured `gitea_url`, never from the
+  challenge's realm, kept in memory and never rendered. The test fake Gitea
+  allows exactly that one `Authorization` header.
+- **Which images:** allowlisted images (`images` in config) named like the
+  repo, plus container packages the API links to the repo, when the API
+  answers. Images outside `images` never appear. Other package types (npm
+  and so on) still come from the API, listed under "Other packages".
+- **What's shown:** per image, the `docker pull` of the newest tag. Then up
+  to 8 versions, newest first, one per distinct manifest digest, with every
+  tag that points at it (the first 30 tags are read). Each version is a
+  `<details>`, and the newest is open. It shows the full digest, a
+  pull-by-digest command, the created time, the manifest type, and each
+  platform (attestation manifests skipped) with its full digest, compressed
+  size, layer count and distro.
+- **Distro:** read from `etc/os-release` (or `usr/lib/os-release`, which is
+  where Alpine's symlink points) in the first three layers. Only gzip or
+  plain tar layers up to 64 MB are read, and the stream stops as soon as the
+  file is found. Otherwise the page says "No os-release (scratch or
+  distroless)".
+- **Metadata:** OCI labels for version, revision (linked to its commit page
+  when it has one), base image, licenses, authors, vendor, description,
+  source, URL and documentation, plus entrypoint, command, ports and user.
+  The environment is never even parsed, since it can hold secrets. Gitea's
+  hosts are private: the configured host and the challenge realm's host,
+  which is `ROOT_URL` and may be a tailnet name. A source or URL on those
+  hosts that points at an allowlisted repo becomes a link to its page here.
+  Any other value naming them, or a `.ts.net` name, is dropped. Only https
+  URLs are linked.
+- **Integrity and cost:** manifests fetched by digest and config blobs must
+  hash to their digest. Per-platform results are cached in memory by digest,
+  since they're content-addressed, so a rebuild only refetches the tag list
+  and the tag manifests.
+- **Failure:** registry trouble never fails the build. The image is still
+  listed with its pull command and a note that details aren't available.
+  This differs from the API rule, because a stale packages page is worse
+  than a short one.
+
+### Phase 4: activity on the profile page
+
+All of it is server-side HTML and SVG, built from data the build already
+has: the last year's commits from the mirrors of the allowlisted repos, plus
+releases, pulls and repo metadata from API calls already made. The one new
+field read is the repo's `created_at` (and `merged_at` on pulls), from the
+same responses. No new endpoints are called. Only repos in `config.json`
+are in the data, so nothing else can appear.
+
+- **Weekly bars** sit in the heatmap box, above the heatmap: 52 weeks, with
+  the same Sunday columns and colour steps (`h0`–`h4`) as the heatmap.
+  Empty weeks keep a 2px baseline. The box head shows "active in N of the
+  last 52 weeks" and the current streak: consecutive weeks with commits,
+  ending this week, or last week while this week is still empty.
+- **Layout (revised after review):** activity graph at the top, then the
+  featured repos, then the activity feed. The separate "Recently active"
+  row is gone.
+- **Featured repos:** up to six cards in the middle, from `featured` in
+  config (in order, each must be in `repos`), or the six most recently
+  updated. "All N repositories →" links to `/repos/`, a new top-level page
+  that lists every allowlisted repo. The server has one extra route for it,
+  and `repos` is now a reserved repo name. A repo with a commit in the last
+  week gets an accent "active" pill and an accent edge. Cards also carry
+  the 12-week sparkline and the latest release tag.
+- **Activity feed:** a text timeline, modelled on Tangled's and styled
+  after the comment threads on danieldaum.net: no boxes, a dashed rule
+  above, and a time column (UTC) that shows the time for today's events and
+  the date ("Nov 19") otherwise, with the full time on hover. Day headers
+  were tried and dropped to keep it short. Each event has an avatar (yours for your own events, a person icon
+  for others) with a small badge icon, a one-line sentence, and nested
+  lines on a 1px left rule, like saturn's comment replies. The feed covers
+  the last 90 days, at most 6 events, in a compact type size (shortened twice after review):
+  - "pushed N commits to `main` on repo": git doesn't record pushes, so
+    commits are grouped per repo, author and day. Each shows the newest
+    two as short hash (linked when it has a page) plus subject, then a
+    "+N more" chip and "Commits →" to the log.
+  - "created repository X", "published release `vX` on repo", and
+    "opened" or "merged pull <title> on repo", one line each.
+  The year's commits come from one `git log` pass per repo (hash, author,
+  time, subject), which also feeds the heatmap and the bars. On phones the
+  time moves above the sentence.
+- **Counting rules match the heatmap's:** every commit on the default
+  branch counts, whoever authored it, because the anonymous API hides
+  emails. Pushes are approximated by commits, since Gitea's activity feed
+  isn't used: it would need a new endpoint and covers private repos.
+- The repo-a fixture gains 25 dated commits across five months (on
+  `docs/notes.md`, four of them on one day), repo `created_at` dates, and a
+  merged pull (#5), so the goldens and `just demo` show a real shape.

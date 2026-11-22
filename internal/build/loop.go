@@ -20,6 +20,9 @@ type state struct {
 	prev string            // last good build dir, "" before the first
 	keys map[string]string // repo -> reuse key of the last good build
 	next map[string]string // keys of the build in progress
+	// images caches container image details by manifest digest; they are
+	// content-addressed, so they never go stale (see images.go)
+	images map[string]ImagePlatform
 }
 
 func (b *Builder) siteDir() string { return filepath.Join(b.Data, "site") }
@@ -111,7 +114,7 @@ func (b *Builder) prune(keep ...string) {
 func (b *Builder) reuse(r *repo, dir string, dirs ...string) bool {
 	// everything the shared repo header and tabs show
 	h, _ := json.Marshal([]any{r.Head, r.Description, r.Website, r.Topics, r.Archived, r.DefaultBranch, r.LatestTag(),
-		len(r.Branches), len(r.Tags), len(r.Releases), len(r.Pulls), len(r.Packages), r.License, r.Avatar})
+		len(r.Branches), len(r.Tags), len(r.Releases), len(r.Pulls), r.PackageCount(), r.License, r.Avatar})
 	key := fmt.Sprintf("%x", sha256.Sum256(h))
 	if b.st.next == nil { // -once mode: no previous build
 		return false

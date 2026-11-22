@@ -43,7 +43,13 @@ type Profile struct {
 	Avatar  string
 	Heatmap template.HTML
 	Total   int
-	Repos   []*gitea.Repo
+	Repos   []RepoCard // all, newest update first: the repos page
+
+	// activity (activity.go)
+	Weekly              template.HTML // one bar per week of the last year
+	ActiveWeeks, Streak int
+	Featured            []RepoCard // config's featured repos, or the newest six
+	Feed                []FeedItem // newest first
 }
 
 // Render writes a complete site into dir, which must be empty.
@@ -84,13 +90,15 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 			return fmt.Errorf("%s: %w", name, err)
 		}
 		if r.Head != "" {
-			if err := r.Git.CommitDays(ctx, r.Head, since, days); err != nil {
+			if r.Year, err = r.Git.CommitsSince(ctx, r.Head, since); err != nil {
 				return fmt.Errorf("%s: %w", name, err)
+			}
+			for _, c := range r.Year {
+				days[c.When.Format("2006-01-02")]++
 			}
 		}
 		r.Owner, r.OwnerName, r.Avatar = user.Login, user.FullName, p.Avatar
 		repos = append(repos, r)
-		p.Repos = append(p.Repos, r.Repo)
 	}
 	pkgs, err := b.Gitea.Packages(ctx, b.Cfg.Repos)
 	if errors.Is(err, gitea.ErrNotFound) { // Gitea 28 wants a token for this API
@@ -105,7 +113,10 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 			}
 		}
 	}
-	slices.SortStableFunc(p.Repos, func(a, c *gitea.Repo) int { return c.UpdatedAt.Compare(a.UpdatedAt) })
+	for _, r := range repos {
+		r.Images = b.images(ctx, r)
+	}
+	b.activity(&p, repos, user.Login)
 
 	p.Heatmap, p.Total = render.Heatmap(days, b.Now())
 	title := user.FullName
@@ -114,6 +125,9 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 	}
 	if err := rd.Write(dir, "index.html", "profile", render.Page{Title: title, D: p}); err != nil {
 		return fmt.Errorf("profile: %w", err)
+	}
+	if err := rd.Write(dir, "repos/index.html", "repos", render.Page{Title: "Repositories · " + title, D: p}); err != nil {
+		return fmt.Errorf("repos page: %w", err)
 	}
 	if err := rd.Write(dir, "404.html", "notfound", render.Page{Title: "not found"}); err != nil {
 		return err
@@ -125,7 +139,7 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 		if err := b.renderLog(ctx, rd, dir, rp); err != nil {
 			return fmt.Errorf("%s log: %w", rp.Name, err)
 		}
-		if err := b.renderExtras(rd, dir, rp); err != nil {
+		if err := b.renderExtras(ctx, rd, dir, rp); err != nil {
 			return fmt.Errorf("%s: %w", rp.Name, err)
 		}
 	}

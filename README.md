@@ -35,11 +35,16 @@ just run         # build from real Gitea every 10 min and serve on localhost:800
     "links": { "website": "https://danieldaum.net" },
     "repos": ["repo-a", "repo-b"],
     "images": ["repo-a"],
+    "featured": ["repo-a"],
     "max_commits": 50,
     "theme": "moss",
     "trusted_proxies": ["100.64.0.10"]
 }
 ```
+
+`featured` (optional) picks up to six repos for the profile, in order.
+Without it, the six most recently updated are shown. Every repo is listed
+at `/repos/`.
 
 ## Deploy
 

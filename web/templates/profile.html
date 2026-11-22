@@ -9,24 +9,62 @@
 </header>
 
 <section class="box heat">
-  <h2 class="box-head">{{template "icon" "commit"}}{{.Total}} commits in the last year</h2>
+  <h2 class="box-head">{{template "icon" "pulse"}}{{.Total}} commits in the last year
+    <span class="activity-stats">
+      <span>active in <b>{{.ActiveWeeks}}</b> of the last 52 weeks</span>
+      {{- if .Streak}}<span class="streak">{{template "icon" "fire"}}<b>{{.Streak}}</b>-week streak</span>{{end}}
+    </span>
+  </h2>
   <div class="heat-body">
+    <div class="weekly-wrap">
+      {{.Weekly}}
+      <p class="weekly-labels" aria-hidden="true"><span>a year ago</span><span>this week</span></p>
+    </div>
     {{.Heatmap}}
     <p class="heat-legend" aria-hidden="true">less <i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h3"></i><i class="h4"></i> more</p>
   </div>
 </section>
 
-<h2 class="section-title">Repositories</h2>
+<div class="section-head">
+  <h2 class="section-title">Repositories</h2>
+  <a class="section-link" href="/repos/">All {{len .Repos}} repositories &rarr;</a>
+</div>
 <div class="repo-grid">
-  {{- range .Repos}}
-  <a class="repo-card" href="/{{.Name}}/">
-    <span class="repo-card-name">{{template "icon" "book"}}{{.Name}}</span>
-    {{if .Description}}<span class="repo-card-desc">{{.Description}}</span>{{else}}<span class="repo-card-desc repo-card-desc--none">No description.</span>{{end}}
-    <span class="repo-card-meta">
-      {{- with .Language}}<span><span class="dot {{lang .}}" aria-hidden="true"></span>{{.}}</span>{{end}}
-      <span>Updated <time class="{{fresh .UpdatedAt}}" datetime="{{.UpdatedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{ago .UpdatedAt}}</time></span>
-    </span>
-  </a>
+  {{- range .Featured}}
+  {{template "repocard" .}}
   {{- end}}
 </div>
+
+{{- with .Feed}}
+<section class="feed" aria-labelledby="feed-title">
+  <h2 class="section-title" id="feed-title">Activity</h2>
+  <ol class="timeline">
+    {{- range .}}
+    <li class="tl-item tl--{{.Kind}}">
+      <time class="tl-time" datetime="{{.When.Format "2006-01-02T15:04:05Z07:00"}}" title="{{.When.Format "2006-01-02 15:04 MST"}}">{{.Stamp}}</time>
+      <span class="tl-who">
+        {{- if and .Own $.Avatar}}<img class="avatar-sm" src="{{$.Avatar}}" alt="" width="24" height="24">{{else}}<span class="avatar-sm avatar-none">{{template "icon" "user"}}</span>{{end}}
+        <span class="tl-badge">{{if eq .Kind "push"}}{{template "icon" "commit"}}{{else if eq .Kind "created"}}{{template "icon" "repo-new"}}{{else if eq .Kind "release"}}{{template "icon" "tag"}}{{else if eq .Kind "merged"}}{{template "icon" "merge"}}{{else}}{{template "icon" "pull"}}{{end}}</span>
+      </span>
+      <div class="tl-main">
+        <p class="tl-text"><b class="tl-actor">{{.Actor}}</b>
+          {{- if eq .Kind "push"}} pushed {{.Count}} commit{{if ne .Count 1}}s{{end}} to <code class="tl-ref">{{.Branch}}</code> on <a class="tl-repo" href="/{{.Repo}}/">{{.Repo}}</a>
+          {{- else if eq .Kind "created"}} created repository <a class="tl-repo" href="{{.Href}}">{{.Repo}}</a>
+          {{- else if eq .Kind "release"}} published {{if .Pre}}pre-release{{else}}release{{end}} <a class="tl-ref" href="{{.Href}}">{{.Label}}</a> on <a class="tl-repo" href="/{{.Repo}}/">{{.Repo}}</a>
+          {{- else}} {{if eq .Kind "merged"}}merged{{else}}opened{{end}} pull <a class="tl-title" href="{{.Href}}">{{or .Title .Label}}</a> on <a class="tl-repo" href="/{{.Repo}}/">{{.Repo}}</a>
+          {{- end}}</p>
+        {{- if .Commits}}
+        <ul class="tl-commits">
+          {{- range .Commits}}
+          <li>{{if .Href}}<a class="tl-sha" href="{{.Href}}">{{.Short}}</a>{{else}}<span class="tl-sha">{{.Short}}</span>{{end}}<span class="tl-subject">{{.Subject}}</span></li>
+          {{- end}}
+          <li class="tl-foot">{{with .More}}<span class="tl-chip">+{{.}} more</span>{{end}}<a class="tl-link" href="{{.Href}}">Commits &rarr;</a></li>
+        </ul>
+        {{- end}}
+      </div>
+    </li>
+    {{- end}}
+  </ol>
+</section>
+{{- end}}
 {{- end}}

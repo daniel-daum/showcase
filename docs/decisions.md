@@ -324,3 +324,27 @@ plum, teal and flexoki get the same steps as moss.
   a page uses an icon its sprite lacks.
 - UI icons are filled paths now, so `.icon` uses `fill: currentColor` and
   the stroke rules are gone. CI pending is `dot-outline`.
+
+### Extra: document tabs in the README box
+
+- On the repo root, the README box gets a tab bar when the repo has more than
+  the README: README, License (named when recognised, such as "MIT
+  license"), Security, Contributing, Code of conduct and Changelog, in that
+  order, and only those the repo has. Each is the first file matching the
+  stem (`SECURITY`, `CONTRIBUTING`, `CODE_OF_CONDUCT`, `CHANGELOG`/`CHANGES`,
+  and `LICENSE`/`LICENCE`/`COPYING` by prefix) with no extension or `.md`,
+  `.markdown` or `.txt`, in the root, then `.github/`, then `docs/`. Files
+  over 512 KB are skipped. Markdown renders like the README, with relative
+  links resolved from the file's own folder. Plain text, such as most
+  LICENSE files, is a wrapping monospace block. Folder pages keep their
+  single README box.
+- **No JS:** the tabs are radio inputs (visually hidden) with labels. CSS
+  shows the panel whose radio is checked, using `:has()` inside
+  `@supports selector(:has(a))`. Without `:has` only the first document
+  shows, which is the old README box. Radios also give keyboard switching
+  (arrow keys) and a focus ring for free. The CSP is unchanged.
+- Known limits: heading anchors inside a hidden tab don't scroll there, and
+  two documents may produce the same heading id.
+- New UI icons: `shield` (shield-check), `users` and `heart`.
+- The repo-a fixture gains `SECURITY.md`, `CONTRIBUTING.md` and
+  `.github/CODE_OF_CONDUCT.md`, so the goldens cover all six tabs.

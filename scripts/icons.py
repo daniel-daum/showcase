@@ -26,13 +26,16 @@ UI = {
     "copy": "copy",
     "dot": "dot-outline",
     "download": "download-simple",
+    "heart": "heart",
     "history": "clock-counter-clockwise",
     "law": "scales",
     "link": "link-simple",
     "package": "package",
     "pull": "git-pull-request",
+    "shield": "shield-check",
     "tag": "tag",
     "user": "user",
+    "users": "users",
     "x": "x",
 }
 

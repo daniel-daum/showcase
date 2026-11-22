@@ -65,11 +65,25 @@
 </table>
 {{- end}}
 
-{{define "readme" -}}
+{{/* docs: the README box. More than one document gets tabs, which are
+     radio inputs: CSS shows the checked one's panel, no js. */}}
+{{define "docs" -}}
 {{with .}}
-<article class="box">
-  <h2 class="box-head">{{template "icon" "book"}}README</h2>
-  <div class="readme markdown">{{.}}</div>
+<article class="box docs">
+  {{- if eq (len .) 1}}{{with index . 0}}
+  <h2 class="box-head">{{template "icon" .Icon}}{{.Label}}</h2>
+  {{- end}}{{else}}
+  <h2 class="sr-only">Documents</h2>
+  <div class="box-head doc-tabs" role="radiogroup" aria-label="documents">
+    {{- range $i, $d := .}}
+    <input class="sr-only d{{$i}}" type="radio" name="doc" id="doc-{{.Key}}"{{if not $i}} checked{{end}}>
+    <label for="doc-{{.Key}}">{{template "icon" .Icon}}{{.Label}}</label>
+    {{- end}}
+  </div>
+  {{- end}}
+  {{- range $i, $d := .}}
+  <div class="readme markdown doc p{{$i}}">{{.HTML}}</div>
+  {{- end}}
 </article>
 {{- end}}
 {{- end}}

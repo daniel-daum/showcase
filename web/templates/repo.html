@@ -39,5 +39,5 @@
   {{template "copyfield" (dict "ID" "clone-https" "Value" (printf "git clone %s" .CloneURL) "Label" "clone command")}}
 </section>
 {{- end}}
-{{template "readme" .Readme}}
+{{template "docs" .Docs}}
 {{- end}}

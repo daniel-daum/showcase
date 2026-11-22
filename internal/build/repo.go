@@ -100,7 +100,27 @@ type RepoPage struct {
 	Latest   *gitx.Commit
 	Crumbs   []Crumb // tree pages only
 	Rows     []Row
-	Readme   template.HTML
+	Docs     []Doc // README first; the repo root adds license, security and so on
+}
+
+// Doc is one tab of the README box.
+type Doc struct {
+	Key, Label, Icon string
+	HTML             template.HTML
+}
+
+// docKinds are the tabs next to the README, in tab order, found by file
+// stem (any case, extension "", .md, .markdown or .txt) in the repo root,
+// .github/ or docs/. License names match by prefix (LICENSE-MIT).
+var docKinds = []struct {
+	key, label, icon string
+	stems            []string
+}{
+	{"license", "License", "law", []string{"LICENSE", "LICENCE", "COPYING"}},
+	{"security", "Security", "shield", []string{"SECURITY"}},
+	{"contributing", "Contributing", "users", []string{"CONTRIBUTING"}},
+	{"conduct", "Code of conduct", "heart", []string{"CODE_OF_CONDUCT"}},
+	{"changelog", "Changelog", "history", []string{"CHANGELOG", "CHANGES"}},
 }
 
 type BlobPage struct {
@@ -203,7 +223,8 @@ func (b *Builder) renderRepo(ctx context.Context, rd *render.Renderer, dir strin
 	}
 
 	// root
-	if p.Rows, p.Readme, err = b.listing(ctx, r, "", kids[""], last); err != nil {
+	var readme template.HTML
+	if p.Rows, readme, err = b.listing(ctx, r, "", kids[""], last); err != nil {
 		return err
 	}
 	for _, e := range kids[""] {
@@ -220,6 +241,9 @@ func (b *Builder) renderRepo(ctx context.Context, rd *render.Renderer, dir strin
 			r.License, r.LicenseHref = licenseName(src), "/"+r.Name+"/blob/"+render.EscapePath(e.Name)
 		}
 	}
+	if p.Docs, err = b.docs(ctx, r, readme, kids); err != nil {
+		return err
+	}
 	if err := rd.Write(dir, r.Name+"/index.html", "repo", page); err != nil {
 		return err
 	}
@@ -231,8 +255,12 @@ func (b *Builder) renderRepo(ctx context.Context, rd *render.Renderer, dir strin
 		switch {
 		case e.Type == "tree":
 			tp := RepoPage{Repo: r, Tab: "code", Crumbs: crumbs(r.Name, e.Name)}
-			if tp.Rows, tp.Readme, err = b.listing(ctx, r, e.Name, kids[e.Name], last); err != nil {
+			var readme template.HTML
+			if tp.Rows, readme, err = b.listing(ctx, r, e.Name, kids[e.Name], last); err != nil {
 				return err
+			}
+			if readme != "" {
+				tp.Docs = []Doc{{"readme", "README", "book", readme}}
 			}
 			rel := r.Name + "/tree/" + e.Name + "/index.html"
 			if err := rd.Write(dir, rel, "dir", render.Page{Title: e.Name + " · " + r.Name, Wide: true, D: &tp}); err != nil {
@@ -245,6 +273,55 @@ func (b *Builder) renderRepo(ctx context.Context, rd *render.Renderer, dir strin
 		}
 	}
 	return nil
+}
+
+// docs collects the README tabs for the repo root: the README, then the
+// first match of each docKinds entry, looking in the root, .github/ and docs/.
+func (b *Builder) docs(ctx context.Context, r *repo, readme template.HTML, kids map[string][]gitx.Entry) ([]Doc, error) {
+	var out []Doc
+	if readme != "" {
+		out = append(out, Doc{"readme", "README", "book", readme})
+	}
+	for _, k := range docKinds {
+	search:
+		for _, dir := range []string{"", ".github", "docs"} {
+			for _, e := range kids[dir] {
+				if e.Type != "blob" || e.Size > maxRender || !isDoc(path.Base(e.Name), k.stems, k.key == "license") {
+					continue
+				}
+				src, err := r.Git.Blob(ctx, e.Hash)
+				if err != nil {
+					return nil, err
+				}
+				h, err := readmeHTML(path.Base(e.Name), src, "/"+r.Name, dir)
+				if err != nil {
+					return nil, err
+				}
+				label := k.label
+				if k.key == "license" && r.License != "" && r.License != "license" {
+					label = r.License + " license"
+				}
+				out = append(out, Doc{k.key, label, k.icon, h})
+				break search
+			}
+		}
+	}
+	return out, nil
+}
+
+func isDoc(name string, stems []string, prefix bool) bool {
+	stem, ext, _ := strings.Cut(strings.ToUpper(name), ".")
+	switch ext {
+	case "", "MD", "MARKDOWN", "TXT":
+	default:
+		return false
+	}
+	for _, s := range stems {
+		if stem == s || prefix && strings.HasPrefix(stem, s) {
+			return true
+		}
+	}
+	return false
 }
 
 // listing builds the rows and README for one directory.

@@ -1,0 +1,28 @@
+{{define "content" -}}
+{{template "repohead" .}}
+{{- $r := .Repo}}{{$kind := .Kind}}
+<section class="box">
+  <h2 class="box-head">{{if eq $kind "tags"}}{{template "icon" "tag"}}{{else}}{{template "icon" "branch"}}{{end}}{{len .Refs}} {{if eq (len .Refs) 1}}{{slice $kind 0 (len $kind | dec)}}{{else}}{{$kind}}{{end}}</h2>
+  {{- if .Refs}}
+  <ol class="rows">
+    {{- range .Refs}}{{$href := $r.CommitHref .Hash}}
+    <li class="row">
+      <span class="pkg-icon">{{if eq $kind "tags"}}{{template "icon" "tag"}}{{else}}{{template "icon" "branch"}}{{end}}</span>
+      <div class="row-main">
+        <span class="row-title">
+          {{- if and (eq $kind "branches") (eq .Name $r.DefaultBranch)}}<a href="/{{$r.Name}}/">{{.Name}}</a><span class="badge">default</span>
+          {{- else if and (eq $kind "tags") ($r.Release .Name)}}<a href="/{{$r.Name}}/releases/#{{.Name}}">{{.Name}}</a>
+          {{- else}}{{.Name}}{{end}}</span>
+        <span class="row-sub">{{if $href}}<a href="{{$href}}">{{.Subject}}</a>{{else}}{{.Subject}}{{end}}</span>
+      </div>
+      <time class="{{fresh .When}}" datetime="{{.When.Format "2006-01-02T15:04:05Z07:00"}}">{{ago .When}}</time>
+      {{if $href}}<a class="sha" href="{{$href}}">{{slice .Hash 0 7}}</a>{{else}}<span class="sha">{{slice .Hash 0 7}}</span>{{end}}
+    </li>
+    {{- end}}
+  </ol>
+  {{- else}}
+  <p class="box-note">None yet.</p>
+  {{- end}}
+</section>
+{{- if eq $kind "branches"}}<p class="hint">Only the default branch is browsable here. Clone the repository for the others.</p>{{end}}
+{{- end}}

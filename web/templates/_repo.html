@@ -1,54 +1,82 @@
 {{define "repohead" -}}
-<header class="page-header">
-  <h1>{{.Repo.Name}}</h1>
-  {{- with .Repo.Description}}<p>{{.}}</p>{{end}}
-  {{- with .Repo.Website}}<p><a href="{{.}}">{{.}}</a></p>{{end}}
-  {{- if or .Repo.Topics .Repo.Archived .Repo.LatestTag}}
-  <div class="pills">
-    {{- with .Repo.LatestTag}}<a class="pill pill--release" href="/{{$.Repo.Name}}/releases/">{{.}}</a>{{end}}
-    {{- if .Repo.Archived}}<span class="pill">archived</span>{{end}}
-    {{- range .Repo.Topics}}<span class="pill">{{.}}</span>{{end}}
-  </div>
+{{- $r := .Repo}}{{$base := printf "/%s" $r.Name}}
+<header class="repo-head">
+  <h1 class="repo-title">
+    {{- with $r.Avatar}}<img class="avatar-sm" src="{{.}}" alt="" width="24" height="24">{{end}}
+    <a class="repo-owner" href="/">{{$r.Owner}}</a><span class="repo-slash" aria-hidden="true">/</span><a class="repo-name" href="{{$base}}/">{{$r.Name}}</a>
+    {{- if $r.Archived}}<span class="pill">archived</span>{{end}}
+  </h1>
+  {{- with $r.Description}}<p class="repo-desc">{{.}}</p>{{end}}
+  {{- with $r.Topics}}
+  <div class="pills topics">{{range .}}<span class="pill">{{.}}</span>{{end}}</div>
   {{- end}}
+  <ul class="repo-meta">
+    {{- with $r.Website}}<li>{{template "icon" "link"}}<a href="{{.}}">{{trimScheme .}}</a></li>{{end}}
+    {{- with $r.License}}<li>{{template "icon" "law"}}<a href="{{$r.LicenseHref}}">{{.}}</a></li>{{end}}
+    {{- with $r.LatestTag}}<li>{{template "icon" "tag"}}<a href="{{$base}}/releases/#{{.}}">{{.}}</a><span class="badge badge--latest">latest</span></li>{{end}}
+    {{- with $r.Packages}}<li>{{template "icon" "package"}}<a href="{{$base}}/packages/">{{len .}} package{{if gt (len .) 1}}s{{end}}</a></li>{{end}}
+  </ul>
 </header>
 <nav class="tabs" aria-label="repository">
-  {{- $tab := .Tab}}{{$base := printf "/%s" .Repo.Name}}
-  <a href="{{$base}}/"{{if eq $tab "code"}} aria-current="page"{{end}}>code</a>
-  <a href="{{$base}}/log/"{{if eq $tab "log"}} aria-current="page"{{end}}>commits</a>
-  <a href="{{$base}}/releases/"{{if eq $tab "releases"}} aria-current="page"{{end}}>releases</a>
-  <a href="{{$base}}/pulls/"{{if eq $tab "pulls"}} aria-current="page"{{end}}>pulls</a>
-  <a href="{{$base}}/packages/"{{if eq $tab "packages"}} aria-current="page"{{end}}>packages</a>
+  {{- $tab := .Tab}}
+  <a href="{{$base}}/"{{if eq $tab "code"}} aria-current="page"{{end}}>{{template "icon" "code"}}Code</a>
+  <a href="{{$base}}/log/"{{if eq $tab "log"}} aria-current="page"{{end}}>{{template "icon" "commit"}}Commits{{with $r.Commits}}<span class="count">{{.}}</span>{{end}}</a>
+  <a href="{{$base}}/releases/"{{if eq $tab "releases"}} aria-current="page"{{end}}>{{template "icon" "tag"}}Releases{{with $r.Releases}}<span class="count">{{len .}}</span>{{end}}</a>
+  <a href="{{$base}}/pulls/"{{if eq $tab "pulls"}} aria-current="page"{{end}}>{{template "icon" "pull"}}Pulls{{with $r.Pulls}}<span class="count">{{len .}}</span>{{end}}</a>
+  <a href="{{$base}}/packages/"{{if eq $tab "packages"}} aria-current="page"{{end}}>{{template "icon" "package"}}Packages{{with $r.Packages}}<span class="count">{{len .}}</span>{{end}}</a>
 </nav>
 {{- end}}
 
-{{define "latest" -}}
-{{- $repo := .Repo.Name}}{{with .Latest}}
-<div class="commit-log commit-log--inline">
-  <div class="commit-log-head">
-    <span>latest commit · {{.Author}}</span>
-    <a href="/{{$repo}}/log/">history</a>
-  </div>
-  <ol class="commit-log-list">
-    <li class="commit-log-row">
-      <a class="commit-log-hash" href="/{{$repo}}/commit/{{.Hash}}/">{{.Short}}</a>
-      <span class="commit-log-msg">{{.Subject}}</span>
-      <time class="commit-log-date" datetime="{{.When.Format "2006-01-02T15:04:05Z07:00"}}">{{ago .When}}</time>
-    </li>
-  </ol>
+{{/* who: the owner's avatar for their own commits, a person icon otherwise */}}
+{{define "who" -}}
+{{if .R.IsOwner .Name}}{{with .R.Avatar}}<img class="avatar-xs" src="{{.}}" alt="" width="20" height="20">{{end}}{{else}}<span class="avatar-xs avatar-none">{{template "icon" "user"}}</span>{{end}}
+{{- end}}
+
+{{define "ci" -}}
+{{with .S}}<a class="ci ci--{{.State}}" href="{{$.Href}}#checks" title="checks: {{.State}}">{{if eq .State "success"}}{{template "icon" "check"}}{{else if or (eq .State "failure") (eq .State "error")}}{{template "icon" "x"}}{{else}}{{template "icon" "dot"}}{{end}}<span>{{.Passed}}/{{.TotalCount}}</span></a>{{end}}
+{{- end}}
+
+{{define "commitrow" -}}
+{{- $r := .Repo}}{{with .Latest}}{{$href := printf "/%s/commit/%s/" $r.Name .Hash}}
+<div class="box-commit">
+  {{template "who" (dict "R" $r "Name" .Author)}}
+  <span class="commit-author">{{.Author}}</span>
+  <a class="commit-msg" href="{{$href}}">{{.Subject}}</a>
+  {{template "ci" (dict "S" $r.Status "Href" $href)}}
+  <a class="sha" href="{{$href}}">{{slice .Hash 0 7}}</a>
+  <time class="{{fresh .When}}" datetime="{{.When.Format "2006-01-02T15:04:05Z07:00"}}" title="{{.When.Format "2006-01-02 15:04 MST"}}">{{ago .When}}</time>
 </div>
 {{- end}}
 {{- end}}
 
-{{define "tree" -}}
-<table class="table tree">
+{{define "files" -}}
+<table class="files">
   <tbody>
   {{- range .}}
-  <tr class="table-row">
-    <td>{{if .Href}}<a class="table-title" href="{{.Href}}">{{.Base}}{{if eq .Type "tree"}}<span class="tree-dir">/</span>{{end}}</a>{{else}}<span class="table-title">{{.Base}}</span>{{end}}</td>
-    <td class="table-desc">{{.Last.Subject}}</td>
-    <td class="table-date">{{ago .Last.When}}</td>
+  <tr>
+    <td class="f-name"><img class="ficon" src="{{ficon .Base .Type}}" alt="" width="16" height="16">
+      {{- if .Href}}<a href="{{.Href}}">{{.Base}}</a>{{else}}<span>{{.Base}}</span>{{end}}</td>
+    <td class="f-msg">{{if .CommitHref}}<a href="{{.CommitHref}}">{{.Last.Subject}}</a>{{else}}<span>{{.Last.Subject}}</span>{{end}}</td>
+    <td class="f-size">{{if eq .Type "blob"}}{{size .Size}}{{end}}</td>
+    <td class="f-age"><time class="{{fresh .Last.When}}" datetime="{{.Last.When.Format "2006-01-02T15:04:05Z07:00"}}">{{ago .Last.When}}</time></td>
   </tr>
   {{- end}}
   </tbody>
 </table>
+{{- end}}
+
+{{define "readme" -}}
+{{with .}}
+<article class="box">
+  <h2 class="box-head">{{template "icon" "book"}}README</h2>
+  <div class="readme markdown">{{.}}</div>
+</article>
+{{- end}}
+{{- end}}
+
+{{define "copyfield" -}}
+<div class="copyfield">
+  <input id="{{.ID}}" readonly value="{{.Value}}" aria-label="{{.Label}}">
+  <button class="copy" type="button" data-copy="{{.ID}}" hidden title="copy">{{template "icon" "copy"}}{{template "icon" "check"}}<span class="sr-only">copy</span></button>
+</div>
 {{- end}}

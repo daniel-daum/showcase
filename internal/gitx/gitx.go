@@ -126,6 +126,42 @@ func (r Repo) Log(ctx context.Context, rev string, n int, path string) ([]Commit
 	return cs, nil
 }
 
+// CommitCount is the number of commits reachable from rev.
+func (r Repo) CommitCount(ctx context.Context, rev string) (int, error) {
+	out, err := r.run(ctx, "rev-list", "--count", "--end-of-options", rev)
+	if err != nil {
+		return 0, err
+	}
+	return strconv.Atoi(strings.TrimSpace(string(out)))
+}
+
+// Ref is a branch or tag and the commit it points at.
+type Ref struct {
+	Name, Hash, Subject string
+	When                time.Time
+}
+
+// Refs lists "heads" or "tags", newest first. Annotated tags resolve to
+// their commit.
+func (r Repo) Refs(ctx context.Context, kind string) ([]Ref, error) {
+	out, err := r.run(ctx, "for-each-ref", "--sort=-creatordate",
+		"--format=%(refname:lstrip=2)%1f%(if)%(*objectname)%(then)%(*objectname)%(else)%(objectname)%(end)%1f%(creatordate:unix)%1f%(contents:subject)%1e",
+		"refs/"+kind)
+	if err != nil {
+		return nil, err
+	}
+	var refs []Ref
+	for _, rec := range strings.Split(string(out), "\x1e") {
+		f := strings.Split(strings.TrimSpace(rec), "\x1f")
+		if len(f) != 4 {
+			continue
+		}
+		at, _ := strconv.ParseInt(f[2], 10, 64)
+		refs = append(refs, Ref{Name: f[0], Hash: f[1], When: time.Unix(at, 0).UTC(), Subject: f[3]})
+	}
+	return refs, nil
+}
+
 // LastChanges maps every path (files and directories) to the newest commit
 // reachable from rev that touched it, in one pass over history.
 func (r Repo) LastChanges(ctx context.Context, rev string) (map[string]Commit, error) {

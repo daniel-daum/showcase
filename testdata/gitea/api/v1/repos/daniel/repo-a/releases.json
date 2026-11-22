@@ -13,13 +13,34 @@
     "id": 2,
     "tag_name": "v0.2.0",
     "name": "Second release",
-    "body": "Fixes `hello`. See [the guide](docs/guide.md).\n\n<script>alert(1)</script>",
+    "body": "Fixes `hello`. See [the guide](docs/guide.md).\n\n### Changes\n\n- greet the world, not just hello\n- smaller image\n\n<script>alert(1)</script>",
     "draft": false,
     "prerelease": false,
     "published_at": "2026-10-01T10:00:00Z",
     "assets": [
-      {"id": 7, "name": "hello_linux_amd64.tar.gz", "size": 1048576, "browser_download_url": "http://gitea.tailnet.example:3000/daniel/repo-a/releases/download/v0.2.0/hello_linux_amd64.tar.gz"}
+      {
+        "id": 7,
+        "name": "hello_linux_amd64.tar.gz",
+        "size": 1048576,
+        "browser_download_url": "http://gitea.tailnet.example:3000/daniel/repo-a/releases/download/v0.2.0/hello_linux_amd64.tar.gz"
+      },
+      {
+        "id": 8,
+        "name": "hello_darwin_arm64.tar.gz",
+        "size": 980000,
+        "browser_download_url": "http://gitea.tailnet.example:3000/x"
+      }
     ]
+  },
+  {
+    "id": 4,
+    "tag_name": "v0.1.0",
+    "name": "First release",
+    "body": "The first one.",
+    "draft": false,
+    "prerelease": false,
+    "published_at": "2026-06-02T10:00:00Z",
+    "assets": []
   },
   {
     "id": 1,

@@ -1,25 +1,26 @@
 {{define "content" -}}
 {{template "repohead" .}}
+{{- $r := .Repo}}
 {{- if .Releases}}
-<ol class="version-list">
-  {{- range .Releases}}
-  <li id="{{.TagName}}">
-    <p class="version-meta">
-      <span class="version-date">{{day .PublishedAt}}</span>
-      <span>{{.TagName}}</span>
-      {{- if .Prerelease}}<span class="pill">pre-release</span>{{end}}
-    </p>
-    <h3>{{or .Name .TagName}}</h3>
-    {{- with .Notes}}<div class="release-notes">{{.}}</div>{{end}}
-    {{- with .Assets}}
-    <ul class="release-assets">
-      {{- range .}}<li><a href="{{.Href}}">{{.Name}}</a></li>{{end}}
-    </ul>
-    {{- end}}
-  </li>
+{{- range $i, $rel := .Releases}}
+<article class="box release" id="{{.TagName}}">
+  <div class="box-head release-head">
+    {{template "icon" "tag"}}<a class="release-tag" href="#{{.TagName}}">{{.TagName}}</a>
+    {{- if .Prerelease}}<span class="badge badge--pre">pre-release</span>{{else if eq .TagName $r.LatestTag}}<span class="badge badge--latest">latest</span>{{end}}
+    <time class="release-date" datetime="{{.PublishedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{day .PublishedAt}}</time>
+  </div>
+  <div class="release-body">
+    <h2 class="release-title">{{or .Name .TagName}}</h2>
+    {{- with .Notes}}<div class="markdown">{{.}}</div>{{end}}
+  </div>
+  {{- with .Assets}}
+  <ul class="assets">
+    {{- range .}}<li>{{template "icon" "package"}}<a href="{{.Href}}">{{.Name}}</a>{{template "icon" "download"}}</li>{{end}}
+  </ul>
   {{- end}}
-</ol>
+</article>
+{{- end}}
 {{- else}}
-<p class="empty">no releases yet.</p>
+<p class="empty">No releases yet.</p>
 {{- end}}
 {{- end}}

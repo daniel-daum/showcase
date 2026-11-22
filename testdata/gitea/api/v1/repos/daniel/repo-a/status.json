@@ -1,0 +1,21 @@
+{
+  "state": "success",
+  "total_count": 3,
+  "statuses": [
+    {
+      "status": "success",
+      "context": "ci / test",
+      "description": "42 tests passed"
+    },
+    {
+      "status": "success",
+      "context": "ci / lint",
+      "description": "no issues"
+    },
+    {
+      "status": "success",
+      "context": "ci / image",
+      "description": "built repo-a:main"
+    }
+  ]
+}

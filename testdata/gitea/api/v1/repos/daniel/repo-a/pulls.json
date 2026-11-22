@@ -1,12 +1,36 @@
 [
   {
+    "number": 4,
+    "title": "Add a /healthz endpoint",
+    "body": "Adds a health check.\n\n- [x] handler\n- [ ] docs",
+    "state": "open",
+    "merged": false,
+    "created_at": "2026-11-21T09:00:00Z",
+    "user": {
+      "login": "daniel"
+    }
+  },
+  {
     "number": 2,
     "title": "Add a flag",
     "body": "Adds `-v`.\n\n![shot](http://tracker.example/pixel.gif)",
     "state": "open",
     "merged": false,
     "created_at": "2026-11-18T10:00:00Z",
-    "user": {"login": "friend"}
+    "user": {
+      "login": "friend"
+    }
+  },
+  {
+    "number": 3,
+    "title": "Try a different greeting",
+    "body": "Didn't pan out.",
+    "state": "closed",
+    "merged": false,
+    "created_at": "2026-09-10T10:00:00Z",
+    "user": {
+      "login": "friend"
+    }
   },
   {
     "number": 1,
@@ -15,6 +39,8 @@
     "state": "closed",
     "merged": true,
     "created_at": "2026-07-01T10:00:00Z",
-    "user": {"login": "daniel"}
+    "user": {
+      "login": "daniel"
+    }
   }
 ]

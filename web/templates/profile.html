@@ -1,27 +1,31 @@
 {{define "content" -}}
-<header class="page-header page-header--home profile">
-  {{- with .Avatar}}<img class="avatar" src="{{.}}" alt="" width="96" height="96">{{end}}
-  <div>
+<header class="profile">
+  {{- with .Avatar}}<img class="avatar-lg" src="{{.}}" alt="" width="88" height="88">{{end}}
+  <div class="profile-text">
     <h1>{{or .User.FullName .User.Login}}</h1>
-    <p class="meta meta-split">
-      <span>{{.User.Login}}</span>
-      {{- with .User.Location}}<span class="meta-sep" aria-hidden="true">·</span><span>{{.}}</span>{{end}}
-    </p>
-    {{- with .User.Description}}<p>{{.}}</p>{{end}}
+    <p class="profile-handle">{{.User.Login}}{{with .User.Location}} · {{.}}{{end}}</p>
+    {{- with .User.Description}}<p class="profile-bio">{{.}}</p>{{end}}
   </div>
 </header>
 
-<h2 class="section-label">{{.Total}} commits in the last year</h2>
-<div class="heatmap-wrap">{{.Heatmap}}</div>
+<section class="box heat">
+  <h2 class="box-head">{{template "icon" "commit"}}{{.Total}} commits in the last year</h2>
+  <div class="heat-body">
+    {{.Heatmap}}
+    <p class="heat-legend" aria-hidden="true">less <i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h3"></i><i class="h4"></i> more</p>
+  </div>
+</section>
 
-<h2 class="section-label">repositories</h2>
-<div class="card-grid">
+<h2 class="section-title">Repositories</h2>
+<div class="repo-grid">
   {{- range .Repos}}
-  <a class="card" href="/{{.Name}}/">
-    <span class="card-title">{{.Name}}</span>
-    {{- with .Description}}<span class="card-desc">{{.}}</span>{{end}}
-    <span class="card-type">
-      {{- with .Language}}<span class="dot {{lang .}}" aria-hidden="true"></span>{{.}} · {{end}}updated {{ago .UpdatedAt}}</span>
+  <a class="repo-card" href="/{{.Name}}/">
+    <span class="repo-card-name">{{template "icon" "book"}}{{.Name}}</span>
+    <span class="repo-card-desc">{{or .Description "No description."}}</span>
+    <span class="repo-card-meta">
+      {{- with .Language}}<span><span class="dot {{lang .}}" aria-hidden="true"></span>{{.}}</span>{{end}}
+      <span>Updated <time class="{{fresh .UpdatedAt}}" datetime="{{.UpdatedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{ago .UpdatedAt}}</time></span>
+    </span>
   </a>
   {{- end}}
 </div>

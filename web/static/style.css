@@ -1410,12 +1410,421 @@ footer nav a,
 }
 
 /*============================*/
-/* part 2: daum.dev only. built from the saturn tokens above. */
+/* part 2: daum.dev only.
+   saturn's tokens and palettes, with a type and component system for a code
+   browser: Geist for reading, Geist Mono for code and hashes, Geist Pixel
+   for headings and the brand. Sentence case, few capitals. */
 /*============================*/
 
-/* code, diffs and trees need more room than 78ch */
+@font-face {
+    font-family: "Geist";
+    src: url("./fonts/geist/Geist-Variable.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    --ui: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --pixel: "Geist Pixel", ui-monospace, monospace;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --box: color-mix(in oklab, var(--background-dark) 55%, var(--surface));
+    --hover: color-mix(in oklab, var(--surface) 80%, var(--background-dark));
+    --line: color-mix(in oklab, var(--borders) 75%, var(--text-secondary) 25%);
+    --add: var(--syn-string);
+    --del: var(--syn-variable);
+}
+
+body {
+    font-family: var(--ui);
+    font-size: 15px;
+    line-height: 1.55;
+}
+
 body.page--code {
-    max-width: min(72rem, 94vw);
+    max-width: min(68rem, 94vw);
+}
+
+h1, h2, h3,
+.site-name {
+    font-family: var(--pixel);
+    font-weight: normal;
+}
+
+/* saturn capitalises nav and labels; a code browser reads better without */
+.breadcrumb,
+.pill,
+.card-title {
+    text-transform: none;
+}
+
+.muted {
+    color: var(--text-secondary);
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.empty,
+.hint {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* icons: drawn on a 16px grid, coloured by currentColor */
+.sprite {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+.icon {
+    display: inline-block;
+    flex: none;
+    width: 16px;
+    height: 16px;
+    vertical-align: -3px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    border: 0;
+}
+
+.icon .fill,
+.icon-folder,
+.icon-dot {
+    fill: currentColor;
+    stroke: none;
+}
+
+/* file-type icons (material-icon-theme) and avatars are images; saturn
+   styles every img as a full-width bordered photo */
+img.ficon,
+img.avatar-xs,
+img.avatar-sm,
+img.avatar-lg {
+    display: inline-block;
+    flex: none;
+    border: 0;
+    border-radius: 0;
+}
+
+img.ficon {
+    width: 16px;
+    height: 16px;
+    vertical-align: -3px;
+}
+
+.avatar-xs,
+.avatar-sm,
+.avatar-lg {
+    border-radius: 50% !important;
+    object-fit: cover;
+}
+
+.avatar-xs { width: 20px; height: 20px; }
+.avatar-sm { width: 24px; height: 24px; }
+.avatar-lg { width: 88px; height: 88px; box-shadow: 0 0 0 1px var(--borders); }
+
+.avatar-none {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    color: var(--text-secondary);
+    background: var(--surface);
+    box-shadow: 0 0 0 1px var(--borders);
+}
+
+.avatar-none .icon {
+    width: 12px;
+    height: 12px;
+}
+
+/* controls */
+.button,
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text-headings);
+    font-size: 0.85rem;
+    line-height: 1.3;
+    white-space: nowrap;
+    transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+}
+
+.button:hover,
+a.chip:hover {
+    border-color: var(--accent-muted);
+    color: var(--accent);
+}
+
+.button--small {
+    padding: 0.2rem 0.6rem;
+    font-size: 0.8rem;
+}
+
+.button--primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--background-dark);
+    font-weight: 600;
+}
+
+.button--primary:hover {
+    background: color-mix(in oklab, var(--accent) 85%, white);
+    border-color: color-mix(in oklab, var(--accent) 85%, white);
+    color: var(--background-dark);
+}
+
+.chip--inline {
+    padding: 0.05rem 0.5rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.05rem 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.badge--latest,
+.badge--open { color: var(--add); border-color: color-mix(in oklab, var(--add) 55%, transparent); }
+.badge--merged { color: var(--syn-keyword); border-color: color-mix(in oklab, var(--syn-keyword) 55%, transparent); }
+.badge--closed { color: var(--del); border-color: color-mix(in oklab, var(--del) 55%, transparent); }
+.badge--pre { color: var(--syn-type); border-color: color-mix(in oklab, var(--syn-type) 55%, transparent); }
+
+.sha {
+    padding: 0.05rem 0.4rem;
+    border: 1px solid var(--borders);
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+a.sha:hover {
+    color: var(--accent);
+    border-color: var(--accent-muted);
+}
+
+/* copy fields: a read-only input plus a copy button (copy.js shows it) */
+.copyfield {
+    display: flex;
+    min-width: 0;
+}
+
+.copyfield input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.45rem 0.65rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--text-headings);
+    background: var(--background-dark);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+}
+
+.copyfield input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+}
+
+.copyfield:has(.copy:not([hidden])) input {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.copy {
+    display: inline-grid;
+    place-items: center;
+    width: 2.2rem;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-left: 0;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    background: var(--surface);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.copy:hover {
+    color: var(--accent);
+}
+
+.copy .icon-check,
+.copy.copied .icon-copy {
+    display: none;
+}
+
+.copy.copied .icon-check {
+    display: inline-block;
+    color: var(--add);
+}
+
+/* boxes: the one container for listings, files, readmes and diffs */
+.box {
+    margin-bottom: 1.25rem;
+    border: 1px solid var(--borders);
+    border-radius: var(--radius);
+    background: var(--box);
+    overflow: hidden;
+}
+
+.box-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.6rem;
+    margin: 0;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--borders);
+    background: var(--surface);
+    font-family: var(--ui);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-headings);
+}
+
+.box-head .icon {
+    color: var(--text-secondary);
+}
+
+.box-note {
+    margin: 0;
+    padding: 1.25rem 1rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* links inside listings are components, not underlined prose links */
+.box :where(td, li, span, div) > a:not([class]) {
+    border-bottom: 0;
+}
+
+/* rows: commits, pulls, packages, refs */
+.rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.rows > li {
+    margin: 0;
+}
+
+.rows > li + li {
+    border-top: 1px solid var(--borders);
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 1rem;
+    transition: background 120ms ease;
+}
+
+.row:hover,
+.files tr:hover td {
+    background: var(--hover);
+}
+
+.row-main {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+    gap: 0.15rem;
+}
+
+.row-title {
+    overflow: hidden;
+    color: var(--text-headings);
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+a.row-title:hover,
+.row-title a:hover {
+    color: var(--accent);
+}
+
+.row-title a {
+    color: var(--text-headings);
+}
+
+.row-title .badge {
+    margin-left: 0.5rem;
+}
+
+.row-sub {
+    overflow: hidden;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.row-sub a {
+    color: var(--text-secondary);
+}
+
+.row time {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.pkg-icon,
+.pr-icon {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    color: var(--text-secondary);
+}
+
+.pr--open { color: var(--add); }
+.pr--merged { color: var(--syn-keyword); }
+.pr--closed { color: var(--del); }
+
+.package .copyfield {
+    margin-top: 0.5rem;
+    max-width: 36rem;
+}
+
+/* site header */
+.site-header {
+    padding-inline: 0;
+}
+
+.site-header nav a {
+    font-size: 0.85rem;
 }
 
 /* profile */
@@ -1423,332 +1832,783 @@ body.page--code {
     display: flex;
     gap: 1.5rem;
     align-items: center;
+    margin-bottom: 2rem;
 }
 
-.profile .avatar {
-    width: 6rem;
-    height: 6rem;
-    flex: none;
-    border-radius: 50%;
-}
-
-.profile p {
+.profile h1 {
     margin: 0;
+    color: var(--accent);
+    font-size: 1.9rem;
 }
 
-.profile .meta {
-    margin: 0.25rem 0 0.6rem;
+.profile-handle {
+    margin: 0.2rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.profile-bio {
+    margin: 0.6rem 0 0;
+    font-size: 1rem;
 }
 
 @media (max-width: 480px) {
     .profile {
         flex-direction: column;
         align-items: flex-start;
+        gap: 1rem;
     }
 }
 
-/* heatmap: steps from accent-muted to accent so it follows the palette */
-.heatmap-wrap {
-    overflow-x: auto;
-    padding: 1rem;
-    border: 1px solid var(--borders);
-    border-radius: 6px;
-    scrollbar-color: var(--borders) transparent;
+/* heatmap: fits its box at any width; colours follow the palette */
+.heat-body {
+    padding: 1rem 1rem 0.75rem;
 }
 
 .heatmap {
+    display: block;
     width: 100%;
-    min-width: 40rem;
+    height: auto;
     border: 0;
 }
 
 .heatmap text {
     fill: var(--text-secondary);
+    font-family: var(--ui);
     font-size: 9px;
-    font-family: "Geist Pixel", ui-monospace, monospace;
-    text-transform: uppercase;
 }
 
-.heatmap .h0 { fill: var(--surface); }
-.heatmap .h1 { fill: var(--accent-muted); }
-.heatmap .h2 { fill: color-mix(in oklab, var(--accent-muted), var(--accent) 40%); }
-.heatmap .h3 { fill: color-mix(in oklab, var(--accent-muted), var(--accent) 70%); }
-.heatmap .h4 { fill: var(--accent); }
+.heatmap .h0, .heat-legend .h0 { fill: var(--surface); background: var(--surface); }
+.heatmap .h1, .heat-legend .h1 { fill: var(--accent-muted); background: var(--accent-muted); }
+.heatmap .h2, .heat-legend .h2 { fill: color-mix(in oklab, var(--accent-muted), var(--accent) 40%); background: color-mix(in oklab, var(--accent-muted), var(--accent) 40%); }
+.heatmap .h3, .heat-legend .h3 { fill: color-mix(in oklab, var(--accent-muted), var(--accent) 70%); background: color-mix(in oklab, var(--accent-muted), var(--accent) 70%); }
+.heatmap .h4, .heat-legend .h4 { fill: var(--accent); background: var(--accent); }
 
-/* language dots use the syntax roles so they follow the palette */
+.heat-legend {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 3px;
+    margin: 0.5rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
+
+.heat-legend i {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+/* repository cards */
+.section-title {
+    margin: 2rem 0 0.75rem;
+    font-size: 1.1rem;
+}
+
+.repo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+    gap: 0.75rem;
+}
+
+.repo-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 1rem;
+    border: 1px solid var(--borders);
+    border-radius: var(--radius);
+    background: var(--box);
+    transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.repo-card:hover {
+    border-color: var(--accent-muted);
+    transform: translateY(-1px);
+}
+
+.repo-card-name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-headings);
+    font-weight: 600;
+}
+
+.repo-card-name .icon {
+    color: var(--text-secondary);
+}
+
+.repo-card:hover .repo-card-name {
+    color: var(--accent);
+}
+
+.repo-card-desc {
+    flex: 1;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.repo-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin-top: 0.25rem;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+/* language colours use the syntax roles so they follow the palette */
 .dot {
     display: inline-block;
-    width: 0.55rem;
-    height: 0.55rem;
+    width: 0.6rem;
+    height: 0.6rem;
     margin-right: 0.4rem;
     border-radius: 50%;
     background: var(--text-secondary);
 }
 
-.lang-0 { background: var(--syn-keyword); }
-.lang-1 { background: var(--syn-function); }
-.lang-2 { background: var(--syn-builtin); }
-.lang-3 { background: var(--syn-type); }
-.lang-4 { background: var(--syn-variable); }
-.lang-5 { background: var(--syn-constant); }
-.lang-6 { background: var(--syn-string); }
-.lang-7 { background: var(--accent); }
+.lang-0 { background: var(--syn-keyword); fill: var(--syn-keyword); }
+.lang-1 { background: var(--syn-function); fill: var(--syn-function); }
+.lang-2 { background: var(--syn-builtin); fill: var(--syn-builtin); }
+.lang-3 { background: var(--syn-type); fill: var(--syn-type); }
+.lang-4 { background: var(--syn-variable); fill: var(--syn-variable); }
+.lang-5 { background: var(--syn-constant); fill: var(--syn-constant); }
+.lang-6 { background: var(--syn-string); fill: var(--syn-string); }
+.lang-7 { background: var(--accent); fill: var(--accent); }
+.lang-other { background: var(--text-secondary); fill: var(--text-secondary); }
 
 /* repo header */
-.page-header .pills {
+.repo-head {
+    margin-bottom: 1.25rem;
+}
+
+.repo-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.repo-title a {
+    color: var(--text-headings);
+}
+
+.repo-title a:hover {
+    color: var(--accent);
+}
+
+.repo-title .repo-owner {
+    color: var(--text-secondary);
+}
+
+.repo-slash {
+    color: var(--borders);
+}
+
+.repo-title .pill {
+    font-family: var(--ui);
+    font-size: 0.72rem;
+}
+
+.repo-desc {
+    margin: 0.5rem 0 0;
+    font-size: 1rem;
+    color: var(--text-body);
+}
+
+.topics {
     margin-top: 0.75rem;
 }
 
-.page-header > p {
-    margin: 0.4rem 0 0;
+.topics .pill {
+    padding: 0.15rem 0.65rem;
+    border-color: transparent;
+    background: color-mix(in oklab, var(--accent-muted) 35%, transparent);
+    color: var(--accent);
+    font-size: 0.75rem;
+    letter-spacing: 0;
+}
+
+.repo-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.25rem;
+    margin: 0.85rem 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.875rem;
     color: var(--text-secondary);
 }
 
-/* repo tabs: like the site header nav */
+.repo-meta li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+}
+
+.repo-meta a {
+    border: 0;
+    color: var(--text-headings);
+}
+
+.repo-meta a:hover {
+    color: var(--accent);
+}
+
+/* repo tabs */
 .tabs {
-    margin: -1.5rem 0 1.5rem;
-    padding-bottom: 0.6rem;
+    display: flex;
+    gap: 0.25rem;
+    margin: 0 0 1.25rem;
+    overflow-x: auto;
     border-bottom: 1px solid var(--borders);
-    text-transform: uppercase;
+    font-size: 0.9rem;
+    scrollbar-width: none;
 }
 
 .tabs a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: -1px;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 2px solid transparent;
     color: var(--text-secondary);
-    border-bottom: 1px solid transparent;
-    transition:
-        color 220ms ease 60ms,
-        border-bottom-color 220ms ease 60ms;
+    white-space: nowrap;
+    transition: color 150ms ease, border-color 150ms ease;
 }
 
 .tabs a:hover {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
+    color: var(--text-headings);
+    border-bottom-color: var(--borders);
 }
 
 .tabs a[aria-current="page"] {
-    color: var(--accent);
-}
-
-/* clone box */
-.clone {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-    font-size: 0.78rem;
-    letter-spacing: 0.08em;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-}
-
-.clone input {
-    flex: 1;
-    min-width: 0;
-    padding: 0.45rem 0.75rem;
-    font-family: "Geist Mono", ui-monospace, monospace;
-    font-size: 0.82rem;
-    letter-spacing: 0;
-    text-transform: none;
     color: var(--text-headings);
-    background: var(--surface);
-    border: 1px solid var(--borders);
-    border-radius: 6px;
+    font-weight: 500;
+    border-bottom-color: var(--accent);
 }
 
-.clone input:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-}
-
-/* commit log, used inline rather than as a banner */
-.commit-log--inline {
-    max-width: none;
-    box-shadow: none;
-}
-
-a.commit-log-hash:hover {
+.tabs a[aria-current="page"] .icon {
     color: var(--accent);
 }
 
-/* file tree: names are case-sensitive, so no caps */
-.tree .table-title {
-    text-transform: none;
+.count {
+    min-width: 1.5rem;
+    padding: 0 0.45rem;
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    text-align: center;
 }
 
-.tree .table-row:hover {
-    cursor: default;
+/* code box */
+.box-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1.25rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--borders);
+    font-size: 0.875rem;
 }
 
-.tree .table-desc {
-    max-width: 0;
-    width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.box-bar .chip {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+}
+
+.stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--text-secondary);
     white-space: nowrap;
 }
 
-.tree .table-date {
-    text-align: right;
-    padding-right: 0;
+.stat b {
+    color: var(--text-headings);
+    font-weight: 600;
 }
 
-.tree-dir {
+a.stat:hover,
+a.stat:hover b {
+    color: var(--accent);
+}
+
+/* clone menu: a <details>, so it opens without js */
+.clone {
+    position: relative;
+    margin-left: auto;
+}
+
+.clone summary {
+    list-style: none;
+    cursor: pointer;
+}
+
+.clone summary::-webkit-details-marker {
+    display: none;
+}
+
+.clone[open] summary .icon-chevron {
+    transform: rotate(180deg);
+}
+
+.clone-pop {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    z-index: 10;
+    display: grid;
+    gap: 0.4rem;
+    width: min(28rem, 86vw);
+    padding: 0.9rem 1rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--background-dark);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+.clone-label {
+    margin: 0.25rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* latest commit row */
+.box-commit {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid var(--borders);
+    background: var(--surface);
+    font-size: 0.875rem;
+}
+
+.commit-author {
+    color: var(--text-headings);
+    font-weight: 600;
+}
+
+.commit-msg {
+    flex: 1 1 10rem;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    mask-image: linear-gradient(to right, black calc(100% - 3rem), transparent);
+}
+
+.commit-msg:hover {
+    color: var(--accent);
+}
+
+.box-commit time {
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.ci {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+a.ci:hover {
+    color: var(--text-headings);
+}
+
+.ci--success .icon { color: var(--add); stroke-width: 2.2; }
+.ci--failure .icon,
+.ci--error .icon { color: var(--del); stroke-width: 2.2; }
+.ci--pending .icon,
+.ci--warning .icon { color: var(--syn-type); }
+
+/* file listing */
+.files {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.files tr + tr td {
+    border-top: 1px solid var(--borders);
+}
+
+.files td {
+    padding: 0.5rem 1rem;
+    vertical-align: middle;
+    transition: background 120ms ease;
+}
+
+.f-name {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.f-name img.ficon {
+    margin-right: 0.6rem;
+}
+
+.f-name a,
+.f-name span {
+    color: var(--text-headings);
+}
+
+.f-name a:hover {
+    color: var(--accent);
+}
+
+/* commit messages fade out instead of ending in an ellipsis */
+.f-msg {
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    mask-image: linear-gradient(to right, black calc(100% - 4rem), transparent);
+}
+
+.f-msg a,
+.f-msg span {
     color: var(--text-secondary);
 }
 
-@media (max-width: 600px) {
-    .tree .table-desc {
-        max-width: none;
+.f-msg a:hover {
+    color: var(--accent);
+}
+
+.f-size,
+.f-age {
+    width: 1%;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.f-size {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+}
+
+/* freshness: the newer the change, the warmer the age */
+.fresh-1 { color: var(--syn-constant) !important; }
+.fresh-2 { color: color-mix(in oklab, var(--syn-constant) 70%, var(--text-secondary)) !important; }
+.fresh-3 { color: color-mix(in oklab, var(--syn-constant) 35%, var(--text-secondary)) !important; }
+
+@media (max-width: 720px) {
+    .f-msg,
+    .f-size {
+        display: none;
+    }
+
+    .f-name {
         width: auto;
+    }
+
+    .clone {
+        margin-left: 0;
+    }
+
+    .clone-pop {
+        right: auto;
+        left: 0;
+    }
+
+    .commit-msg {
+        order: 9;
+        flex-basis: 100%;
     }
 }
 
-/* readme */
-.readme {
-    padding: 1.5rem;
-    border: 1px solid var(--borders);
-    border-radius: 6px;
+/* languages: bar and legend together under the code box */
+.langs {
+    margin: -0.25rem 0 1.25rem;
 }
 
-.readme > :first-child {
+.langbar {
+    display: block;
+    width: 100%;
+    height: 8px;
+    border: 0;
+    border-radius: 999px;
+    overflow: hidden;
+    clip-path: inset(0 round 999px);
+}
+
+.lang-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.25rem;
+    margin: 0.6rem 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.8rem;
+    color: var(--text-headings);
+}
+
+.lang-legend li {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+}
+
+.lang-pct {
+    margin-left: 0.35rem;
+    color: var(--text-secondary);
+}
+
+/* breadcrumbs */
+.crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0 0 0.85rem;
+    font-size: 0.95rem;
+}
+
+.crumbs a {
+    color: var(--accent);
+}
+
+.crumbs a:hover {
+    text-decoration: underline;
+}
+
+.crumbs [aria-current] {
+    color: var(--text-headings);
+    font-weight: 600;
+}
+
+.crumb-sep {
+    color: var(--text-secondary);
+}
+
+/* readme and other rendered markdown */
+.readme {
+    padding: 1.5rem 2rem 1.75rem;
+}
+
+.markdown > :first-child {
     margin-top: 0;
 }
 
-.readme > :last-child {
+.markdown > :last-child {
     margin-bottom: 0;
 }
 
-.readme img {
-    width: auto;
-    border: 0;
+.markdown :where(p, li, td) > a:not([class]) {
+    border-bottom: 1px solid var(--accent-muted);
+}
+
+.markdown h1 { font-size: 1.6rem; margin: 1.5rem 0 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--borders); }
+.markdown h2 { font-size: 1.25rem; margin: 1.75rem 0 0.6rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--borders); }
+.markdown h3 { font-size: 1.05rem; margin: 1.5rem 0 0.5rem; }
+
+.markdown img {
     display: inline-block;
+    width: auto;
+    max-width: 100%;
+    border: 0;
 }
 
-.readme table {
-    border-collapse: collapse;
+.markdown pre {
+    margin: 1rem 0;
+    background: var(--background-dark);
+}
+
+.markdown table {
     margin: 0 0 1.2rem;
-    font-size: 0.88rem;
+    border-collapse: collapse;
+    font-size: 0.875rem;
 }
 
-.readme th,
-.readme td {
+.markdown th,
+.markdown td {
     padding: 0.4rem 0.75rem;
     border: 1px solid var(--borders);
 }
 
-.empty {
-    color: var(--text-secondary);
+.markdown th {
+    background: var(--surface);
 }
 
-/* file viewer */
-.breadcrumb [aria-current] {
+.markdown input[type="checkbox"] {
+    margin-right: 0.4rem;
+    accent-color: var(--accent);
+}
+
+@media (max-width: 600px) {
+    .readme {
+        padding: 1rem;
+    }
+}
+
+.box-empty {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1.5rem;
+}
+
+.box-empty p {
+    margin: 0;
+}
+
+/* file and diff views */
+.file-head {
+    font-weight: normal;
+}
+
+.file-name {
     color: var(--text-headings);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    font-weight: 500;
+    overflow-wrap: anywhere;
 }
 
-.breadcrumb a,
-.breadcrumb [aria-current] {
-    text-transform: none;
-}
-
-.code-block .code-label {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
-
-.code-label a {
+.file-stats {
+    margin-right: auto;
     color: var(--text-secondary);
+    font-size: 0.8rem;
 }
 
-.code-label a:hover {
-    color: var(--accent);
-}
-
-pre.lines {
-    padding: 1rem 0;
+pre.code {
+    margin: 0;
+    padding: 0.75rem 0;
+    border: 0;
+    border-radius: 0;
+    background: var(--background-dark);
 }
 
 .line {
     display: block;
-    padding-right: 1.25rem;
     min-height: 1.5em;
+    padding-right: 1.25rem;
 }
 
 .ln {
     display: inline-block;
     width: 5ch;
     margin-right: 1.25rem;
-    text-align: right;
     color: var(--text-secondary);
-    opacity: 0.6;
+    text-align: right;
+    opacity: 0.55;
     user-select: none;
 }
 
-.ln:hover {
+a.ln:hover {
     color: var(--accent);
     opacity: 1;
 }
 
 .line:target {
-    background: var(--background-dark);
-    box-shadow: inset 2px 0 var(--accent);
+    background: color-mix(in oklab, var(--accent-muted) 30%, transparent);
+    box-shadow: inset 3px 0 var(--accent);
 }
 
-.file-note {
-    margin: 0;
-    padding: 1.25rem;
-    color: var(--text-secondary);
-    border: 1px solid var(--borders);
-    border-radius: 0 0 6px 6px;
+.file-image {
+    padding: 1.5rem;
+    text-align: center;
+    background: var(--background-dark);
 }
 
 .file-image img {
+    display: inline-block;
     width: auto;
     max-width: 100%;
-    margin: 0 auto;
-}
-
-/* commit log page */
-a.commit-log-msg:hover {
-    color: var(--accent);
+    border: 0;
 }
 
 /* commit page */
 .commit-head {
-    margin-bottom: 2rem;
+    padding: 1rem 1rem 0.25rem;
 }
 
-.commit-head h2 {
-    margin-top: 0;
+.commit-title {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--text-headings);
 }
 
 .commit-body {
+    margin: 0.75rem 0 0;
+    color: var(--text-body);
+    font-size: 0.9rem;
     white-space: pre-wrap;
 }
 
-.commit-head .meta {
-    margin: 0.25rem 0 0;
+.commit-meta {
+    margin-top: 0.75rem;
+    border-top: 1px solid var(--borders);
+    border-bottom: 0;
 }
 
-.commit-ids code {
+.commit-ids {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: auto;
     font-size: 0.8rem;
 }
 
-.diff-path {
-    text-transform: none;
+.checks {
+    margin: 0;
+    padding: 0.25rem 0;
+    border-top: 1px solid var(--borders);
+    list-style: none;
+    font-size: 0.85rem;
+}
+
+.checks li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0.4rem 1rem;
+}
+
+.checks li.ci--success .icon { color: var(--add); stroke-width: 2.2; }
+.checks li.ci--failure .icon,
+.checks li.ci--error .icon { color: var(--del); stroke-width: 2.2; }
+.checks li.ci--pending .icon { color: var(--syn-type); }
+
+.checks b {
     color: var(--text-headings);
-    overflow-wrap: anywhere;
+    font-weight: 500;
 }
 
-.diff-status {
+.diff-summary {
+    margin: 0 0 0.75rem;
     color: var(--text-secondary);
-    text-transform: uppercase;
+    font-size: 0.875rem;
 }
 
-.diff + .diff {
-    margin-top: 1.5rem;
+.diff-summary b {
+    color: var(--text-headings);
+    font-weight: 600;
+}
+
+.add { color: var(--add); }
+.del { color: var(--del); }
+
+.diffstat {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 0.78rem;
 }
 
 .diff .ln {
@@ -1763,110 +2623,106 @@ a.commit-log-msg:hover {
 }
 
 .diff .line.hl-added {
-    background: color-mix(in oklab, var(--syn-string) 10%, transparent);
+    background: color-mix(in oklab, var(--add) 12%, transparent);
 }
 
 .diff .line.hl-removed {
-    background: color-mix(in oklab, var(--syn-variable) 10%, transparent);
+    background: color-mix(in oklab, var(--del) 12%, transparent);
 }
 
 .diff .hunk {
-    padding: 0.25rem 1.25rem;
+    padding: 0.3rem 1.25rem;
     color: var(--text-secondary);
-    background: var(--background-dark);
-}
-
-.diff .hunk:not(:first-child) {
-    margin-top: 0.5rem;
+    background: color-mix(in oklab, var(--syn-function) 8%, transparent);
 }
 
 /* releases */
-a.pill--release {
-    color: var(--accent);
-    border-color: var(--accent-muted);
+.release-head {
+    font-weight: normal;
 }
 
-a.pill--release:hover {
-    border-color: var(--accent);
+.release-tag {
+    color: var(--text-headings);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    font-weight: 600;
 }
 
-.release-assets {
-    list-style: none;
-    margin: 1rem 0 0;
+.release-date {
+    margin-left: auto;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.release-body {
+    padding: 1rem 1.25rem 1.25rem;
+}
+
+.release-title {
+    margin: 0 0 0.75rem;
+    font-size: 1.25rem;
+    color: var(--text-headings);
+}
+
+.assets {
+    margin: 0;
     padding: 0;
+    border-top: 1px solid var(--borders);
+    list-style: none;
     font-size: 0.85rem;
 }
 
-.release-assets a::before {
-    content: "↓ ";
+.assets li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0.5rem 1.25rem;
     color: var(--text-secondary);
 }
 
-/* pulls: titles open the body, no js */
-.pull-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.pull-list > li {
-    margin: 0;
-    border-bottom: 1px solid var(--borders);
-}
-
-.pull-list > li:first-child {
+.assets li + li {
     border-top: 1px solid var(--borders);
 }
 
-.pull-list summary {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.25rem 0.75rem;
-    padding: 0.75rem 0;
-    cursor: pointer;
-    list-style: none;
+.assets a {
+    flex: 1;
+    color: var(--text-headings);
+    font-family: var(--mono);
+    font-size: 0.8rem;
 }
 
-.pull-list summary::-webkit-details-marker {
-    display: none;
-}
-
-.pull-list summary:hover .pull-title {
+.assets a:hover {
     color: var(--accent);
 }
 
-.pull-title {
-    color: var(--text-headings);
-    flex: 1 1 20rem;
+/* pulls: each row opens its body, no js */
+.pull summary {
+    list-style: none;
+    cursor: pointer;
 }
 
-.pull-list .meta {
-    margin: 0;
+.pull summary::-webkit-details-marker {
+    display: none;
 }
 
 .pull-body {
-    padding: 0 0 1rem;
+    padding: 0.25rem 1rem 1rem 3.1rem;
+    font-size: 0.9rem;
 }
 
-.pill--open {
-    color: var(--syn-string);
+/* 404 */
+.notfound {
+    padding: 4rem 0;
+    text-align: center;
 }
 
-.pill--merged {
-    color: var(--syn-keyword);
+.notfound h1 {
+    color: var(--accent);
+    font-size: 4rem;
+    margin: 0;
 }
 
-/* packages */
-.packages .table-title {
-    text-transform: none;
-}
-
-.packages .table-row:hover {
-    cursor: default;
-}
-
-.packages code {
-    font-size: 0.78rem;
-    white-space: nowrap;
+.notfound p {
+    color: var(--text-secondary);
 }

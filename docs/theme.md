@@ -1,5 +1,10 @@
 # Theme
 
+> Update: after the first real review, daum.dev keeps saturn's palettes and
+> tokens but uses its own type and component system (Geist for text, boxes,
+> sentence case). See "Polish pass" in `docs/decisions.md`. The rest of this
+> page describes the original plan.
+
 daum.dev should look like part of danieldaum.net (the `saturn` repo). Saturn
 is the source of truth. This site copies its tokens and components and adds
 only what a code browser needs on top.

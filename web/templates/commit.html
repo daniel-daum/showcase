@@ -1,40 +1,51 @@
 {{define "content" -}}
 {{template "repohead" .}}
-<section class="commit-head">
-  <h2>{{.C.Subject}}</h2>
-  {{- with .C.Body}}
-  <p class="commit-body">{{.}}</p>
+{{- $r := .Repo}}
+<section class="box">
+  <div class="commit-head">
+    <h2 class="commit-title">{{.C.Subject}}</h2>
+    {{- with .C.Body}}<p class="commit-body">{{.}}</p>{{end}}
+  </div>
+  <div class="box-commit commit-meta">
+    {{template "who" (dict "R" $r "Name" .C.Author)}}
+    <span class="commit-author">{{.C.Author}}</span>
+    <span class="muted">committed <time datetime="{{.C.When.Format "2006-01-02T15:04:05Z07:00"}}" title="{{.C.When.Format "2006-01-02 15:04 MST"}}">{{ago .C.When}}</time></span>
+    <span class="commit-ids">
+      {{- range .Parents}}<span class="muted">parent</span> {{if .Href}}<a class="sha" href="{{.Href}}">{{slice .Name 0 7}}</a>{{else}}<span class="sha">{{slice .Name 0 7}}</span>{{end}} {{end -}}
+      <span class="muted">commit</span> <span class="sha">{{slice .C.Hash 0 7}}</span>
+    </span>
+  </div>
+  {{- with .Status}}
+  <ul class="checks" id="checks">
+    {{- range .Statuses}}
+    <li class="ci--{{.Status}}">{{if eq .Status "success"}}{{template "icon" "check"}}{{else if or (eq .Status "failure") (eq .Status "error")}}{{template "icon" "x"}}{{else}}{{template "icon" "dot"}}{{end}}<b>{{.Context}}</b><span class="muted">{{.Description}}</span></li>
+    {{- end}}
+  </ul>
   {{- end}}
-  <p class="meta meta-split">
-    <span>{{.C.Author}}</span><span class="meta-sep" aria-hidden="true">·</span>
-    <time datetime="{{.C.When.Format "2006-01-02T15:04:05Z07:00"}}">{{day .C.When}}</time><span class="meta-sep" aria-hidden="true">·</span>
-    <span>{{len .Files}} files · <span class="hl-added">+{{.Added}}</span> <span class="hl-removed">-{{.Deleted}}</span></span>
-  </p>
-  <p class="meta commit-ids">
-    commit <code>{{.C.Hash}}</code>
-    {{- range .Parents}} · parent {{if .Href}}<a href="{{.Href}}"><code>{{.Name}}</code></a>{{else}}<code>{{.Name}}</code>{{end}}{{end}}
-  </p>
 </section>
+<p class="diff-summary">Showing <b>{{len .Files}} changed file{{if ne (len .Files) 1}}s{{end}}</b> with <span class="add">{{.Added}} addition{{if ne .Added 1}}s{{end}}</span> and <span class="del">{{.Deleted}} deletion{{if ne .Deleted 1}}s{{end}}</span>.</p>
 {{- range .Files}}
-<div class="code-block diff">
-  <p class="code-label">
-    <span class="diff-path">{{with .OldPath}}{{.}} → {{end}}{{.Path}}{{with .Status}} <span class="diff-status">{{.}}</span>{{end}}</span>
-    <span><span class="hl-added">+{{.Added}}</span> <span class="hl-removed">-{{.Deleted}}</span></span>
-  </p>
+<section class="box diff">
+  <div class="box-head file-head">
+    <img class="ficon" src="{{ficon .Path "blob"}}" alt="" width="16" height="16">
+    <span class="file-name">{{with .OldPath}}{{.}} → {{end}}{{.Path}}</span>
+    {{- with .Status}}<span class="badge">{{.}}</span>{{end}}
+    <span class="diffstat"><span class="add">+{{.Added}}</span> <span class="del">−{{.Deleted}}</span></span>
+  </div>
   {{- if .Binary}}
-  <p class="file-note">binary file, not shown.</p>
+  <p class="box-note">Binary file, not shown.</p>
   {{- else if .Lines}}
-  <pre class="lines"><code>
+  <pre class="code"><code>
     {{- range .Lines}}<span class="line {{diff .Kind}}">
       {{- if eq .Kind 64}}{{.Text}}{{else}}<span class="ln">{{if .Old}}{{.Old}}{{end}}</span><span class="ln">{{if .New}}{{.New}}{{end}}</span><span class="sign" aria-hidden="true">{{printf "%c" .Kind}}</span>{{.Text}}{{end -}}
     </span>{{end -}}
   </code></pre>
-  {{- if .Truncated}}<p class="file-note">diff truncated. clone the repository for the full change.</p>{{end}}
+  {{- if .Truncated}}<p class="box-note">Diff truncated. Clone the repository for the full change.</p>{{end}}
   {{- else if .Truncated}}
-  <p class="file-note">diff truncated. clone the repository for the full change.</p>
+  <p class="box-note">Diff truncated. Clone the repository for the full change.</p>
   {{- else}}
-  <p class="file-note">no content changes.</p>
+  <p class="box-note">No content changes.</p>
   {{- end}}
-</div>
+</section>
 {{- end}}
 {{- end}}

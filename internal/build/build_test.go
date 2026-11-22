@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -23,8 +24,11 @@ import (
 )
 
 var (
-	update = flag.Bool("update", false, "rewrite golden files")
-	keep   = flag.String("keep", "", "also render the fixture site into this directory")
+	statusRe = regexp.MustCompile(`/commits/[^/]+/status$`)
+	// paths the fake Gitea answers with 401, like Gitea 28's packages API
+	needToken = map[string]bool{}
+	update    = flag.Bool("update", false, "rewrite golden files")
+	keep      = flag.String("keep", "", "also render the fixture site into this directory")
 )
 
 // gitEnv isolates fixture commits from the user's git config (no signing).
@@ -63,6 +67,9 @@ func fixtureRepos(t *testing.T) string {
 	os.WriteFile(filepath.Join(work, "data.bin"), []byte("bin\x00ary2"), 0o644)
 	run(t, work, "", "add", "-A")
 	run(t, work, "2026-11-19T08:30:00Z", "commit", "-q", "--no-gpg-sign", "-m", "Add changelog", "-m", "With a body.")
+	run(t, work, "", "tag", "v0.1.0", "HEAD~1")
+	run(t, work, "2026-11-19T09:00:00Z", "tag", "-a", "-m", "v0.2.0", "v0.2.0")
+	run(t, work, "", "branch", "feature/flag")
 	run(t, root, "", "clone", "-q", "--bare", work, "daniel/repo-a.git")
 	run(t, root, "", "init", "-q", "--bare", "-b", "main", "daniel/repo-b.git")
 	return root
@@ -85,6 +92,10 @@ func fakeGitea(t *testing.T) *httptest.Server {
 		if r.Header.Get("Authorization") != "" || r.Header.Get("Cookie") != "" {
 			t.Errorf("request to %s carried credentials", r.URL)
 		}
+		if needToken[r.URL.Path] {
+			http.Error(w, `{"message":"token is required"}`, http.StatusUnauthorized)
+			return
+		}
 		if strings.Contains(r.URL.Path, ".git/") {
 			gitBackend.ServeHTTP(w, r)
 			return
@@ -95,7 +106,8 @@ func fakeGitea(t *testing.T) *httptest.Server {
 			w.Write(buf.Bytes())
 			return
 		}
-		b, err := os.ReadFile(filepath.Join("../../testdata/gitea", filepath.FromSlash(r.URL.Path)+".json"))
+		p := statusRe.ReplaceAllString(r.URL.Path, "/status") // any commit's status
+		b, err := os.ReadFile(filepath.Join("../../testdata/gitea", filepath.FromSlash(p)+".json"))
 		if err != nil {
 			http.NotFound(w, r)
 			return
@@ -183,6 +195,7 @@ func TestSiteGolden(t *testing.T) {
 		"repo-a/blob/cmd/hello/main.go.html", "repo-a/blob/README.md.html",
 		"repo-a/blob/docs/logo.png.html", "repo-a/blob/data.bin.html", "repo-a/blob/big.txt.html",
 		"repo-a/log/index.html", "repo-b/log/index.html",
+		"repo-a/branches/index.html", "repo-a/tags/index.html",
 		"repo-a/releases/index.html", "repo-a/pulls/index.html", "repo-a/packages/index.html",
 		"repo-b/releases/index.html",
 	} {
@@ -194,10 +207,10 @@ func TestSiteGolden(t *testing.T) {
 	}
 	for _, c := range commits {
 		b, _ := os.ReadFile(c)
-		if bytes.Contains(b, []byte("<h2>Add changelog</h2>")) {
+		if bytes.Contains(b, []byte(">Add changelog</h2>")) {
 			os.Rename(c, filepath.Join(dir, "repo-a/commit-latest.html")) // hash-free golden name
 			checkGolden(t, dir, "repo-a/commit-latest.html")
-		} else if !bytes.Contains(b, []byte("diff truncated")) { // initial commit has 40k lines of big.txt
+		} else if !bytes.Contains(b, []byte("Diff truncated")) { // initial commit has 40k lines of big.txt
 			t.Error("initial commit page: big.txt diff should be truncated")
 		}
 	}
@@ -217,5 +230,18 @@ func TestSiteGolden(t *testing.T) {
 		if _, err := os.Stat(filepath.Join(dir, f)); err == nil {
 			t.Errorf("%s was rendered", f)
 		}
+	}
+}
+
+func TestPackagesNeedToken(t *testing.T) {
+	needToken["/api/v1/packages/daniel"] = true
+	defer delete(needToken, "/api/v1/packages/daniel")
+	dir := t.TempDir()
+	if err := testBuilder(t).Render(context.Background(), dir); err != nil {
+		t.Fatalf("build failed when the packages API wants a token: %v", err)
+	}
+	b, _ := os.ReadFile(filepath.Join(dir, "repo-a/packages/index.html"))
+	if !bytes.Contains(b, []byte("No packages")) {
+		t.Error("packages page should be empty")
 	}
 }

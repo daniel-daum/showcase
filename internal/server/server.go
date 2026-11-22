@@ -21,7 +21,8 @@ import (
 	"daum.dev/showcase/internal/config"
 )
 
-const csp = "default-src 'none'; style-src 'self'; img-src 'self' https:; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+// script-src 'self' is only for /static/copy.js (copy buttons); nothing inline.
+const csp = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' https:; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 
 type Server struct {
 	Cfg   *config.Config
@@ -182,7 +183,7 @@ func (s *Server) raw(w http.ResponseWriter, r *http.Request, p string) {
 	}
 	defer f.Close()
 	ctype := staticType(p)
-	if !strings.HasPrefix(ctype, "image/") {
+	if !strings.HasPrefix(ctype, "image/") || ctype == "image/svg+xml" { // repo SVGs are never images here
 		head := make([]byte, 512)
 		n, _ := io.ReadFull(f, head)
 		f.Seek(0, io.SeekStart)
@@ -218,6 +219,10 @@ func staticType(p string) string {
 		return "text/css; charset=utf-8"
 	case ".woff2":
 		return "font/woff2"
+	case ".js":
+		return "text/javascript; charset=utf-8"
+	case ".svg":
+		return "image/svg+xml"
 	case ".png":
 		return "image/png"
 	case ".jpg", ".jpeg":

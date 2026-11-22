@@ -85,6 +85,7 @@ compose.yaml       example deployment
 
 Styles and palettes come from [saturn](https://tangled.org/danieldaum.net/saturn)
 (danieldaum.net, MIT), which builds on Flexoki (MIT,
-[stephango.com/flexoki](https://stephango.com/flexoki)). Geist Pixel and Geist
-Mono are under the SIL Open Font License; the licence files are in
-`web/static/fonts/`.
+[stephango.com/flexoki](https://stephango.com/flexoki)). Geist, Geist Mono and
+Geist Pixel are under the SIL Open Font License, and file icons come from
+[material-icon-theme](https://github.com/material-extensions/vscode-material-icon-theme)
+(MIT). The licence files are in `web/static/fonts/` and `web/static/icons/`.

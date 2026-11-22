@@ -1,25 +1,26 @@
 {{define "content" -}}
 {{template "repohead" .}}
 {{template "crumbs" .Crumbs}}
-<div class="code-block">
-  <p class="code-label">
-    <span>{{size .Size}}{{with .Lines}} · {{len .}} lines{{end}}</span>
-    {{- with .Raw}}<a href="{{.}}">raw</a>{{end}}
-  </p>
+<section class="box">
+  <div class="box-head file-head">
+    <img class="ficon" src="{{ficon .Name "blob"}}" alt="" width="16" height="16"><span class="file-name">{{.Name}}</span>
+    <span class="file-stats">{{size .Size}}{{with .Lines}} · {{len .}} line{{if ne (len .) 1}}s{{end}}{{end}}</span>
+    {{- with .Raw}}<a class="button button--small" href="{{.}}">{{template "icon" "download"}}Raw</a>{{end}}
+  </div>
   {{- if .Lines}}
-  <pre class="lines"><code>
+  <pre class="code"><code>
     {{- range $i, $l := .Lines}}{{$n := inc $i}}<span class="line" id="L{{$n}}"><a class="ln" href="#L{{$n}}" aria-hidden="true">{{$n}}</a>{{$l}}</span>{{end -}}
   </code></pre>
   {{- else if and .Image .Raw}}
-  <div class="file-note file-image"><img src="{{.Raw}}" alt="{{.Path}}"></div>
+  <div class="box-note file-image"><img src="{{.Raw}}" alt="{{.Path}}"></div>
   {{- else if not .Raw}}
-  <p class="file-note">this file is too large to show here. clone the repository to get it.</p>
+  <p class="box-note">This file is too large to show here. Clone the repository to get it.</p>
   {{- else if .Binary}}
-  <p class="file-note">binary file, not shown. use the raw link to download it.</p>
+  <p class="box-note">Binary file, not shown. Use the raw link to download it.</p>
   {{- else if .Large}}
-  <p class="file-note">this file is too large to show here. use the raw link to view it.</p>
+  <p class="box-note">This file is too large to show here. Use the raw link to view it.</p>
   {{- else}}
-  <p class="file-note">empty file.</p>
+  <p class="box-note">Empty file.</p>
   {{- end}}
-</div>
+</section>
 {{- end}}

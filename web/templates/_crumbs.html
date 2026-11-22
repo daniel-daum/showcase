@@ -1,5 +1,5 @@
 {{define "crumbs" -}}
-<nav class="breadcrumb" aria-label="path">
-  {{- range $i, $c := .}}{{if $i}} / {{end}}{{if .Href}}<a href="{{.Href}}">{{.Name}}</a>{{else}}<span aria-current="page">{{.Name}}</span>{{end}}{{end -}}
+<nav class="crumbs" aria-label="path">
+  {{- range $i, $c := .}}{{if $i}}<span class="crumb-sep" aria-hidden="true">/</span>{{end}}{{if .Href}}<a href="{{.Href}}">{{.Name}}</a>{{else}}<span aria-current="page">{{.Name}}</span>{{end}}{{end -}}
 </nav>
 {{- end}}

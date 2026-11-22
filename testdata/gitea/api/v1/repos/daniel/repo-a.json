@@ -6,9 +6,13 @@
   "private": false,
   "empty": false,
   "archived": false,
-  "website": "",
+  "website": "https://example.com/repo-a",
   "default_branch": "main",
   "language": "Go",
-  "topics": ["go", "web"],
+  "topics": [
+    "go",
+    "web",
+    "self-hosted"
+  ],
   "updated_at": "2026-11-20T09:00:00Z"
 }

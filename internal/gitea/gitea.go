@@ -16,8 +16,9 @@ import (
 
 const maxBody = 8 << 20
 
-// ErrNotFound is returned for a 404, e.g. a repo with that feature turned off.
-var ErrNotFound = errors.New("gitea: not found")
+// ErrNotFound means the data isn't publicly visible: a 404 (missing, or a
+// feature turned off) or a 401/403 (Gitea wants a token, e.g. the packages API).
+var ErrNotFound = errors.New("gitea: not publicly visible")
 
 type Client struct {
 	base string
@@ -103,8 +104,9 @@ func (c *Client) fetch(ctx context.Context, path string) ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, fmt.Errorf("GET %s: %w", path, ErrNotFound)
+	switch resp.StatusCode {
+	case http.StatusNotFound, http.StatusUnauthorized, http.StatusForbidden:
+		return nil, fmt.Errorf("GET %s: %s: %w", path, resp.Status, ErrNotFound)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("gitea: GET %s: %s", path, resp.Status)
@@ -138,6 +140,33 @@ func (c *Client) Repo(ctx context.Context, name string) (*Repo, error) {
 		return nil, fmt.Errorf("repo %s is private: %w", name, ErrNotFound)
 	}
 	return &r, nil
+}
+
+// Status is a commit's combined CI status.
+type Status struct {
+	State      string `json:"state"`
+	TotalCount int    `json:"total_count"`
+	Statuses   []struct {
+		Status      string `json:"status"`
+		Context     string `json:"context"`
+		Description string `json:"description"`
+	} `json:"statuses"`
+}
+
+// Passed counts the successful checks.
+func (s *Status) Passed() int {
+	n := 0
+	for _, x := range s.Statuses {
+		if x.Status == "success" {
+			n++
+		}
+	}
+	return n
+}
+
+func (c *Client) Status(ctx context.Context, repo, sha string) (*Status, error) {
+	var s Status
+	return &s, c.get(ctx, c.repoPath(repo, "/commits/"+url.PathEscape(sha)+"/status"), &s)
 }
 
 func (c *Client) Languages(ctx context.Context, repo string) (map[string]int64, error) {

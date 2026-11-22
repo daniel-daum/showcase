@@ -3,6 +3,8 @@ package build
 import (
 	"context"
 
+	"daum.dev/showcase/internal/gitea"
+
 	"daum.dev/showcase/internal/gitx"
 	"daum.dev/showcase/internal/render"
 )
@@ -20,6 +22,7 @@ type CommitPage struct {
 	Parents        []Crumb // Href is "" when the parent has no page
 	Files          []gitx.FileDiff
 	Added, Deleted int
+	Status         *gitea.Status // CI checks; only known for HEAD
 }
 
 // renderLog writes the log page and one page per listed commit. Only those
@@ -32,7 +35,7 @@ func (b *Builder) renderLog(ctx context.Context, rd *render.Renderer, dir string
 			return err
 		}
 	}
-	if err := rd.Write(dir, r.Name+"/log/index.html", "log", render.Page{Title: "commits · " + r.Name, D: &p}); err != nil {
+	if err := rd.Write(dir, r.Name+"/log/index.html", "log", render.Page{Title: "commits · " + r.Name, Wide: true, D: &p}); err != nil {
 		return err
 	}
 
@@ -45,6 +48,9 @@ func (b *Builder) renderLog(ctx context.Context, rd *render.Renderer, dir string
 	}
 	for _, c := range p.Commits {
 		cp := CommitPage{Repo: r, Tab: "log", C: c}
+		if c.Hash == r.Head {
+			cp.Status = r.Status
+		}
 		for _, h := range c.Parents {
 			cr := Crumb{Name: h[:min(len(h), 10)]}
 			if listed[h] {

@@ -32,6 +32,44 @@ type repo struct {
 	Releases []gitea.Release
 	Pulls    []gitea.PullRequest
 	Packages []gitea.Package
+
+	Owner, OwnerName, Avatar string // for the header and commit rows
+	Commits                  int
+	Branches, Tags           []gitx.Ref
+	Status                   *gitea.Status // CI status of HEAD, nil if none
+	Langs                    []Lang
+	License, LicenseHref     string
+	Listed                   map[string]bool // commits that have their own page
+}
+
+// Lang is one segment of the language bar, X and W on a 0..1000 scale.
+type Lang struct {
+	Name      string
+	Pct, X, W float64
+}
+
+// IsOwner reports whether a commit author is the profile's user, whose
+// avatar we have.
+func (r *repo) IsOwner(author string) bool {
+	return author != "" && (strings.EqualFold(author, r.OwnerName) || strings.EqualFold(author, r.Owner))
+}
+
+// Release returns the release for a tag, if any.
+func (r *repo) Release(tag string) *gitea.Release {
+	for i := range r.Releases {
+		if r.Releases[i].TagName == tag {
+			return &r.Releases[i]
+		}
+	}
+	return nil
+}
+
+// CommitHref links a commit to its page, if it has one.
+func (r *repo) CommitHref(hash string) string {
+	if !r.Listed[hash] {
+		return ""
+	}
+	return "/" + r.Name + "/commit/" + hash + "/"
 }
 
 // LatestTag is the newest non-prerelease tag, for the repo header.
@@ -46,9 +84,10 @@ func (r *repo) LatestTag() string {
 
 type Row struct {
 	gitx.Entry
-	Base string // last path segment
-	Href string
-	Last gitx.Commit
+	Base       string // last path segment
+	Href       string
+	Last       gitx.Commit
+	CommitHref string
 }
 
 type Crumb struct{ Name, Href string }
@@ -57,6 +96,7 @@ type RepoPage struct {
 	Repo     *repo
 	Tab      string
 	CloneURL string
+	GoGet    string // "daum.dev/<repo>" for Go modules
 	Latest   *gitx.Commit
 	Crumbs   []Crumb // tree pages only
 	Rows     []Row
@@ -68,6 +108,7 @@ type BlobPage struct {
 	Tab           string
 	Crumbs        []Crumb
 	Path, Raw     string
+	Name          string // last path segment
 	Size          int64
 	Lines         []template.HTML
 	Image, Binary bool
@@ -95,17 +136,43 @@ func (b *Builder) loadRepo(ctx context.Context, name string) (*repo, error) {
 	if r.Git, err = gitx.Mirror(ctx, src, filepath.Join(b.Data, "mirrors", name+".git")); err != nil {
 		return nil, err
 	}
-	if !meta.Empty {
-		if r.Head, err = r.Git.Head(ctx, meta.DefaultBranch); err != nil {
-			return nil, err
-		}
+	langs, err := b.Gitea.Languages(ctx, name)
+	if err != nil && !errors.Is(err, gitea.ErrNotFound) {
+		return nil, err
 	}
-	return r, nil
+	r.Langs = langBar(langs)
+	if meta.Empty {
+		return r, nil
+	}
+	if r.Head, err = r.Git.Head(ctx, meta.DefaultBranch); err != nil {
+		return nil, err
+	}
+	if r.Commits, err = r.Git.CommitCount(ctx, r.Head); err != nil {
+		return nil, err
+	}
+	if r.Branches, err = r.Git.Refs(ctx, "heads"); err != nil {
+		return nil, err
+	}
+	if r.Tags, err = r.Git.Refs(ctx, "tags"); err != nil {
+		return nil, err
+	}
+	switch st, err := b.Gitea.Status(ctx, name, r.Head); {
+	case err == nil && st.TotalCount > 0:
+		r.Status = st
+	case err != nil && !errors.Is(err, gitea.ErrNotFound):
+		return nil, err
+	}
+	log, err := r.Git.Log(ctx, r.Head, b.Cfg.MaxCommits, "")
+	r.Listed = map[string]bool{}
+	for _, c := range log {
+		r.Listed[c.Hash] = true
+	}
+	return r, err
 }
 
 func (b *Builder) renderRepo(ctx context.Context, rd *render.Renderer, dir string, r *repo) error {
 	p := RepoPage{Repo: r, Tab: "code", CloneURL: b.Cfg.SiteURL + "/" + r.Name + ".git"}
-	page := render.Page{Title: r.Name, D: &p}
+	page := render.Page{Title: r.Name, Wide: true, D: &p}
 	if r.Head == "" {
 		return rd.Write(dir, r.Name+"/index.html", "repo", page)
 	}
@@ -139,8 +206,19 @@ func (b *Builder) renderRepo(ctx context.Context, rd *render.Renderer, dir strin
 	if p.Rows, p.Readme, err = b.listing(ctx, r, "", kids[""], last); err != nil {
 		return err
 	}
-	if slices.ContainsFunc(kids[""], func(e gitx.Entry) bool { return e.Name == "go.mod" }) {
-		page.GoImport = goImport(b.Cfg.SiteURL, r.Name)
+	for _, e := range kids[""] {
+		switch u := strings.ToUpper(e.Name); {
+		case e.Name == "go.mod":
+			page.GoImport = goImport(b.Cfg.SiteURL, r.Name)
+			p.GoGet = siteHost(b.Cfg.SiteURL) + "/" + r.Name
+		case r.License == "" && e.Type == "blob" && e.Size < 64<<10 &&
+			(strings.HasPrefix(u, "LICENSE") || strings.HasPrefix(u, "LICENCE") || strings.HasPrefix(u, "COPYING")):
+			src, err := r.Git.Blob(ctx, e.Hash)
+			if err != nil {
+				return err
+			}
+			r.License, r.LicenseHref = licenseName(src), "/"+r.Name+"/blob/"+render.EscapePath(e.Name)
+		}
 	}
 	if err := rd.Write(dir, r.Name+"/index.html", "repo", page); err != nil {
 		return err
@@ -157,7 +235,7 @@ func (b *Builder) renderRepo(ctx context.Context, rd *render.Renderer, dir strin
 				return err
 			}
 			rel := r.Name + "/tree/" + e.Name + "/index.html"
-			if err := rd.Write(dir, rel, "dir", render.Page{Title: e.Name + " · " + r.Name, D: &tp}); err != nil {
+			if err := rd.Write(dir, rel, "dir", render.Page{Title: e.Name + " · " + r.Name, Wide: true, D: &tp}); err != nil {
 				return err
 			}
 		case e.Type == "blob":
@@ -175,6 +253,7 @@ func (b *Builder) listing(ctx context.Context, r *repo, dir string, entries []gi
 	rows := make([]Row, 0, len(entries))
 	for _, e := range entries {
 		row := Row{Entry: e, Base: path.Base(e.Name), Last: last[e.Name]}
+		row.CommitHref = r.CommitHref(row.Last.Hash)
 		switch e.Type {
 		case "tree":
 			row.Href = "/" + r.Name + "/tree/" + render.EscapePath(e.Name) + "/"
@@ -202,7 +281,7 @@ func (b *Builder) listing(ctx context.Context, r *repo, dir string, entries []gi
 }
 
 func (b *Builder) renderBlob(ctx context.Context, rd *render.Renderer, dir string, r *repo, e gitx.Entry) error {
-	p := BlobPage{Repo: r, Tab: "code", Crumbs: crumbs(r.Name, e.Name), Path: e.Name, Size: e.Size}
+	p := BlobPage{Repo: r, Tab: "code", Crumbs: crumbs(r.Name, e.Name), Path: e.Name, Name: path.Base(e.Name), Size: e.Size}
 	p.Image = isImage(e.Name)
 	if e.Size <= maxRaw {
 		src, err := r.Git.Blob(ctx, e.Hash)
@@ -266,4 +345,56 @@ func goImport(siteURL, name string) string {
 
 func siteHost(siteURL string) string {
 	return strings.TrimPrefix(strings.TrimPrefix(siteURL, "https://"), "http://")
+}
+
+// licenseName names common licenses from their text; anything else is just
+// "license".
+func licenseName(src []byte) string {
+	t := string(src[:min(len(src), 2048)])
+	for _, l := range []struct{ marker, name string }{
+		{"GNU AFFERO GENERAL PUBLIC LICENSE", "AGPL-3.0"},
+		{"GNU LESSER GENERAL PUBLIC LICENSE", "LGPL"},
+		{"GNU GENERAL PUBLIC LICENSE\n                       Version 2", "GPL-2.0"},
+		{"GNU GENERAL PUBLIC LICENSE", "GPL-3.0"},
+		{"Apache License", "Apache-2.0"},
+		{"Mozilla Public License", "MPL-2.0"},
+		{"Permission is hereby granted, free of charge", "MIT"},
+		{"ISC License", "ISC"},
+		{"Redistribution and use in source and binary forms", "BSD"},
+		{"This is free and unencumbered software", "Unlicense"},
+	} {
+		if strings.Contains(t, l.marker) {
+			return l.name
+		}
+	}
+	return "license"
+}
+
+// langBar turns Gitea's bytes-per-language into bar segments: the six
+// largest, plus "other" for the rest.
+func langBar(bytes map[string]int64) []Lang {
+	var total int64
+	names := make([]string, 0, len(bytes))
+	for n, b := range bytes {
+		names, total = append(names, n), total+b
+	}
+	if total == 0 {
+		return nil
+	}
+	slices.SortFunc(names, func(a, c string) int { return cmp.Or(cmp.Compare(bytes[c], bytes[a]), cmp.Compare(a, c)) })
+	var out []Lang
+	x, rest := 0.0, 0.0
+	for i, n := range names {
+		pct := 100 * float64(bytes[n]) / float64(total)
+		if i >= 6 || pct < 0.5 {
+			rest += pct
+			continue
+		}
+		out = append(out, Lang{Name: n, Pct: pct, X: x, W: pct * 10})
+		x += pct * 10
+	}
+	if rest > 0 {
+		out = append(out, Lang{Name: "other", Pct: rest, X: x, W: 1000 - x})
+	}
+	return out
 }

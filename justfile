@@ -5,7 +5,7 @@ default:
 
 # Run all tests
 test:
-    go test ./...
+    go test ./cmd/... ./internal/... ./web/...
 
 # Rewrite golden files after an intended output change
 golden:
@@ -13,8 +13,8 @@ golden:
 
 # gofmt check + go vet
 lint:
-    test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
-    go vet ./...
+    test -z "$(gofmt -l cmd internal web)" || { gofmt -l cmd internal web; exit 1; }
+    go vet ./cmd/... ./internal/... ./web/...
 
 # Lint the Dockerfile
 lint-docker:
@@ -28,6 +28,10 @@ digests:
 # Build the image (needs Docker, e.g. on the host)
 image:
     docker build -t daumdev:latest .
+
+# Regenerate the file icon subset from a material-icon-theme npm package dir
+icons pkg:
+    python3 -I scripts/icons.py {{pkg}}
 
 # Build the binary into ./bin
 build:
@@ -57,4 +61,4 @@ demo:
 
 # Count Go lines (budget: ~1,800, excluding tests, templates and CSS)
 loc:
-    find cmd internal web -name '*.go' ! -name '*_test.go' -print0 | xargs -0 cat | wc -l
+    find cmd internal web -name '*.go' ! -name '*_test.go' ! -name '*_gen.go' -print0 | xargs -0 cat | wc -l

@@ -1,21 +1,27 @@
 {{define "content" -}}
 {{template "repohead" .}}
 {{- if .Pulls}}
-<ol class="pull-list">
-  {{- range .Pulls}}
-  <li id="pr-{{.Number}}">
-    <details>
-      <summary>
-        <span class="pull-title">#{{.Number}} {{.Title}}</span>
-        <span class="pill pill--{{if .Merged}}merged{{else}}{{.State}}{{end}}">{{if .Merged}}merged{{else}}{{.State}}{{end}}</span>
-        <span class="meta">{{.User.Login}} · {{day .CreatedAt}}</span>
-      </summary>
-      {{- if .Body}}<div class="pull-body">{{.Body}}</div>{{else}}<p class="empty">no description.</p>{{end}}
-    </details>
-  </li>
-  {{- end}}
-</ol>
+<section class="box">
+  <h2 class="box-head">{{template "icon" "pull"}}{{len .Pulls}} pull request{{if ne (len .Pulls) 1}}s{{end}}</h2>
+  <ol class="rows">
+    {{- range .Pulls}}{{$state := .State}}{{if .Merged}}{{$state = "merged"}}{{end}}
+    <li class="pull" id="pr-{{.Number}}">
+      <details>
+        <summary class="row">
+          <span class="pr-icon pr--{{$state}}">{{template "icon" "pull"}}</span>
+          <div class="row-main">
+            <span class="row-title">{{.Title}}</span>
+            <span class="row-sub">#{{.Number}} opened {{day .CreatedAt}} by {{.User.Login}}</span>
+          </div>
+          <span class="badge badge--{{$state}}">{{$state}}</span>
+        </summary>
+        <div class="pull-body markdown">{{if .Body}}{{.Body}}{{else}}<p class="muted">No description.</p>{{end}}</div>
+      </details>
+    </li>
+    {{- end}}
+  </ol>
+</section>
 {{- else}}
-<p class="empty">no pull requests.</p>
+<p class="empty">No pull requests.</p>
 {{- end}}
 {{- end}}

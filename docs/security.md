@@ -39,6 +39,14 @@ enforces it and the test that proves it. Run them all with `just test`.
 - A repo is skipped only when Gitea says it's not found or private. Any other
   error fails the build and the previous one stays live.
 
+## Changes after the review
+
+- The CSP now has `script-src 'self'` for `/static/copy.js` (copy buttons).
+  Inline scripts and handlers are still impossible, and `TestOutputIsSafe`
+  allows exactly that one script tag and nothing else.
+- Repo SVGs on `raw/` stay `text/plain` even though `/static` serves our own
+  icons as `image/svg+xml` (covered by `TestRoutes`).
+
 ## Accepted risks
 
 - PR and release bodies can embed https images (the CSP allows `img-src

@@ -109,7 +109,9 @@ func (b *Builder) prune(keep ...string) {
 // reuse links r's git-derived pages (dirs) from the previous build when the
 // repo's HEAD and header data are unchanged. It reports whether it did.
 func (b *Builder) reuse(r *repo, dir string, dirs ...string) bool {
-	h, _ := json.Marshal([]any{r.Head, r.Description, r.Website, r.Topics, r.Archived, r.DefaultBranch, r.LatestTag()})
+	// everything the shared repo header and tabs show
+	h, _ := json.Marshal([]any{r.Head, r.Description, r.Website, r.Topics, r.Archived, r.DefaultBranch, r.LatestTag(),
+		len(r.Branches), len(r.Tags), len(r.Releases), len(r.Pulls), len(r.Packages), r.License, r.Avatar})
 	key := fmt.Sprintf("%x", sha256.Sum256(h))
 	if b.st.next == nil { // -once mode: no previous build
 		return false

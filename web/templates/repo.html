@@ -1,18 +1,43 @@
 {{define "content" -}}
 {{template "repohead" .}}
-<div class="clone">
-  <label for="clone-url">clone</label>
-  <input id="clone-url" readonly value="{{.CloneURL}}">
-</div>
+{{- $r := .Repo}}
 {{- if .Latest}}
-{{template "latest" .}}
-<h2 class="section-label">files</h2>
-{{template "tree" .Rows}}
+<section class="box">
+  <div class="box-bar">
+    <a class="chip" href="/{{$r.Name}}/branches/">{{template "icon" "branch"}}{{$r.DefaultBranch}}</a>
+    <a class="stat" href="/{{$r.Name}}/branches/">{{template "icon" "branch"}}<b>{{len $r.Branches}}</b> branch{{if ne (len $r.Branches) 1}}es{{end}}</a>
+    <a class="stat" href="/{{$r.Name}}/tags/">{{template "icon" "tag"}}<b>{{len $r.Tags}}</b> tag{{if ne (len $r.Tags) 1}}s{{end}}</a>
+    <a class="stat" href="/{{$r.Name}}/log/">{{template "icon" "history"}}<b>{{$r.Commits}}</b> commit{{if ne $r.Commits 1}}s{{end}}</a>
+    <details class="clone">
+      <summary class="button button--primary">{{template "icon" "code"}}Clone{{template "icon" "chevron"}}</summary>
+      <div class="clone-pop">
+        <p class="clone-label">HTTPS</p>
+        {{template "copyfield" (dict "ID" "clone-https" "Value" (printf "git clone %s" .CloneURL) "Label" "clone command")}}
+        {{- with .GoGet}}
+        <p class="clone-label">Go</p>
+        {{template "copyfield" (dict "ID" "clone-go" "Value" (printf "go get %s" .) "Label" "go get command")}}
+        {{- end}}
+      </div>
+    </details>
+  </div>
+  {{template "commitrow" .}}
+  {{template "files" .Rows}}
+</section>
+{{- with $r.Langs}}
+<section class="langs" aria-label="languages">
+  <svg class="langbar" width="100%" height="8" viewBox="0 0 1000 8" preserveAspectRatio="none" aria-hidden="true">
+    {{- range .}}<rect class="{{if eq .Name "other"}}lang-other{{else}}{{lang .Name}}{{end}}" x="{{printf "%.2f" .X}}" width="{{printf "%.2f" .W}}" height="8"></rect>{{end -}}
+  </svg>
+  <ul class="lang-legend">
+    {{- range .}}<li><span class="dot {{if eq .Name "other"}}lang-other{{else}}{{lang .Name}}{{end}}" aria-hidden="true"></span>{{.Name}}<span class="lang-pct">{{pct .Pct}}%</span></li>{{end}}
+  </ul>
+</section>
+{{- end}}
 {{- else}}
-<p class="empty">this repository is empty.</p>
+<section class="box box-empty">
+  <p>This repository is empty.</p>
+  {{template "copyfield" (dict "ID" "clone-https" "Value" (printf "git clone %s" .CloneURL) "Label" "clone command")}}
+</section>
 {{- end}}
-{{- with .Readme}}
-<h2 class="section-label">readme</h2>
-<article class="readme">{{.}}</article>
-{{- end}}
+{{template "readme" .Readme}}
 {{- end}}

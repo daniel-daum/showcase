@@ -88,11 +88,14 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 				return fmt.Errorf("%s: %w", name, err)
 			}
 		}
+		r.Owner, r.OwnerName, r.Avatar = user.Login, user.FullName, p.Avatar
 		repos = append(repos, r)
 		p.Repos = append(p.Repos, r.Repo)
 	}
 	pkgs, err := b.Gitea.Packages(ctx, b.Cfg.Repos)
-	if err != nil && !errors.Is(err, gitea.ErrNotFound) {
+	if errors.Is(err, gitea.ErrNotFound) { // Gitea 28 wants a token for this API
+		b.Log.Warn("packages not visible anonymously", "err", err)
+	} else if err != nil {
 		return fmt.Errorf("packages: %w", err)
 	}
 	for _, pk := range pkgs {

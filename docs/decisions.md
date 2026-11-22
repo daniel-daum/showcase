@@ -163,3 +163,44 @@ details are in `docs/theme.md`. This replaces the spec's original
 - `.dockerignore` is an allowlist: only `go.mod`, `go.sum`, `cmd/`,
   `internal/` and `web/` enter the build context, and tests are excluded.
 - `crane` and `hadolint` are project tools in `mise.toml`.
+
+## Reaching Gitea
+
+- Today Gitea's HTTPS is public at `git.danieldaum.net`, and only SSH is
+  tailnet-only. `gitea_url` is `https://git.danieldaum.net` for now. SSH isn't
+  an option, because it needs a key and the builder must stay anonymous.
+- Once Gitea goes private, the best option is a shared Docker network on the
+  same host (`gitea_url: http://gitea:3000`), so no tailnet hop is needed.
+  Otherwise expose Gitea's HTTP port on the tailnet only.
+- Gitea 28's packages API requires a token even for public packages, so it
+  answers anonymous calls with 401. 401 and 403 now count as "not publicly
+  visible", the same as 404. The build logs a warning, and the packages page
+  stays empty.
+
+## Polish pass: design, icons, one small script
+
+- **Design:** saturn's palettes and tokens stay, but daum.dev has its own type
+  and component system, because saturn's all-pixel, all-caps style reads
+  poorly in dense listings. Text is Geist, code and hashes are Geist Mono, and
+  headings and the brand are Geist Pixel. Labels are sentence case.
+  Everything sits in one bordered "box" component. Repo pages are up to 68rem
+  wide.
+- **File icons:** a 153-icon subset of material-icon-theme (MIT, the set Gitea
+  uses), picked by `scripts/icons.py` (`just icons <pkg>`) into
+  `web/static/icons/`. The name and extension maps are generated into
+  `internal/render/icons_gen.go`. Icons are served as `<img>`, which can't
+  run scripts. UI icons are an inline SVG sprite drawn for this site.
+- **Copy buttons need JS**, which departs from the spec's "No JavaScript".
+  `/static/copy.js` is about 15 lines, same-origin and progressive: without
+  it, the buttons stay hidden and the read-only fields can still be copied by
+  hand. The CSP gains `script-src 'self'`, and nothing inline is allowed. To
+  drop it, delete `copy.js`, its `<script>` tag and the CSP entry.
+- **Branches and tags pages** (`/<repo>/branches/`, `/<repo>/tags/`) list refs
+  with their last commit. Only the default branch is browsable. Tags link to
+  their release.
+- **CI checks:** the status of HEAD comes from Gitea's commit status API. The
+  check badge links to the commit page's `#checks` list. Gitea's own run
+  pages aren't linked, since the Gitea UI is never exposed.
+- **Freshness:** ages within a day, week or month get warmer colours.
+- **Stylesheet cache-busting:** the CSS (and `copy.js`) URLs carry a hash of
+  `style.css`, so caches never serve a stale stylesheet.

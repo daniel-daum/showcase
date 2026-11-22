@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"daum.dev/showcase/internal/gitea"
+	"daum.dev/showcase/internal/gitx"
 	"daum.dev/showcase/internal/render"
 )
 
@@ -31,6 +32,8 @@ type ExtraPage struct {
 	Releases []ReleaseView
 	Pulls    []PullView
 	Packages []PackageView
+	Kind     string // "branches" or "tags" on the refs pages
+	Refs     []gitx.Ref
 }
 
 // renderExtras writes the releases, pulls and packages pages from API data.
@@ -74,8 +77,17 @@ func (b *Builder) renderExtras(rd *render.Renderer, dir string, r *repo) error {
 	}
 
 	for _, p := range []ExtraPage{rel, pulls, pkgs} {
-		page := render.Page{Title: p.Tab + " · " + r.Name, D: &p}
+		page := render.Page{Title: p.Tab + " · " + r.Name, Wide: true, D: &p}
 		if err := rd.Write(dir, r.Name+"/"+p.Tab+"/index.html", p.Tab, page); err != nil {
+			return err
+		}
+	}
+	for _, p := range []ExtraPage{
+		{Repo: r, Tab: "code", Kind: "branches", Refs: r.Branches},
+		{Repo: r, Tab: "code", Kind: "tags", Refs: r.Tags},
+	} {
+		page := render.Page{Title: p.Kind + " · " + r.Name, Wide: true, D: &p}
+		if err := rd.Write(dir, r.Name+"/"+p.Kind+"/index.html", "refs", page); err != nil {
 			return err
 		}
 	}

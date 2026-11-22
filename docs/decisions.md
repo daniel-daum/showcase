@@ -150,3 +150,16 @@ details are in `docs/theme.md`. This replaces the spec's original
 - Gitea must allow anonymous HTTP git and registry reads
   (`REQUIRE_SIGNIN_VIEW = false`, HTTP git not disabled), or public clones and
   pulls fail.
+
+## Image
+
+- Base images are `golang:1.27.4-alpine3.24` and `alpine:3.24.4`, pinned by
+  digest. `just digests` prints the current upstream digests for bumping. Go
+  is the same version as `mise.toml`.
+- apk packages (`git`, `ca-certificates`) aren't version-pinned, since
+  Alpine drops old package versions. The base image digest bounds them.
+- `HOME=/data`, so nothing tries to write elsewhere on the read-only root.
+  Builds only write under `/data`.
+- `.dockerignore` is an allowlist: only `go.mod`, `go.sum`, `cmd/`,
+  `internal/` and `web/` enter the build context, and tests are excluded.
+- `crane` and `hadolint` are project tools in `mise.toml`.

@@ -41,6 +41,21 @@ just run         # build from real Gitea every 10 min and serve on localhost:800
 }
 ```
 
+## Deploy
+
+```sh
+just image                       # docker build -t daumdev:latest . (needs Docker)
+docker compose up -d             # uses compose.yaml and ./config.json
+```
+
+The container runs as uid 10001 with a read-only root filesystem, no
+capabilities and `no-new-privileges`. Only `/data` is writable: git mirrors
+and site builds. It listens on plain HTTP `:8080`. Pangolin terminates TLS.
+
+Gitea must allow anonymous reads (`REQUIRE_SIGNIN_VIEW = false`, HTTP git
+not disabled) and has to be reachable from the container at `gitea_url`.
+Put Pangolin's address in `trusted_proxies` so logs show client IPs.
+
 ## Layout
 
 ```
@@ -54,6 +69,8 @@ internal/server/   router, static files, git + registry proxy
 web/               embedded templates and static assets
 testdata/          sample Gitea JSON and golden output
 docs/              spec and design decisions
+Dockerfile         golang build stage, alpine + git runtime, pinned by digest
+compose.yaml       example deployment
 ```
 
 ## Docs

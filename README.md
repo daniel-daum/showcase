@@ -79,6 +79,7 @@ compose.yaml       example deployment
   and the build order.
 - [docs/decisions.md](docs/decisions.md): choices made while building.
 - [docs/theme.md](docs/theme.md): how the look follows danieldaum.net.
+- [docs/security.md](docs/security.md): each security rule mapped to code and tests.
 
 ## Licences
 

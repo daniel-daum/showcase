@@ -135,7 +135,7 @@ func (c *Client) Repo(ctx context.Context, name string) (*Repo, error) {
 		return nil, err
 	}
 	if r.Private { // anonymous calls should never see one; refuse anyway
-		return nil, fmt.Errorf("gitea: repo %s is private", name)
+		return nil, fmt.Errorf("repo %s is private: %w", name, ErrNotFound)
 	}
 	return &r, nil
 }

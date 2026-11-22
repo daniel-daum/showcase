@@ -55,7 +55,8 @@ func TestProxyRoutes(t *testing.T) {
 		{"HEAD", "/v2/", nil, 200, "/v2/"},
 		{"GET", "/v2/token?scope=repository:daniel/repo-a:pull&service=container_registry", nil, 200, "/v2/token?scope=repository:daniel/repo-a:pull&service=container_registry"},
 		{"GET", "/v2/daniel/repo-a/manifests/latest", nil, 200, "/v2/daniel/repo-a/manifests/latest"},
-		{"HEAD", "/v2/daniel/tools/cli/blobs/sha256:abc", nil, 200, "/v2/daniel/tools/cli/blobs/sha256:abc"},
+		{"HEAD", "/v2/daniel/tools/cli/blobs/sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", nil, 200, "/v2/daniel/tools/cli/blobs/sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+		{"GET", "/v2/daniel/repo-a/manifests/sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", nil, 200, "/v2/daniel/repo-a/manifests/sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
 		{"GET", "/repo-a/releases/download/v1.0/app.tar.gz", nil, 200, "/daniel/repo-a/releases/download/v1.0/app.tar.gz"},
 
 		// push and anything else on these prefixes never reaches Gitea
@@ -76,6 +77,9 @@ func TestProxyRoutes(t *testing.T) {
 		{"GET", "/v2/daniel/secret/manifests/latest", nil, 404, ""},
 		{"GET", "/v2/other/repo-a/manifests/latest", nil, 404, ""},
 		{"GET", "/v2/_catalog", nil, 404, ""},
+		{"GET", "/v2/daniel/repo-a/blobs/uploads", nil, 404, ""},
+		{"GET", "/v2/daniel/repo-a/blobs/sha256:abc", nil, 404, ""},
+		{"GET", "/v2/daniel/repo-a/manifests/-bad", nil, 404, ""},
 		{"GET", "/v2/daniel/repo-a/tags/list", nil, 404, ""},
 		{"GET", "/secret/releases/download/v1/x", nil, 404, ""},
 		{"GET", "/repo-a/releases/download/v1/a/b", nil, 404, ""},
@@ -157,9 +161,19 @@ func TestProxyResponses(t *testing.T) {
 		http.Redirect(w, r, "http://minio.tailnet.example/bucket/blob", http.StatusTemporaryRedirect)
 	}
 	w = httptest.NewRecorder()
-	s.ServeHTTP(w, httptest.NewRequest("GET", "/v2/daniel/repo-a/blobs/sha256:abc", nil))
+	s.ServeHTTP(w, httptest.NewRequest("GET", "/v2/daniel/repo-a/blobs/sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", nil))
 	if w.Code != http.StatusBadGateway || strings.Contains(w.Header().Get("Location"), "tailnet") {
 		t.Errorf("upstream redirect passed through: %d %s", w.Code, w.Header().Get("Location"))
+	}
+
+	u.resp = func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Www-Authenticate", `Basic realm="Gitea"`)
+		w.WriteHeader(http.StatusUnauthorized)
+	}
+	w = httptest.NewRecorder()
+	s.ServeHTTP(w, httptest.NewRequest("GET", "/repo-a.git/info/refs?service=git-upload-pack", nil))
+	if w.Header().Get("Www-Authenticate") != "" {
+		t.Error("Basic challenge passed through; git would prompt for credentials")
 	}
 
 	u.resp = func(w http.ResponseWriter, r *http.Request) { io.Copy(io.Discard, r.Body) }

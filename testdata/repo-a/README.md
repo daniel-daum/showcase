@@ -16,3 +16,9 @@ and [the section below](#usage).
 ```sh
 go run ./cmd/hello
 ```
+
+| flag | default |
+| :--- | ------: |
+| `-v` | off     |
+
+- [x] task lists render

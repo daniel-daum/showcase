@@ -76,9 +76,12 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 	days, since := map[string]int{}, b.Now().AddDate(-1, 0, -7)
 	for _, name := range b.Cfg.Repos {
 		r, err := b.loadRepo(ctx, name)
-		if err != nil {
+		if errors.Is(err, gitea.ErrNotFound) { // private, renamed or deleted: never shown
 			b.Log.Warn("skipping repo", "repo", name, "err", err)
 			continue
+		}
+		if err != nil { // anything else may be transient: keep the last good build
+			return fmt.Errorf("%s: %w", name, err)
 		}
 		if r.Head != "" {
 			if err := r.Git.CommitDays(ctx, r.Head, since, days); err != nil {

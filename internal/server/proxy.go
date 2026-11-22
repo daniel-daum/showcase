@@ -13,7 +13,11 @@ import (
 
 const maxUploadPack = 10 << 20
 
-var realmRe = regexp.MustCompile(`realm="[^"]*"`)
+var (
+	realmRe  = regexp.MustCompile(`realm="[^"]*"`)
+	digestRe = regexp.MustCompile(`^sha256:[a-f0-9]{64}$`)
+	refRe    = regexp.MustCompile(`^([A-Za-z0-9_][A-Za-z0-9._-]{0,127}|sha256:[a-f0-9]{64})$`)
+)
 
 // newProxy forwards allowlisted git, registry and release-download requests
 // to Gitea. It never forwards cookies or proxy headers, refuses upstream
@@ -47,8 +51,12 @@ func (s *Server) newProxy() *httputil.ReverseProxy {
 					h.Del(k)
 				}
 			}
-			if v := h.Get("Www-Authenticate"); v != "" {
+			// point the registry's token realm at us; drop other challenges so
+			// clients never prompt for (or send) credentials
+			if v := h.Get("Www-Authenticate"); strings.HasPrefix(v, "Bearer ") {
 				h.Set("Www-Authenticate", realmRe.ReplaceAllLiteralString(v, `realm="`+s.Cfg.SiteURL+`/v2/token"`))
+			} else {
+				h.Del("Www-Authenticate")
 			}
 			if strings.Contains(resp.Request.URL.Path, "/releases/download/") {
 				// uploaded assets could be anything, including HTML
@@ -131,10 +139,10 @@ func (s *Server) proxyRoute(w http.ResponseWriter, r *http.Request) bool {
 // registryImage splits "<image>/(manifests|blobs)/<ref>" and checks the
 // image against the allowlist. Image names may contain slashes.
 func (s *Server) registryImage(rest string) (string, bool) {
-	for _, kind := range []string{"/manifests/", "/blobs/"} {
+	for kind, ok := range map[string]*regexp.Regexp{"/manifests/": refRe, "/blobs/": digestRe} {
 		if i := strings.LastIndex(rest, kind); i > 0 {
 			image, ref := rest[:i], rest[i+len(kind):]
-			return image, ref != "" && !strings.Contains(ref, "/") && s.Cfg.HasImage(image)
+			return image, ok.MatchString(ref) && s.Cfg.HasImage(image)
 		}
 	}
 	return "", false

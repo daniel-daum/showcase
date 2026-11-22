@@ -21,7 +21,10 @@ import (
 // "/repo-a"); images that aren't relative or https are dropped.
 func Markdown(src []byte, base, dir string) (template.HTML, error) {
 	md := goldmark.New(
-		goldmark.WithExtensions(extension.GFM),
+		// GFM, but table alignment as align attributes: the default inline
+		// style attributes would be blocked by the CSP.
+		goldmark.WithExtensions(extension.Linkify, extension.Strikethrough, extension.TaskList,
+			extension.NewTable(extension.WithTableCellAlignMethod(extension.TableCellAlignAttribute))),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
 			parser.WithASTTransformers(util.Prioritized(linkFixer{base, dir}, 100)),

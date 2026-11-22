@@ -31,8 +31,8 @@ func TestContrast(t *testing.T) {
 		{"--text-headings", "--page"}, {"--text-headings", "--box"}, {"--text-headings", "--box-head"}, {"--text-headings", "--hover"},
 		{"--body-text", "--page"}, {"--body-text", "--box"}, {"--body-text", "--box-head"}, {"--body-text", "--hover"},
 		{"--text-secondary", "--page"}, {"--text-secondary", "--box"}, {"--text-secondary", "--box-head"},
-		{"--text-secondary", "--hover"}, {"--text-secondary", "--surface"}, {"--text-secondary", "--background-dark"},
-		{"--accent-bright", "--page"}, {"--accent-bright", "--box"}, {"--accent-bright", "--hover"},
+		{"--text-secondary", "--hover"},
+		{"--accent-bright", "--page"}, {"--accent-bright", "--box"}, {"--accent-bright", "--box-head"}, {"--accent-bright", "--hover"},
 		{"--accent", "--page"}, {"--background-dark", "--accent"},
 		{"--syn-constant", "--box"}, {"--add", "--box"}, {"--del", "--box"},
 	}

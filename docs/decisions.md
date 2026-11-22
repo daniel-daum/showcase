@@ -213,12 +213,31 @@ All changes are in part 2 of `style.css`. Saturn's tokens in part 1 are
 untouched, and every new value is a `color-mix()` of them, so ink, wine,
 plum, teal and flexoki get the same steps as moss.
 
-- **Layers, darkest first:** `--page` (background-dark 55% toward black),
-  `--box` (60% background-dark, 40% surface), then `--box-head` and `--hover`
-  (surface with 4–5% of the heading colour). The latest-commit strip and
-  README table headers use `--box-head` too. Box edges use `--edge`, which is
-  brighter than saturn's `--borders`. Dividers inside boxes use the softer
-  `--rule`, and controls use `--line`.
+- **Layers follow the Paint themes for Gitea** (`gitea/theme/css/`). The
+  first try mixed saturn's `--surface` and `--borders` into boxes. They are
+  strongly saturated (moss surface is an olive at chroma 0.056), so boxes
+  looked off-colour against a near-black page. Paint uses one lightness
+  ladder in every palette, tinted only slightly toward the palette's hue: in
+  OKLab, page L 0.205, box 0.222, box header 0.245, hover 0.267, border 0.36,
+  all at chroma ~0.015. Here each layer is
+  `color-mix(in oklab, var(--background-dark) 55%, <neutral grey>)`, which
+  lands within 1–2 RGB units of every Paint theme and extends to flexoki,
+  which has no Paint theme:
+
+  | token        | grey      | moss result | Paint moss |
+  | ------------ | --------- | ----------- | ---------- |
+  | `--page`     | `#141414` | `#171a10`   | `#16180e`  |
+  | `--box`      | `#1c1c1c` | `#1b1d14`   | `#1a1c12`  |
+  | `--box-head` | `#282828` | `#202319`   | `#1f2217`  |
+  | `--hover`    | `#343434` | `#25281e`   | `#25271d`  |
+  | `--rule`     | `#4e4e4e` | dividers inside boxes | |
+  | `--edge`     | `#6d6d6d` | `#3d4035`   | `#3c3f33`  |
+  | `--line`     | `#808080` | controls    |            |
+
+  Nothing in part 2 uses `--surface`, `--borders` or `--accent-muted` any
+  more. Chips, buttons, the clone menu, code areas, inline code, `hr`, the
+  count pills and topic pills now sit on the ladder or on a light mix of the
+  accent. Hover borders use `--accent-edge` (the accent mixed into `--edge`).
 - **Text:** `--body-text` (45% body, 55% headings) for body copy,
   descriptions and the tree's commit column. File names, repo names, commit
   subjects and counts use `--text-headings` at weight 500–600, and
@@ -228,30 +247,39 @@ plum, teal and flexoki get the same steps as moss.
 - **Accent:** `--accent-bright` (accent 82%, white 18%) is used for hovers,
   active tabs, breadcrumb links, the profile name, the 404 and one shared
   `:focus-visible` ring (`a`, `button`, `summary`, `input`). `--accent` stays
-  for fills: the primary button, the heatmap, the language bar and the
-  `:target` line edge.
-- **Depth:** boxes and repo cards get `--depth` (a faint top highlight plus
-  a soft drop shadow), and box heads repeat the highlight, since their
-  background hides the box's. The profile avatar has a faint accent glow made
-  of two spread box-shadows. It sits only behind the avatar, with no gradient
-  behind text.
+  for fills: the primary button, the language bar, the top heatmap step and
+  the `:target` line edge. Heatmap steps `--heat-1..3` mix the accent into
+  `--box` (30/52/76%), like Paint's primary ramp, instead of starting from
+  the saturated `--accent-muted`.
+- **Depth:** Paint's card shadow (`0 1px 1px` at 25% black) plus a very faint
+  top highlight, on boxes, repo cards and box heads. An accent glow behind
+  the avatar was tried and dropped: the avatar has a plain 1px ring.
 - **Contrast:** `web/contrast_test.go` reads the tokens from `style.css`,
   evaluates the `color-mix()` chains in OKLab and fails below 4.5:1. Run
   `go test -v -run Contrast ./web` to see the ratios. At the time of writing:
 
   | text on              | moss  | ink   | wine  | plum  | teal  | flexoki |
   | -------------------- | ----- | ----- | ----- | ----- | ----- | ------- |
-  | headings / page      | 17.68 | 17.79 | 17.82 | 17.83 | 17.68 | 18.08   |
-  | headings / box-head  | 11.20 | 12.12 | 12.35 | 12.59 | 11.12 | 13.62   |
-  | body / box           | 12.68 | 13.30 | 13.45 | 13.56 | 12.64 | 14.62   |
-  | body / hover         | 10.40 | 11.25 | 11.45 | 11.68 | 10.32 | 12.61   |
-  | secondary / page     | 7.45  | 7.49  | 7.51  | 7.51  | 7.45  | 7.61    |
-  | secondary / box      | 5.90  | 6.18  | 6.25  | 6.30  | 5.88  | 6.79    |
-  | secondary / box-head | 4.72  | 5.11  | 5.20  | 5.30  | 4.68  | 5.74    |
-  | secondary / hover    | 4.83  | 5.23  | 5.32  | 5.43  | 4.80  | 5.86    |
-  | accent-bright / box  | 7.94  | 7.33  | 7.69  | 7.98  | 8.30  | 7.61    |
+  | headings / page      | 15.46 | 15.71 | 15.78 | 15.80 | 15.46 | 16.47   |
+  | headings / box-head  | 14.01 | 14.30 | 14.38 | 14.40 | 14.01 | 15.23   |
+  | body / box           | 13.49 | 13.74 | 13.80 | 13.82 | 13.49 | 14.49   |
+  | body / hover         | 11.89 | 12.17 | 12.24 | 12.26 | 11.89 | 13.06   |
+  | secondary / page     | 6.51  | 6.62  | 6.65  | 6.65  | 6.51  | 6.94    |
+  | secondary / box      | 6.27  | 6.39  | 6.42  | 6.42  | 6.27  | 6.74    |
+  | secondary / box-head | 5.90  | 6.02  | 6.06  | 6.07  | 5.90  | 6.41    |
+  | secondary / hover    | 5.53  | 5.66  | 5.69  | 5.70  | 5.53  | 6.07    |
+  | accent-bright / box  | 8.45  | 7.57  | 7.89  | 8.13  | 8.86  | 7.55    |
 
-  The tightest pair is metadata on box heads in teal and moss (about 4.7:1).
-  That's why heads and hovers only take 4–5% of the heading colour. Line
-  numbers keep saturn's dimmed look (opacity 0.55) and are exempt, as
+  Line numbers keep saturn's dimmed look (opacity 0.55) and are exempt, as
   decoration next to the code.
+
+### Phase 2: language bar above the file tree
+
+- The language legend (dot, name, percent) is a compact row between the tabs
+  and the code box. The bar is a 4px SVG strip, the first child of the code
+  box. The box's `overflow: hidden` clips it to the rounded top corners and
+  keeps it inside the border. The segments are the same as before: adjacent
+  rects with no extra gap, the six largest languages plus "other". The old
+  `.langs` section under the box is gone.
+- Empty repos show neither, as before: there's no code box and Gitea reports
+  no languages.

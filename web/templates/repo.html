@@ -2,7 +2,17 @@
 {{template "repohead" .}}
 {{- $r := .Repo}}
 {{- if .Latest}}
+{{- with $r.Langs}}
+<ul class="lang-legend" aria-label="languages">
+  {{- range .}}<li><span class="dot {{if eq .Name "other"}}lang-other{{else}}{{lang .Name}}{{end}}" aria-hidden="true"></span>{{.Name}}<span class="lang-pct">{{pct .Pct}}%</span></li>{{end}}
+</ul>
+{{- end}}
 <section class="box">
+  {{- with $r.Langs}}
+  <svg class="langbar" width="100%" height="4" viewBox="0 0 1000 4" preserveAspectRatio="none" aria-hidden="true">
+    {{- range .}}<rect class="{{if eq .Name "other"}}lang-other{{else}}{{lang .Name}}{{end}}" x="{{printf "%.2f" .X}}" width="{{printf "%.2f" .W}}" height="4"></rect>{{end -}}
+  </svg>
+  {{- end}}
   <div class="box-bar">
     <a class="chip" href="/{{$r.Name}}/branches/">{{template "icon" "branch"}}{{$r.DefaultBranch}}</a>
     <a class="stat" href="/{{$r.Name}}/branches/">{{template "icon" "branch"}}<b>{{len $r.Branches}}</b> branch{{if ne (len $r.Branches) 1}}es{{end}}</a>
@@ -23,16 +33,6 @@
   {{template "commitrow" .}}
   {{template "files" .Rows}}
 </section>
-{{- with $r.Langs}}
-<section class="langs" aria-label="languages">
-  <svg class="langbar" width="100%" height="8" viewBox="0 0 1000 8" preserveAspectRatio="none" aria-hidden="true">
-    {{- range .}}<rect class="{{if eq .Name "other"}}lang-other{{else}}{{lang .Name}}{{end}}" x="{{printf "%.2f" .X}}" width="{{printf "%.2f" .W}}" height="8"></rect>{{end -}}
-  </svg>
-  <ul class="lang-legend">
-    {{- range .}}<li><span class="dot {{if eq .Name "other"}}lang-other{{else}}{{lang .Name}}{{end}}" aria-hidden="true"></span>{{.Name}}<span class="lang-pct">{{pct .Pct}}%</span></li>{{end}}
-  </ul>
-</section>
-{{- end}}
 {{- else}}
 <section class="box box-empty">
   <p>This repository is empty.</p>

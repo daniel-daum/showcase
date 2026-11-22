@@ -1,0 +1,459 @@
+/* Tangled-style theme for Gitea. Built against Gitea v1.27.3 theme variables.
+   Install: {CustomPath}/public/assets/css/  (see README) */
+
+gitea-theme-meta-info {
+  --theme-display-name: "Tangled Light";
+  --theme-color-scheme: "light";
+}
+
+/* Fonts: Tangled uses Inter + IBM Plex Mono (both OFL). Installed copies are used first;
+   otherwise drop the woff2 files in {CustomPath}/public/assets/fonts/.
+   If you skip the fonts, delete these @font-face blocks; system fonts take over. */
+@font-face {
+  font-family: "InterVariable";
+  src: local("InterVariable"), local("Inter Variable"), local("Inter"), url("../fonts/InterVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "InterVariable";
+  src: local("InterVariable Italic"), local("Inter Variable Italic"), local("Inter Italic"), url("../fonts/InterVariable-Italic.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBMPlexMono";
+  src: local("IBM Plex Mono"), local("IBMPlexMono"), url("../fonts/IBMPlexMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBMPlexMono";
+  src: local("IBM Plex Mono Bold"), local("IBMPlexMono-Bold"), url("../fonts/IBMPlexMono-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --fonts-proportional: "InterVariable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  --fonts-monospace: "IBMPlexMono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace, var(--fonts-emoji);
+}
+
+:root {
+  --is-dark-theme: false;
+  --color-primary: #111827;
+  --color-primary-contrast: #ffffff;
+  --color-primary-dark-1: #0d1320;
+  --color-primary-dark-2: #0a0f1a;
+  --color-primary-dark-3: #080b14;
+  --color-primary-dark-4: #05080e;
+  --color-primary-dark-5: #030508;
+  --color-primary-dark-6: #010204;
+  --color-primary-dark-7: #000000;
+  --color-primary-light-1: #374151;
+  --color-primary-light-2: #4b5563;
+  --color-primary-light-3: #6b7280;
+  --color-primary-light-4: #9ca3af;
+  --color-primary-light-5: #d1d5db;
+  --color-primary-light-6: #e5e7eb;
+  --color-primary-light-7: #f9fafb;
+  --color-primary-alpha-10: #1118271a;
+  --color-primary-alpha-20: #11182733;
+  --color-primary-alpha-30: #1118274c;
+  --color-primary-alpha-40: #11182766;
+  --color-primary-alpha-50: #11182780;
+  --color-primary-alpha-60: #11182799;
+  --color-primary-alpha-70: #111827b2;
+  --color-primary-alpha-80: #111827cc;
+  --color-primary-alpha-90: #111827e6;
+  --color-primary-hover: #374151;
+  --color-primary-active: #4b5563;
+  --color-secondary: #e5e7eb;
+  --color-secondary-dark-1: #dbdee3;
+  --color-secondary-dark-2: #d1d5db;
+  --color-secondary-dark-3: #b6bcc5;
+  --color-secondary-dark-4: #9ca3af;
+  --color-secondary-dark-5: #848a98;
+  --color-secondary-dark-6: #6b7280;
+  --color-secondary-dark-7: #5b6472;
+  --color-secondary-dark-8: #4b5563;
+  --color-secondary-dark-9: #414b5a;
+  --color-secondary-dark-10: #374151;
+  --color-secondary-dark-11: #2b3544;
+  --color-secondary-dark-12: #1f2937;
+  --color-secondary-dark-13: #111827;
+  --color-secondary-light-1: #eaebef;
+  --color-secondary-light-2: #eef0f2;
+  --color-secondary-light-3: #f3f4f6;
+  --color-secondary-light-4: #f9fafb;
+  --color-secondary-alpha-10: #e5e7eb1a;
+  --color-secondary-alpha-20: #e5e7eb33;
+  --color-secondary-alpha-30: #e5e7eb4c;
+  --color-secondary-alpha-40: #e5e7eb66;
+  --color-secondary-alpha-50: #e5e7eb80;
+  --color-secondary-alpha-60: #e5e7eb99;
+  --color-secondary-alpha-70: #e5e7ebb2;
+  --color-secondary-alpha-80: #e5e7ebcc;
+  --color-secondary-alpha-90: #e5e7ebe6;
+  --color-secondary-button: var(--color-secondary-dark-4);
+  --color-secondary-hover: var(--color-secondary-dark-5);
+  --color-secondary-active: var(--color-secondary-dark-6);
+  /* console colors - used for actions console and console files */
+  --color-console-fg: #111827;
+  --color-console-fg-subtle: #4b5563;
+  --color-console-bg: #ffffff;
+  --color-console-border: #e5e7eb;
+  --color-console-hover-bg: #f3f4f6;
+  --color-console-active-bg: #e5e7eb;
+  --color-console-menu-bg: #f9fafb;
+  --color-console-menu-border: #e5e7eb;
+  --color-console-link: #6b7280;
+  /* named colors */
+  --color-red: #dc2626;
+  --color-orange: #ea580c;
+  --color-yellow: #eab308;
+  --color-olive: #65a30d;
+  --color-green: #16a34a;
+  --color-teal: #0d9488;
+  --color-blue: #2563eb;
+  --color-violet: #7c3aed;
+  --color-purple: #9333ea;
+  --color-pink: #db2777;
+  --color-brown: #92400e;
+  --color-black: #111827;
+  /* light variants - produced via Sass scale-color(color, $lightness: +25%) */
+  --color-red-light: #f87171;
+  --color-orange-light: #fb923c;
+  --color-yellow-light: #fde047;
+  --color-olive-light: #a3e635;
+  --color-green-light: #4ade80;
+  --color-teal-light: #2dd4bf;
+  --color-blue-light: #60a5fa;
+  --color-violet-light: #a78bfa;
+  --color-purple-light: #c084fc;
+  --color-pink-light: #f472b6;
+  --color-brown-light: #b45309;
+  --color-black-light: #4b5563;
+  /* dark 1 variants - produced via Sass scale-color(color, $lightness: -10%) */
+  --color-red-dark-1: #b91c1c;
+  --color-orange-dark-1: #c2410c;
+  --color-yellow-dark-1: #ca8a04;
+  --color-olive-dark-1: #4d7c0f;
+  --color-green-dark-1: #15803d;
+  --color-teal-dark-1: #0f766e;
+  --color-blue-dark-1: #1d4ed8;
+  --color-violet-dark-1: #6d28d9;
+  --color-purple-dark-1: #7e22ce;
+  --color-pink-dark-1: #be185d;
+  --color-brown-dark-1: #78350f;
+  --color-black-dark-1: #1f2937;
+  /* dark 2 variants - produced via Sass scale-color(color, $lightness: -20%) */
+  --color-red-dark-2: #991b1b;
+  --color-orange-dark-2: #9a3412;
+  --color-yellow-dark-2: #a16207;
+  --color-olive-dark-2: #3f6212;
+  --color-green-dark-2: #166534;
+  --color-teal-dark-2: #115e59;
+  --color-blue-dark-2: #1e40af;
+  --color-violet-dark-2: #5b21b6;
+  --color-purple-dark-2: #6b21a8;
+  --color-pink-dark-2: #9d174d;
+  --color-brown-dark-2: #451a03;
+  --color-black-dark-2: #030712;
+  /* ansi colors used for actions console and console files */
+  --color-ansi-black: #1e2327;
+  --color-ansi-red: #cc4848;
+  --color-ansi-green: #87ab63;
+  --color-ansi-yellow: #cc9903;
+  --color-ansi-blue: #3a8ac6;
+  --color-ansi-magenta: #d22e8b;
+  --color-ansi-cyan: #00918a;
+  --color-ansi-white: var(--color-console-fg-subtle);
+  --color-ansi-bright-black: #46494d;
+  --color-ansi-bright-red: #d15a5a;
+  --color-ansi-bright-green: #93b373;
+  --color-ansi-bright-yellow: #eaaf03;
+  --color-ansi-bright-blue: #4e96cc;
+  --color-ansi-bright-magenta: #d74397;
+  --color-ansi-bright-cyan: #00b6ad;
+  --color-ansi-bright-white: var(--color-console-fg);
+  /* 16-color series */
+  --color-series-16-0: #7db233;
+  --color-series-16-1: #499a37;
+  --color-series-16-2: #ce4751;
+  --color-series-16-3: #8f9121;
+  --color-series-16-4: #ac32a6;
+  --color-series-16-5: #7445e9;
+  --color-series-16-6: #c67d28;
+  --color-series-16-7: #4db392;
+  --color-series-16-8: #aa4d30;
+  --color-series-16-9: #2a6f84;
+  --color-series-16-10: #c45327;
+  --color-series-16-11: #3d965c;
+  --color-series-16-12: #792a93;
+  --color-series-16-13: #439d73;
+  --color-series-16-14: #103aad;
+  --color-series-16-15: #982e85;
+  /* other colors */
+  --color-grey: #6b7280;
+  --color-grey-light: #9ca3af;
+  --color-gold: #a1882b;
+  --color-white: #ffffff;
+  --color-diff-added-fg: #166534;
+  --color-diff-added-linenum-bg: #dcfce7;
+  --color-diff-added-row-bg: #f0fdf4;
+  --color-diff-added-row-border: #f0fdf4;
+  --color-diff-added-word-bg: #bbf7d0;
+  --color-diff-moved-row-bg: #f1f8d1;
+  --color-diff-moved-row-border: #d0e27f;
+  --color-diff-removed-fg: #991b1b;
+  --color-diff-removed-linenum-bg: #fee2e2;
+  --color-diff-removed-row-bg: #fef2f2;
+  --color-diff-removed-row-border: #fecaca;
+  --color-diff-removed-word-bg: #fecaca;
+  --color-diff-inactive: #f3f4f6;
+  --color-error-border: #fecaca;
+  --color-error-bg: #fef2f2;
+  --color-error-bg-active: #fecaca;
+  --color-error-bg-hover: #fee2e2;
+  --color-error-text: #991b1b;
+  --color-success-border: #bbf7d0;
+  --color-success-bg: #dcfce7;
+  --color-success-text: #166534;
+  --color-warning-border: #fde68a;
+  --color-warning-bg: #fffbeb;
+  --color-warning-text: #92400e;
+  --color-info-border: #bfdbfe;
+  --color-info-bg: #eff6ff;
+  --color-info-text: #1e40af;
+  --color-priority-border: #ddd6fe;
+  --color-priority-bg: #f5f3ff;
+  --color-priority-text: #5b21b6;
+  --color-red-badge: #dc2626;
+  --color-red-badge-bg: #dc26261a;
+  --color-red-badge-hover-bg: #dc26264c;
+  --color-green-badge: #16a34a;
+  --color-green-badge-bg: #16a34a1a;
+  --color-green-badge-hover-bg: #16a34a4c;
+  --color-yellow-badge: #eab308;
+  --color-yellow-badge-bg: #eab3081a;
+  --color-yellow-badge-hover-bg: #eab3084c;
+  --color-orange-badge: #ea580c;
+  --color-orange-badge-bg: #ea580c1a;
+  --color-orange-badge-hover-bg: #ea580c4c;
+  --color-git: #f05133;
+  --color-logo: #609926;
+  /* target-based colors */
+  --color-body: #f1f5f9;
+  --color-box-header: #f9fafb;
+  --color-box-body: #ffffff;
+  --color-box-body-highlight: #f3f4f6;
+  --color-text-dark: #000000;
+  --color-text: #111827;
+  --color-text-light: #374151;
+  --color-text-light-1: #4b5563;
+  --color-text-light-2: #6b7280;
+  --color-text-light-3: #9ca3af;
+  --color-footer: var(--color-nav-bg);
+  --color-timeline: #e5e7eb;
+  --color-input-text: var(--color-text-dark);
+  --color-input-background: #ffffff;
+  --color-input-toggle-background: #d1d5db;
+  --color-input-border: #d1d5db;
+  --color-light: #11182705;
+  --color-light-border: #1118271f;
+  --color-hover: #1118270a;
+  --color-hover-opaque: #f3f4f6;
+  --color-active: #11182714;
+  --color-menu: #ffffff;
+  --color-card: #ffffff;
+  --color-markup-table-row: #11182708;
+  --color-markup-code-block: #f3f4f6;
+  --color-markup-code-inline: #f3f4f6;
+  --color-button: #ffffff;
+  --color-code-bg: #ffffff;
+  --color-shadow: #1118271a;
+  --color-shadow-opaque: #d1d5db;
+  --color-secondary-bg: #f3f4f6;
+  --color-expand-button: #e5e7eb;
+  --color-placeholder-text: var(--color-text-light-3);
+  --color-editor-line-highlight: var(--color-secondary-alpha-30);
+  --color-editor-selection: var(--color-primary-alpha-30);
+  --color-project-column-bg: var(--color-secondary-light-4);
+  --color-caret: var(--color-text-dark);
+  --color-reaction-bg: #1118270a;
+  --color-reaction-hover-bg: var(--color-primary-light-5);
+  --color-reaction-active-bg: var(--color-primary-light-6);
+  --color-tooltip-text: #f9fafb;
+  --color-tooltip-bg: #111827;
+  --color-nav-bg: #ffffff;
+  --color-nav-hover-bg: #f3f4f6;
+  --color-nav-text: var(--color-text);
+  --color-secondary-nav-bg: #f1f5f9;
+  --color-label-text: var(--color-text);
+  --color-label-bg: #e5e7eb;
+  --color-label-hover-bg: #d1d5db;
+  --color-label-active-bg: #9ca3af;
+  --color-accent: var(--color-primary-light-1);
+  --color-small-accent: var(--color-primary-light-6);
+  --color-highlight-fg: #eed200;
+  --color-highlight-bg: #f5efc5;
+  --color-overlay-backdrop: #080808c0;
+  --color-danger: var(--color-red);
+  --color-transparency-grid-light: #fafafa;
+  --color-transparency-grid-dark: #e2e2e2;
+  --color-workflow-edge-hover: #9ca3af;
+  --color-syntax-keyword: #a73a00;
+  --color-syntax-bool: #076872;
+  --color-syntax-control: #7d5700;
+  --color-syntax-name: #785900;
+  --color-syntax-type: #ae2368;
+  --color-syntax-number: #105ead;
+  --color-syntax-operator: #a73a00;
+  --color-syntax-regexp: #773dc5;
+  --color-syntax-string: #456800;
+  --color-syntax-comment: #506070;
+  --color-syntax-invalid: #c00000;
+  --color-syntax-link: var(--color-primary);
+  --color-syntax-tag: #a73a00;
+  --color-syntax-attribute: #6f41c5;
+  --color-syntax-property: #2060a0;
+  --color-syntax-variable: #944a00;
+  --color-syntax-string-special: #7d5700;
+  --color-syntax-escape: #785900;
+  --color-syntax-entity: #6f41c5;
+  --color-syntax-preproc: #2d6a4b;
+  --color-syntax-preproc-file: #105ead;
+  --color-syntax-decorator: #2d6a4b;
+  --color-syntax-namespace: #555555;
+  --color-syntax-name-pseudo: #6f41c5;
+  --color-syntax-comment-special: #773dc5;
+  --color-syntax-text: inherit;
+  --color-syntax-text-alt: #47525b;
+  --color-syntax-punctuation: inherit;
+  --color-syntax-whitespace: #bbbbbb;
+  --color-syntax-diff-fg: #000000;
+  --color-syntax-deleted-bg: #ffdddd;
+  --color-syntax-inserted-bg: #ddffdd;
+  --color-syntax-emph: #8b5000;
+  --color-syntax-strong: inherit;
+  --color-syntax-heading: #7d5700;
+  --color-syntax-subheading: #456800;
+  --color-syntax-output: #506070;
+  --color-syntax-prompt: #944a00;
+  --color-syntax-traceback: #c00000;
+  --color-syntax-matching-bracket-bg: #00b5ad38;
+  --color-syntax-nonmatching-bracket-bg: #db282838;
+  accent-color: var(--color-accent);
+  color-scheme: light;
+  --tangled-btn-edge: #e5e7eb;
+  --tangled-btn-edge-hover: #d1d5db;
+  --tangled-btn-hover-bg: #f9fafb;
+  --tangled-create-bg: #16a34a;
+  --tangled-create-bg-hover: #15803d;
+  --tangled-create-border: #15803d;
+  --tangled-card-shadow: 0 1px 1px rgb(0 0 0 / 0.05);
+}
+
+/* ---------- Structural touches (colors all come from the variables above) ---------- */
+
+/* Navbar: flat card, no rule line */
+#navbar {
+  border-bottom: none;
+  box-shadow: var(--tangled-card-shadow);
+}
+
+/* Links: text-colored, underline on hover; underlined inside rendered markdown */
+.markup a:not(.anchor) {
+  text-decoration-line: underline;
+  font-weight: var(--font-weight-medium);
+}
+
+/* Buttons: Tangled's "keycap" look (2px inset bottom edge, presses down on click) */
+.ui.button {
+  box-shadow: inset 0 -2px 0 0 var(--tangled-btn-edge);
+  transition: background-color 150ms, box-shadow 150ms, color 150ms;
+}
+.ui.button:hover,
+.ui.basic.button:hover,
+.ui.basic.buttons .button:hover {
+  background: var(--tangled-btn-hover-bg);
+  box-shadow: inset 0 -2px 0 0 var(--tangled-btn-edge-hover);
+}
+.ui.button:active,
+.ui.active.button {
+  box-shadow: inset 0 2px 2px 0 var(--tangled-btn-edge);
+}
+.ui.button:not(.dropdown):active {
+  transform: translateY(2px);
+}
+.ui.labeled.button:not(.icon),
+.ui.labeled.button:not(.icon):hover,
+.ui.labeled.button:not(.icon):active {
+  box-shadow: none;
+  transform: none;
+  background: none;
+}
+
+/* Primary / green buttons: Tangled's green "create" button */
+.ui.primary.button,
+.ui.primary.buttons .button,
+.ui.green.button,
+.ui.green.buttons .button {
+  background: var(--tangled-create-bg);
+  border-color: var(--tangled-create-border);
+  color: #ffffff;
+  box-shadow: inset 0 -2px 0 0 rgb(17 24 39 / 25%);
+}
+.ui.primary.button:hover,
+.ui.primary.buttons .button:hover,
+.ui.green.button:hover,
+.ui.green.buttons .button:hover {
+  background: var(--tangled-create-bg-hover);
+  color: #ffffff;
+  box-shadow: inset 0 -2px 0 0 rgb(17 24 39 / 35%);
+}
+.ui.primary.button:active,
+.ui.primary.buttons .button:active,
+.ui.green.button:active,
+.ui.green.buttons .button:active {
+  background: var(--tangled-create-bg-hover);
+  box-shadow: inset 0 2px 2px 0 rgb(17 24 39 / 35%);
+}
+.ui.red.button,
+.ui.red.buttons .button {
+  box-shadow: inset 0 -2px 0 0 rgb(17 24 39 / 25%);
+}
+/* outlined variants stay outlined */
+.ui.basic.primary.button,
+.ui.basic.primary.buttons .button,
+.ui.basic.green.button,
+.ui.basic.green.buttons .button {
+  background: var(--color-button);
+  color: var(--tangled-create-border);
+  border-color: var(--tangled-create-border);
+  box-shadow: inset 0 -2px 0 0 var(--tangled-btn-edge);
+}
+
+/* Inputs: soft gray focus instead of a primary-colored one */
+.ui.input.focus > input,
+input:not([type="checkbox"], [type="radio"]):focus,
+textarea:focus,
+.ui.input input:focus,
+.ui.form input:not([type="checkbox"], [type="radio"]):focus,
+.ui.form select:focus,
+.ui.form textarea:focus,
+.ui.search > .prompt:focus {
+  border-color: var(--color-secondary-dark-4);
+}
+
+/* Commit hashes and other code-ish chips in mono */
+.ui.sha.label,
+a.ui.sha.label,
+.sha.label .shortsha {
+  font-family: var(--fonts-monospace);
+}

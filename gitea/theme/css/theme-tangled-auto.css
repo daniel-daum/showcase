@@ -1,0 +1,6 @@
+@import "./theme-tangled-dark.css" (prefers-color-scheme: dark);
+@import "./theme-tangled-light.css" (prefers-color-scheme: light);
+gitea-theme-meta-info {
+  --theme-display-name: "Tangled Auto";
+  --theme-color-scheme: "auto";
+}

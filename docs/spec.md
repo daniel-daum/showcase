@@ -13,7 +13,8 @@ or reach Gitea's UI or API.
   commit log, commit diffs, releases, pull requests (read-only), packages.
 - Public clone: `git clone https://daum.dev/<repo>.git`
 - Public image pull: `docker pull daum.dev/daniel/<image>:<tag>`
-- No JavaScript. Light and dark via `prefers-color-scheme`. Flexoki palette, Geist Pixel for headings.
+- No JavaScript. Matches danieldaum.net (saturn): dark only, saturn's Flexoki-based
+  palettes (moss by default), Geist Pixel for all text, Geist Mono for code. See `docs/theme.md`.
 
 ## Non-goals
 
@@ -164,7 +165,7 @@ internal/build/        build loop, change detection, atomic swap
 internal/render/       templates, markdown, highlight, heatmap SVG
 internal/server/       router, static files, git + registry proxy, headers
 web/templates/*.html   embedded
-web/static/style.css   embedded, Flexoki variables
+web/static/style.css   embedded, saturn tokens + components
 Dockerfile             multi-stage: golang → alpine + git, non-root
 compose.yaml           one service, example for deployment
 testdata/              sample Gitea JSON + a tiny test repo

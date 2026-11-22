@@ -57,6 +57,7 @@ docs/              spec and design decisions
 - [docs/spec.md](docs/spec.md): what this is and isn't, the security rules
   and the build order.
 - [docs/decisions.md](docs/decisions.md): choices made while building.
+- [docs/theme.md](docs/theme.md): how the look follows danieldaum.net.
 
 ## Licences
 

@@ -9,7 +9,8 @@ The heatmap API leaked private activity before Gitea 28.3.0, and the server
 runs 28.2.x. The builder counts commits on the default branch of the
 allowlisted repos from the local mirrors instead. Private activity can't leak
 whatever Gitea version runs, but only commits are counted (no PRs, issues and
-so on).
+so on). All authors are counted, since the anonymous API hides the user's
+email, so merged commits from others show up too.
 
 ## Packages are filtered by the allowlist
 
@@ -46,6 +47,17 @@ served with their real types. SVG and everything else is served as
 - Config rejects repo names that clash with routes (`static`, `v2`, `healthz`,
   `api`, `user`).
 - Dates are bucketed in UTC.
-- Fonts: Geist Pixel Square from the `geist` npm package (OFL). Body text uses
-  system fonts.
+- README links resolve to `blob/` pages, or to `tree/` pages when they end in
+  `/`. Images that aren't relative or https are dropped and their alt text
+  kept. Goldmark blanks dangerous link schemes such as `javascript:`.
+- The go-import meta is added when the repo root has a `go.mod`.
+- The clone box shows only the HTTPS URL for now. Tangled and GitHub links
+  need per-repo config, because not every repo is mirrored there.
 - Tooling: Go is pinned in `mise.toml`, and commands live in the `justfile`.
+
+## Theme follows danieldaum.net (saturn)
+
+The site's look matches saturn instead of a generic Flexoki light/dark theme.
+It is dark only and uses saturn's tokens, palettes, fonts and components. The
+details are in `docs/theme.md`. This replaces the spec's original
+"light and dark via `prefers-color-scheme`".

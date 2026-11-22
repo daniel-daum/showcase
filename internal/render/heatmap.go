@@ -32,7 +32,7 @@ func Heatmap(counts map[string]int, end time.Time) (template.HTML, int) {
 
 	w, h := left+weeks*(cell+gap), top+7*(cell+gap)
 	var b strings.Builder
-	fmt.Fprintf(&b, `<svg class="heatmap" viewBox="0 0 %d %d" role="img" aria-label="%d contributions in the last year">`, w, h, total)
+	fmt.Fprintf(&b, `<svg class="heatmap" viewBox="0 0 %d %d" role="img" aria-label="%d commits in the last year">`, w, h, total)
 	for i, label := range []string{"Mon", "Wed", "Fri"} {
 		fmt.Fprintf(&b, `<text x="0" y="%d">%s</text>`, top+(2*i+1)*(cell+gap)+cell-1, label)
 	}
@@ -45,8 +45,8 @@ func Heatmap(counts map[string]int, end time.Time) (template.HTML, int) {
 			fmt.Fprintf(&b, `<text x="%d" y="%d">%s</text>`, x, top-5, d.Format("Jan"))
 		}
 		n := counts[d.Format("2006-01-02")]
-		fmt.Fprintf(&b, `<rect class="h%d" x="%d" y="%d" width="%d" height="%d" rx="2"><title>%d on %s</title></rect>`,
-			level(n, max), x, y, cell, cell, n, d.Format("Jan 2, 2006"))
+		fmt.Fprintf(&b, `<rect class="h%d" x="%d" y="%d" width="%d" height="%d" rx="2"><title>%s on %s</title></rect>`,
+			level(n, max), x, y, cell, cell, commits(n), d.Format("Jan 2, 2006"))
 	}
 	b.WriteString(`</svg>`)
 	return template.HTML(b.String()), total
@@ -57,4 +57,11 @@ func level(n, max int) int {
 		return 0
 	}
 	return (4*n + max - 1) / max // ceil(4n/max), 1..4
+}
+
+func commits(n int) string {
+	if n == 1 {
+		return "1 commit"
+	}
+	return fmt.Sprintf("%d commits", n)
 }

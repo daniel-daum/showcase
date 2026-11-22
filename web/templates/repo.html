@@ -1,0 +1,16 @@
+{{define "content" -}}
+{{template "repohead" .}}
+<div class="clone">
+  <label for="clone-url">HTTPS</label>
+  <input id="clone-url" readonly value="{{.CloneURL}}">
+</div>
+{{- if .Latest}}
+{{template "latest" .}}
+{{template "tree" .Rows}}
+{{- else}}
+<p class="empty">This repository is empty.</p>
+{{- end}}
+{{- with .Readme}}
+<article class="readme markdown">{{.}}</article>
+{{- end}}
+{{- end}}

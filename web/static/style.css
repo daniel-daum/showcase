@@ -97,3 +97,44 @@ header.site a { color: var(--tx); }
 @media (max-width: 40rem) {
   .profile { flex-direction: column; }
 }
+
+/* repo pages */
+.repohead h1 a { color: var(--tx); }
+.repohead .desc { color: var(--tx-2); margin: .5rem 0; }
+.badge { font: .75rem system-ui, sans-serif; border: 1px solid var(--ui-3); border-radius: 1rem; padding: .1rem .5rem; color: var(--tx-2); vertical-align: middle; }
+.topics { list-style: none; padding: 0; margin: .5rem 0; display: flex; flex-wrap: wrap; gap: .35rem; }
+.topics li { font-size: .8rem; color: var(--cyan); background: var(--bg-2); border: 1px solid var(--ui); border-radius: 1rem; padding: .05rem .6rem; }
+
+.tabs { display: flex; flex-wrap: wrap; gap: .25rem; border-bottom: 1px solid var(--ui); margin: 1.25rem 0 1rem; }
+.tabs a { color: var(--tx-2); padding: .5rem .75rem; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs a:hover { color: var(--tx); text-decoration: none; }
+.tabs a[aria-current] { color: var(--tx); border-bottom-color: var(--orange); }
+
+.clone { display: flex; align-items: center; gap: .5rem; margin-bottom: 1rem; }
+.clone label { font-size: .85rem; color: var(--tx-2); }
+.clone input { flex: 1; font: .875rem ui-monospace, "SF Mono", Menlo, monospace; padding: .4rem .6rem; color: var(--tx); background: var(--bg-2); border: 1px solid var(--ui-2); border-radius: 6px; }
+
+.latest { display: flex; flex-wrap: wrap; gap: .25rem .75rem; align-items: baseline; padding: .6rem .75rem; background: var(--bg-2); border: 1px solid var(--ui); border-bottom: 0; border-radius: 6px 6px 0 0; font-size: .9rem; }
+.latest .subject { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sha { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .85rem; }
+
+.tree { width: 100%; border-collapse: collapse; border: 1px solid var(--ui); font-size: .9rem; }
+.latest + .tree { border-radius: 0 0 6px 6px; }
+.tree td { padding: .4rem .75rem; border-top: 1px solid var(--ui); }
+.tree .name { white-space: nowrap; }
+.tree .name.tree a::before { content: "▸ "; color: var(--tx-3); }
+.tree .msg { color: var(--tx-2); width: 100%; max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tree .age { color: var(--tx-2); white-space: nowrap; text-align: right; }
+.empty { color: var(--tx-2); }
+
+.readme { margin-top: 1.5rem; border: 1px solid var(--ui); border-radius: 6px; padding: 1rem 1.5rem; }
+.markdown img { max-width: 100%; }
+.markdown pre { background: var(--bg-2); padding: .75rem 1rem; border-radius: 6px; overflow-x: auto; }
+.markdown :not(pre) > code { background: var(--bg-2); padding: .1em .35em; border-radius: 4px; }
+.markdown table { border-collapse: collapse; }
+.markdown th, .markdown td { border: 1px solid var(--ui-2); padding: .3rem .6rem; }
+.markdown blockquote { margin: 0; padding-left: 1rem; border-left: 3px solid var(--ui-3); color: var(--tx-2); }
+
+@media (max-width: 40rem) {
+  .tree .msg { display: none; }
+}

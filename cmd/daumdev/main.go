@@ -18,6 +18,7 @@ func main() {
 	cfgPath := flag.String("config", "/config.json", "path to config.json")
 	once := flag.Bool("once", false, "render the site once into -out and exit")
 	out := flag.String("out", "", "output directory for -once (must not exist)")
+	data := flag.String("data", "/data", "data directory (git mirrors, site builds)")
 	flag.Parse()
 
 	cfg, err := config.Load(*cfgPath)
@@ -36,7 +37,7 @@ func main() {
 	if err := os.Mkdir(*out, 0o755); err != nil {
 		fatal(err)
 	}
-	if err := build.New(cfg).Render(ctx, *out); err != nil {
+	if err := build.New(cfg, *data).Render(ctx, *out); err != nil {
 		fatal(err)
 	}
 }

@@ -4,7 +4,7 @@
   "full_name": "daniel/repo-b",
   "description": "",
   "private": false,
-  "empty": false,
+  "empty": true,
   "archived": false,
   "website": "",
   "default_branch": "main",

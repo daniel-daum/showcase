@@ -41,10 +41,11 @@ func New(now time.Time) (*Renderer, error) {
 		return nil, err
 	}
 	for _, n := range names {
-		if path.Base(n) == "base.html" {
+		if path.Base(n) == "base.html" || strings.HasPrefix(path.Base(n), "_") {
 			continue
 		}
-		t, err := template.New("").Funcs(funcs).ParseFS(web.FS, "templates/base.html", n)
+		// base.html and _*.html partials are shared by every page.
+		t, err := template.New("").Funcs(funcs).ParseFS(web.FS, "templates/base.html", "templates/_*.html", n)
 		if err != nil {
 			return nil, err
 		}

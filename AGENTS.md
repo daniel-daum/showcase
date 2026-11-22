@@ -2,7 +2,7 @@
 
 Read `docs/spec.md` (requirements, security rules, build order) and
 `docs/decisions.md` (where the build differs from the spec) before changing
-anything.
+anything. For styling, read `docs/theme.md`: the look follows danieldaum.net (saturn).
 
 - Never commit, push, tag or sign. The owner reviews and commits by hand
   (commits are signed with biometric SSH). Leave changes in the working tree.

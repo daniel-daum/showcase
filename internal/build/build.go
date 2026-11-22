@@ -19,14 +19,16 @@ import (
 type Builder struct {
 	Cfg   *config.Config
 	Gitea *gitea.Client
+	Data  string // holds mirrors/ (and later site/)
 	Now   func() time.Time
 	Log   *slog.Logger
 }
 
-func New(cfg *config.Config) *Builder {
+func New(cfg *config.Config, data string) *Builder {
 	return &Builder{
 		Cfg:   cfg,
 		Gitea: gitea.New(cfg.GiteaURL, cfg.User),
+		Data:  data,
 		Now:   time.Now,
 		Log:   slog.Default(),
 	}
@@ -45,7 +47,7 @@ type Profile struct {
 
 // Render writes a complete site into dir, which must be empty.
 func (b *Builder) Render(ctx context.Context, dir string) error {
-	r, err := render.New(b.Now())
+	rd, err := render.New(b.Now())
 	if err != nil {
 		return err
 	}
@@ -68,23 +70,36 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 		p.Avatar = name
 	}
 
+	var repos []*repo
+	days, since := map[string]int{}, b.Now().AddDate(-1, 0, -7)
 	for _, name := range b.Cfg.Repos {
-		repo, err := b.Gitea.Repo(ctx, name)
+		r, err := b.loadRepo(ctx, name)
 		if err != nil {
 			b.Log.Warn("skipping repo", "repo", name, "err", err)
 			continue
 		}
-		p.Repos = append(p.Repos, repo)
+		if r.Head != "" {
+			if err := r.Git.CommitDays(ctx, r.Head, since, days); err != nil {
+				return fmt.Errorf("%s: %w", name, err)
+			}
+		}
+		repos = append(repos, r)
+		p.Repos = append(p.Repos, r.Repo)
 	}
 	slices.SortStableFunc(p.Repos, func(a, c *gitea.Repo) int { return c.UpdatedAt.Compare(a.UpdatedAt) })
 
-	p.Heatmap, p.Total = render.Heatmap(map[string]int{}, b.Now()) // filled from git in a later step
+	p.Heatmap, p.Total = render.Heatmap(days, b.Now())
 	title := user.FullName
 	if title == "" {
 		title = user.Login
 	}
-	if err := r.Write(dir, "index.html", "profile", render.Page{Title: title, D: p}); err != nil {
+	if err := rd.Write(dir, "index.html", "profile", render.Page{Title: title, D: p}); err != nil {
 		return fmt.Errorf("profile: %w", err)
+	}
+	for _, rp := range repos {
+		if err := b.renderRepo(ctx, rd, dir, rp); err != nil {
+			return fmt.Errorf("%s: %w", rp.Name, err)
+		}
 	}
 	return nil
 }

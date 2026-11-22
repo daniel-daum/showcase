@@ -1430,17 +1430,64 @@ footer nav a,
     --pixel: "Geist Pixel", ui-monospace, monospace;
     --radius: 10px;
     --radius-sm: 6px;
-    --box: color-mix(in oklab, var(--background-dark) 55%, var(--surface));
-    --hover: color-mix(in oklab, var(--surface) 80%, var(--background-dark));
-    --line: color-mix(in oklab, var(--borders) 75%, var(--text-secondary) 25%);
     --add: var(--syn-string);
     --del: var(--syn-variable);
+
+    /* layers, darkest first: a near-neutral page, tinted boxes, lighter
+       box heads and hovers. Derived from saturn's tokens, so every palette
+       gets the same steps. web/contrast_test.go checks the text on them. */
+    --page: color-mix(in oklab, var(--background-dark) 55%, black);
+    --box: color-mix(in oklab, var(--background-dark) 60%, var(--surface));
+    --box-head: color-mix(in oklab, var(--surface) 95%, var(--text-headings));
+    --hover: color-mix(in oklab, var(--surface) 96%, var(--text-headings));
+    --edge: color-mix(in oklab, var(--borders) 62%, var(--text-secondary));
+    --rule: color-mix(in oklab, var(--borders) 82%, var(--text-secondary));
+    --line: color-mix(in oklab, var(--borders) 58%, var(--text-secondary));
+
+    /* text: content near the heading colour, --text-secondary for metadata */
+    --body-text: color-mix(in oklab, var(--text-body) 45%, var(--text-headings));
+    --accent-bright: color-mix(in oklab, var(--accent) 82%, white);
+
+    /* depth: a faint top highlight and a soft drop shadow */
+    --highlight: inset 0 1px 0 rgb(255 255 255 / 0.045);
+    --depth: var(--highlight), 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.7);
 }
 
 body {
     font-family: var(--ui);
     font-size: 15px;
     line-height: 1.55;
+    color: var(--body-text);
+    background-color: var(--page);
+}
+
+p {
+    color: var(--body-text);
+}
+
+/* names and numbers */
+time,
+.count,
+.stat,
+.f-size,
+.f-age,
+.lang-pct,
+.diffstat,
+.diff-summary,
+.file-stats,
+.repo-card-meta,
+.heat-body,
+.ln {
+    font-variant-numeric: tabular-nums;
+}
+
+/* one focus ring for everything interactive */
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+input:focus-visible {
+    outline: 2px solid var(--accent-bright);
+    outline-offset: 2px;
 }
 
 body.page--code {
@@ -1535,7 +1582,14 @@ img.ficon {
 
 .avatar-xs { width: 20px; height: 20px; }
 .avatar-sm { width: 24px; height: 24px; }
-.avatar-lg { width: 88px; height: 88px; box-shadow: 0 0 0 1px var(--borders); }
+.avatar-lg {
+    width: 88px;
+    height: 88px;
+    box-shadow:
+        0 0 0 1px var(--edge),
+        0 0 40px 6px color-mix(in oklab, var(--accent) 16%, transparent),
+        0 0 90px 24px color-mix(in oklab, var(--accent) 7%, transparent);
+}
 
 .avatar-none {
     display: inline-grid;
@@ -1543,7 +1597,7 @@ img.ficon {
     flex: none;
     color: var(--text-secondary);
     background: var(--surface);
-    box-shadow: 0 0 0 1px var(--borders);
+    box-shadow: 0 0 0 1px var(--rule);
 }
 
 .avatar-none .icon {
@@ -1571,7 +1625,7 @@ img.ficon {
 .button:hover,
 a.chip:hover {
     border-color: var(--accent-muted);
-    color: var(--accent);
+    color: var(--accent-bright);
 }
 
 .button--small {
@@ -1619,7 +1673,7 @@ a.chip:hover {
 
 .sha {
     padding: 0.05rem 0.4rem;
-    border: 1px solid var(--borders);
+    border: 1px solid var(--rule);
     border-radius: 4px;
     font-family: var(--mono);
     font-size: 0.78rem;
@@ -1628,7 +1682,7 @@ a.chip:hover {
 }
 
 a.sha:hover {
-    color: var(--accent);
+    color: var(--accent-bright);
     border-color: var(--accent-muted);
 }
 
@@ -1651,7 +1705,7 @@ a.sha:hover {
 }
 
 .copyfield input:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--accent-bright);
     outline-offset: -1px;
 }
 
@@ -1674,7 +1728,7 @@ a.sha:hover {
 }
 
 .copy:hover {
-    color: var(--accent);
+    color: var(--accent-bright);
 }
 
 .copy .icon-check,
@@ -1690,9 +1744,10 @@ a.sha:hover {
 /* boxes: the one container for listings, files, readmes and diffs */
 .box {
     margin-bottom: 1.25rem;
-    border: 1px solid var(--borders);
+    border: 1px solid var(--edge);
     border-radius: var(--radius);
     background: var(--box);
+    box-shadow: var(--depth);
     overflow: hidden;
 }
 
@@ -1703,8 +1758,9 @@ a.sha:hover {
     gap: 0.5rem 0.6rem;
     margin: 0;
     padding: 0.7rem 1rem;
-    border-bottom: 1px solid var(--borders);
-    background: var(--surface);
+    border-bottom: 1px solid var(--rule);
+    background: var(--box-head);
+    box-shadow: var(--highlight);
     font-family: var(--ui);
     font-size: 0.875rem;
     font-weight: 600;
@@ -1739,7 +1795,7 @@ a.sha:hover {
 }
 
 .rows > li + li {
-    border-top: 1px solid var(--borders);
+    border-top: 1px solid var(--rule);
 }
 
 .row {
@@ -1772,7 +1828,7 @@ a.sha:hover {
 
 a.row-title:hover,
 .row-title a:hover {
-    color: var(--accent);
+    color: var(--accent-bright);
 }
 
 .row-title a {
@@ -1837,7 +1893,7 @@ a.row-title:hover,
 
 .profile h1 {
     margin: 0;
-    color: var(--accent);
+    color: var(--accent-bright);
     font-size: 1.9rem;
 }
 
@@ -1917,9 +1973,10 @@ a.row-title:hover,
     flex-direction: column;
     gap: 0.4rem;
     padding: 1rem;
-    border: 1px solid var(--borders);
+    border: 1px solid var(--edge);
     border-radius: var(--radius);
     background: var(--box);
+    box-shadow: var(--depth);
     transition: border-color 150ms ease, transform 150ms ease;
 }
 
@@ -1941,13 +1998,17 @@ a.row-title:hover,
 }
 
 .repo-card:hover .repo-card-name {
-    color: var(--accent);
+    color: var(--accent-bright);
 }
 
 .repo-card-desc {
     flex: 1;
-    color: var(--text-secondary);
+    color: var(--body-text);
     font-size: 0.875rem;
+}
+
+.repo-card-desc--none {
+    color: var(--text-secondary);
 }
 
 .repo-card-meta {
@@ -1998,7 +2059,7 @@ a.row-title:hover,
 }
 
 .repo-title a:hover {
-    color: var(--accent);
+    color: var(--accent-bright);
 }
 
 .repo-title .repo-owner {
@@ -2006,7 +2067,7 @@ a.row-title:hover,
 }
 
 .repo-slash {
-    color: var(--borders);
+    color: var(--rule);
 }
 
 .repo-title .pill {
@@ -2017,7 +2078,7 @@ a.row-title:hover,
 .repo-desc {
     margin: 0.5rem 0 0;
     font-size: 1rem;
-    color: var(--text-body);
+    color: var(--body-text);
 }
 
 .topics {
@@ -2028,7 +2089,7 @@ a.row-title:hover,
     padding: 0.15rem 0.65rem;
     border-color: transparent;
     background: color-mix(in oklab, var(--accent-muted) 35%, transparent);
-    color: var(--accent);
+    color: var(--accent-bright);
     font-size: 0.75rem;
     letter-spacing: 0;
 }
@@ -2057,7 +2118,7 @@ a.row-title:hover,
 }
 
 .repo-meta a:hover {
-    color: var(--accent);
+    color: var(--accent-bright);
 }
 
 /* repo tabs */
@@ -2066,7 +2127,7 @@ a.row-title:hover,
     gap: 0.25rem;
     margin: 0 0 1.25rem;
     overflow-x: auto;
-    border-bottom: 1px solid var(--borders);
+    border-bottom: 1px solid var(--rule);
     font-size: 0.9rem;
     scrollbar-width: none;
 }
@@ -2085,17 +2146,17 @@ a.row-title:hover,
 
 .tabs a:hover {
     color: var(--text-headings);
-    border-bottom-color: var(--borders);
+    border-bottom-color: var(--rule);
 }
 
 .tabs a[aria-current="page"] {
     color: var(--text-headings);
     font-weight: 500;
-    border-bottom-color: var(--accent);
+    border-bottom-color: var(--accent-bright);
 }
 
 .tabs a[aria-current="page"] .icon {
-    color: var(--accent);
+    color: var(--accent-bright);
 }
 
 .count {
@@ -2103,8 +2164,9 @@ a.row-title:hover,
     padding: 0 0.45rem;
     border-radius: 999px;
     background: var(--surface);
-    color: var(--text-secondary);
+    color: var(--text-headings);
     font-size: 0.75rem;
+    font-weight: 500;
     text-align: center;
 }
 
@@ -2115,7 +2177,7 @@ a.row-title:hover,
     align-items: center;
     gap: 0.6rem 1.25rem;
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--borders);
+    border-bottom: 1px solid var(--rule);
     font-size: 0.875rem;
 }
 
@@ -2139,7 +2201,7 @@ a.row-title:hover,
 
 a.stat:hover,
 a.stat:hover b {
-    color: var(--accent);
+    color: var(--accent-bright);
 }
 
 /* clone menu: a <details>, so it opens without js */
@@ -2190,8 +2252,8 @@ a.stat:hover b {
     align-items: center;
     gap: 0.5rem 0.75rem;
     padding: 0.65rem 1rem;
-    border-bottom: 1px solid var(--borders);
-    background: var(--surface);
+    border-bottom: 1px solid var(--rule);
+    background: var(--box-head);
     font-size: 0.875rem;
 }
 
@@ -2204,13 +2266,14 @@ a.stat:hover b {
     flex: 1 1 10rem;
     min-width: 0;
     overflow: hidden;
-    color: var(--text-secondary);
+    color: var(--text-headings);
+    font-weight: 500;
     white-space: nowrap;
     mask-image: linear-gradient(to right, black calc(100% - 3rem), transparent);
 }
 
 .commit-msg:hover {
-    color: var(--accent);
+    color: var(--accent-bright);
 }
 
 .box-commit time {
@@ -2244,7 +2307,7 @@ a.ci:hover {
 }
 
 .files tr + tr td {
-    border-top: 1px solid var(--borders);
+    border-top: 1px solid var(--rule);
 }
 
 .files td {
@@ -2265,10 +2328,11 @@ a.ci:hover {
 .f-name a,
 .f-name span {
     color: var(--text-headings);
+    font-weight: 500;
 }
 
 .f-name a:hover {
-    color: var(--accent);
+    color: var(--accent-bright);
 }
 
 /* commit messages fade out instead of ending in an ellipsis */
@@ -2281,11 +2345,11 @@ a.ci:hover {
 
 .f-msg a,
 .f-msg span {
-    color: var(--text-secondary);
+    color: var(--body-text);
 }
 
 .f-msg a:hover {
-    color: var(--accent);
+    color: var(--accent-bright);
 }
 
 .f-size,
@@ -2380,7 +2444,7 @@ a.ci:hover {
 }
 
 .crumbs a {
-    color: var(--accent);
+    color: var(--accent-bright);
 }
 
 .crumbs a:hover {
@@ -2413,8 +2477,13 @@ a.ci:hover {
     border-bottom: 1px solid var(--accent-muted);
 }
 
-.markdown h1 { font-size: 1.6rem; margin: 1.5rem 0 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--borders); }
-.markdown h2 { font-size: 1.25rem; margin: 1.75rem 0 0.6rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--borders); }
+:where(p, li, td, dd, blockquote, figcaption) > a:not([class]):hover {
+    color: var(--accent-bright);
+    border-bottom-color: var(--accent-bright);
+}
+
+.markdown h1 { font-size: 1.6rem; margin: 1.5rem 0 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--rule); }
+.markdown h2 { font-size: 1.25rem; margin: 1.75rem 0 0.6rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--rule); }
 .markdown h3 { font-size: 1.05rem; margin: 1.5rem 0 0.5rem; }
 
 .markdown img {
@@ -2438,11 +2507,11 @@ a.ci:hover {
 .markdown th,
 .markdown td {
     padding: 0.4rem 0.75rem;
-    border: 1px solid var(--borders);
+    border: 1px solid var(--rule);
 }
 
 .markdown th {
-    background: var(--surface);
+    background: var(--box-head);
 }
 
 .markdown input[type="checkbox"] {
@@ -2510,7 +2579,7 @@ pre.code {
 }
 
 a.ln:hover {
-    color: var(--accent);
+    color: var(--accent-bright);
     opacity: 1;
 }
 
@@ -2545,14 +2614,14 @@ a.ln:hover {
 
 .commit-body {
     margin: 0.75rem 0 0;
-    color: var(--text-body);
+    color: var(--body-text);
     font-size: 0.9rem;
     white-space: pre-wrap;
 }
 
 .commit-meta {
     margin-top: 0.75rem;
-    border-top: 1px solid var(--borders);
+    border-top: 1px solid var(--rule);
     border-bottom: 0;
 }
 
@@ -2568,7 +2637,7 @@ a.ln:hover {
 .checks {
     margin: 0;
     padding: 0.25rem 0;
-    border-top: 1px solid var(--borders);
+    border-top: 1px solid var(--rule);
     list-style: none;
     font-size: 0.85rem;
 }
@@ -2667,7 +2736,7 @@ a.ln:hover {
 .assets {
     margin: 0;
     padding: 0;
-    border-top: 1px solid var(--borders);
+    border-top: 1px solid var(--rule);
     list-style: none;
     font-size: 0.85rem;
 }
@@ -2682,7 +2751,7 @@ a.ln:hover {
 }
 
 .assets li + li {
-    border-top: 1px solid var(--borders);
+    border-top: 1px solid var(--rule);
 }
 
 .assets a {
@@ -2693,7 +2762,7 @@ a.ln:hover {
 }
 
 .assets a:hover {
-    color: var(--accent);
+    color: var(--accent-bright);
 }
 
 /* pulls: each row opens its body, no js */
@@ -2718,7 +2787,7 @@ a.ln:hover {
 }
 
 .notfound h1 {
-    color: var(--accent);
+    color: var(--accent-bright);
     font-size: 4rem;
     margin: 0;
 }

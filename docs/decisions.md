@@ -204,3 +204,54 @@ details are in `docs/theme.md`. This replaces the spec's original
 - **Freshness:** ages within a day, week or month get warmer colours.
 - **Stylesheet cache-busting:** the CSS (and `copy.js`) URLs carry a hash of
   `style.css`, so caches never serve a stale stylesheet.
+
+## Polish pass 3
+
+### Phase 1: contrast and type
+
+All changes are in part 2 of `style.css`. Saturn's tokens in part 1 are
+untouched, and every new value is a `color-mix()` of them, so ink, wine,
+plum, teal and flexoki get the same steps as moss.
+
+- **Layers, darkest first:** `--page` (background-dark 55% toward black),
+  `--box` (60% background-dark, 40% surface), then `--box-head` and `--hover`
+  (surface with 4–5% of the heading colour). The latest-commit strip and
+  README table headers use `--box-head` too. Box edges use `--edge`, which is
+  brighter than saturn's `--borders`. Dividers inside boxes use the softer
+  `--rule`, and controls use `--line`.
+- **Text:** `--body-text` (45% body, 55% headings) for body copy,
+  descriptions and the tree's commit column. File names, repo names, commit
+  subjects and counts use `--text-headings` at weight 500–600, and
+  `--text-secondary` is kept for metadata. Ages, sizes, counts and stats use
+  tabular figures. "No description." on repo cards stays dim
+  (`repo-card-desc--none`).
+- **Accent:** `--accent-bright` (accent 82%, white 18%) is used for hovers,
+  active tabs, breadcrumb links, the profile name, the 404 and one shared
+  `:focus-visible` ring (`a`, `button`, `summary`, `input`). `--accent` stays
+  for fills: the primary button, the heatmap, the language bar and the
+  `:target` line edge.
+- **Depth:** boxes and repo cards get `--depth` (a faint top highlight plus
+  a soft drop shadow), and box heads repeat the highlight, since their
+  background hides the box's. The profile avatar has a faint accent glow made
+  of two spread box-shadows. It sits only behind the avatar, with no gradient
+  behind text.
+- **Contrast:** `web/contrast_test.go` reads the tokens from `style.css`,
+  evaluates the `color-mix()` chains in OKLab and fails below 4.5:1. Run
+  `go test -v -run Contrast ./web` to see the ratios. At the time of writing:
+
+  | text on              | moss  | ink   | wine  | plum  | teal  | flexoki |
+  | -------------------- | ----- | ----- | ----- | ----- | ----- | ------- |
+  | headings / page      | 17.68 | 17.79 | 17.82 | 17.83 | 17.68 | 18.08   |
+  | headings / box-head  | 11.20 | 12.12 | 12.35 | 12.59 | 11.12 | 13.62   |
+  | body / box           | 12.68 | 13.30 | 13.45 | 13.56 | 12.64 | 14.62   |
+  | body / hover         | 10.40 | 11.25 | 11.45 | 11.68 | 10.32 | 12.61   |
+  | secondary / page     | 7.45  | 7.49  | 7.51  | 7.51  | 7.45  | 7.61    |
+  | secondary / box      | 5.90  | 6.18  | 6.25  | 6.30  | 5.88  | 6.79    |
+  | secondary / box-head | 4.72  | 5.11  | 5.20  | 5.30  | 4.68  | 5.74    |
+  | secondary / hover    | 4.83  | 5.23  | 5.32  | 5.43  | 4.80  | 5.86    |
+  | accent-bright / box  | 7.94  | 7.33  | 7.69  | 7.98  | 8.30  | 7.61    |
+
+  The tightest pair is metadata on box heads in teal and moss (about 4.7:1).
+  That's why heads and hovers only take 4–5% of the heading colour. Line
+  numbers keep saturn's dimmed look (opacity 0.55) and are exempt, as
+  decoration next to the code.

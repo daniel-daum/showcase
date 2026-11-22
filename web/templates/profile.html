@@ -21,7 +21,7 @@
   {{- range .Repos}}
   <a class="repo-card" href="/{{.Name}}/">
     <span class="repo-card-name">{{template "icon" "book"}}{{.Name}}</span>
-    <span class="repo-card-desc">{{or .Description "No description."}}</span>
+    {{if .Description}}<span class="repo-card-desc">{{.Description}}</span>{{else}}<span class="repo-card-desc repo-card-desc--none">No description.</span>{{end}}
     <span class="repo-card-meta">
       {{- with .Language}}<span><span class="dot {{lang .}}" aria-hidden="true"></span>{{.}}</span>{{end}}
       <span>Updated <time class="{{fresh .UpdatedAt}}" datetime="{{.UpdatedAt.Format "2006-01-02T15:04:05Z07:00"}}">{{ago .UpdatedAt}}</time></span>

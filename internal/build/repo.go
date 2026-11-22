@@ -225,7 +225,7 @@ func (b *Builder) loadRepo(ctx context.Context, name string) (*repo, error) {
 
 func (b *Builder) renderRepo(ctx context.Context, rd *render.Renderer, dir string, r *repo) error {
 	p := RepoPage{Repo: r, Tab: "code", CloneURL: b.Cfg.SiteURL + "/" + r.Name + ".git"}
-	page := render.Page{Title: r.Name, Wide: true, D: &p}
+	page := render.Page{Title: r.Name, D: &p}
 	if r.Head == "" {
 		return rd.Write(dir, r.Name+"/index.html", "repo", page)
 	}
@@ -296,7 +296,7 @@ func (b *Builder) renderRepo(ctx context.Context, rd *render.Renderer, dir strin
 				tp.Docs = []Doc{{"readme", "README", "book", readme}}
 			}
 			rel := r.Name + "/tree/" + e.Name + "/index.html"
-			if err := rd.Write(dir, rel, "dir", render.Page{Title: e.Name + " · " + r.Name, Wide: true, D: &tp}); err != nil {
+			if err := rd.Write(dir, rel, "dir", render.Page{Title: e.Name + " · " + r.Name, D: &tp}); err != nil {
 				return err
 			}
 		case e.Type == "blob":
@@ -407,7 +407,7 @@ func (b *Builder) renderBlob(ctx context.Context, rd *render.Renderer, dir strin
 	}
 	p.Large = e.Size > maxRender
 	// blob pages are stored as <path>.html; the server maps /blob/<path> to them
-	return rd.Write(dir, r.Name+"/blob/"+e.Name+".html", "blob", render.Page{Title: e.Name + " · " + r.Name, Wide: true, D: &p})
+	return rd.Write(dir, r.Name+"/blob/"+e.Name+".html", "blob", render.Page{Title: e.Name + " · " + r.Name, D: &p})
 }
 
 // crumbs links the repo and every parent directory of p; the last part has no link.

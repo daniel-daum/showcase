@@ -656,3 +656,86 @@ sideways at either width.
   circle. Small avatars stay round.
 - `just demo` used to 404 on the newest commit page: the golden test moved
   that page to `commit-latest.html`. It copies it now.
+
+## The chrome is danieldaum.net's
+
+The site is served at code.danieldaum.net and will move to
+danieldaum.net/projects, so it must read as part of that site. The header,
+footer and favicon are now exactly saturn's, hard-coded in `base.html`:
+
+- **Header:** the name is "Daniel Daum", linking to danieldaum.net, and the
+  nav is about, blog, projects, garden. The three main-site links are
+  absolute (a relative `/about/` would 404 on code.danieldaum.net); the
+  "projects" link points at `/` (this site's home) and carries
+  `aria-current="page"`. When the site moves under danieldaum.net/projects,
+  the absolute links stay right, but the internal ones need a base path.
+- **Footer:** saturn's, verbatim: email, git (Tangled, new tab), PGP,
+  changelog, privacy, feed, theme button. All absolute, since the pages live
+  on danieldaum.net. The mobile hide-rules match the path
+  (`a[href$="/pgp.asc"]`) because the urls aren't bare paths, as in saturn.
+- **Profile page:** the profile card (avatar, name, bio) is gone. The home
+  page opens with saturn's /projects page header (`/projects` and
+  "Things I've built or projects in development"), the same meta description
+  and the title "daniel daum - projects". The avatar is still downloaded: the
+  activity feed uses it for own events.
+- **Favicon:** saturn's favicon pngs and webmanifest (icon paths rewritten to
+  `/static/favicon/`) live in `web/static/favicon/`. The server serves
+  `.webmanifest` as `application/manifest`.
+- **Config:** the `links` map is gone. The chrome is fixed, not configured.
+  `site_url` still drives clone urls, `go get` paths and image refs.
+- **Width and background:** `body` is saturn's again: `78ch` wide (about
+  73rem in Geist Pixel at 16px), 16px, `--background-dark`. With the old
+  50rem and 60rem widths the header nav and footer jumped sideways when
+  coming from danieldaum.net, and the darker grey page background showed
+  too. The code browser's own 15px type now starts at `main`. Every page is
+  the same width, so `Page.Wide` and `page--code` are gone. This replaces
+  the "Width" bullet under "Palettes shared with danieldaum.net".
+- **Layers:** `--page` is `--background-dark`. The other layers mix it with
+  white (box 2%, box head 5%, hover 8%, rule 14%, edge 20%, line 24%), close
+  to the old Paint lightness steps above the page, keeping the palette's
+  hue. The contrast test passes in every palette (lowest: secondary text on
+  hover, 5.21:1).
+- **Titles and head:** every title is `daniel daum - <page>`, as on saturn
+  ("daniel daum - repo-a", "daniel daum - README.md · repo-a"). Every page
+  links saturn's Atom feed, and pages with a description (the home page)
+  carry saturn's Open Graph and Twitter card tags.
+- **Breadcrumbs:** repo pages and `/repos/` open with saturn's breadcrumb
+  (`projects -> repo-a`), like saturn's project and tracker pages. It keeps
+  saturn's capitals. The repo title is just the name: the owner, avatar and
+  slash are gone. `/repos/` uses saturn's page header (`/repositories`).
+  The in-repo path crumbs stay as they were.
+- **404:** saturn's wording, "this page doesn't exist", and its title.
+- **Activity feed:** one rule only. The line through the avatars and the
+  commit list's left rule drew two parallel lines. The commit rule stays,
+  as on saturn's comment replies.
+- **Palette:** saturn's `theme.js` still needs the cookie (see "Palettes
+  shared with danieldaum.net"). Until then the two sites can show
+  different palettes, which is the most visible seam left.
+
+## README HTML: an allowlist
+
+GitHub-style READMEs open with raw HTML (`<p align="center"><img …></p>`,
+`<h1 align="center">`). With goldmark's raw HTML switched off, rhea's
+screenshot, title and tagline were dropped. This bends spec rule 5: raw HTML
+is still never passed through, but `internal/render/rawhtml.go` rebuilds an
+allowlist of it.
+
+- **Tags:** p, div, h1–h6, img, a, br, hr, b, i, em, strong, code, kbd, sub,
+  sup, s, del, pre, blockquote, ul, ol, li, details, summary. Others are
+  dropped and their text kept, except script-like tags (script, style,
+  iframe, svg, textarea …), whose contents go too. Comments are dropped.
+- **Attributes:** `align` (left, center, right) on blocks and img; img
+  `src`, `alt`, `title`, `width`, `height` (digits, optional `%`); a `href`,
+  `title`; details `open`. Everything else goes, so no `style`, `class`,
+  `id` or `on*`, and the CSP is unchanged.
+- **URLs:** `src` and `href` go through the same resolver as Markdown
+  images and links (relative paths to `raw/` and `blob/`, images relative
+  or https only). An href must be relative, http(s) or mailto. An image
+  without a usable src becomes its alt text, like a dropped Markdown image.
+- **Text** is unescaped and re-escaped, so nothing in it can form a tag.
+- **Balance:** open tags are tracked over the whole README, so a
+  `<div align="center">` … `</div>` around Markdown works. A close tag that
+  was never opened is ignored, so README HTML can't end the page's own
+  elements, and whatever is still open is closed at the end.
+- No new dependency: the tags are read with two regular expressions, which
+  is enough because the output is built from scratch, never copied.

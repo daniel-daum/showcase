@@ -14,12 +14,11 @@ import (
 )
 
 type Config struct {
-	GiteaURL string            `json:"gitea_url"`
-	User     string            `json:"user"`
-	SiteURL  string            `json:"site_url"`
-	Links    map[string]string `json:"links"`
-	Repos    []string          `json:"repos"`
-	Images   []string          `json:"images"`
+	GiteaURL string   `json:"gitea_url"`
+	User     string   `json:"user"`
+	SiteURL  string   `json:"site_url"`
+	Repos    []string `json:"repos"`
+	Images   []string `json:"images"`
 	// Featured repos for the profile, in order (up to 6). Empty means the
 	// most recently updated ones.
 	Featured   []string `json:"featured"`
@@ -84,11 +83,6 @@ func (c *Config) validate() error {
 	for _, im := range c.Images {
 		if !imageRe.MatchString(im) {
 			return fmt.Errorf("bad image name %q", im)
-		}
-	}
-	for k, v := range c.Links {
-		if p, err := url.Parse(v); err != nil || p.Scheme != "https" {
-			return fmt.Errorf("link %q must be an https url", k)
 		}
 	}
 	for _, p := range c.TrustedProxies {

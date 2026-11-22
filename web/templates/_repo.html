@@ -1,9 +1,12 @@
 {{define "repohead" -}}
 {{- $r := .Repo}}{{$base := printf "/%s" $r.Name}}
+<nav class="breadcrumb" aria-label="breadcrumb">
+  <a href="/">projects</a> <span aria-hidden="true">-></span>
+  <a href="{{$base}}/">{{$r.Name}}</a>
+</nav>
 <header class="repo-head">
   <h1 class="repo-title">
-    {{- with $r.Avatar}}<img class="avatar-sm" src="{{.}}" alt="" width="24" height="24">{{end}}
-    <a class="repo-owner" href="/">{{$r.Owner}}</a><span class="repo-slash" aria-hidden="true">/</span><a class="repo-name" href="{{$base}}/">{{$r.Name}}</a>
+    <a class="repo-name" href="{{$base}}/">{{$r.Name}}</a>
     {{- if $r.Archived}}<span class="pill">archived</span>{{end}}
   </h1>
   {{- with $r.Description}}<p class="repo-desc">{{.}}</p>{{end}}

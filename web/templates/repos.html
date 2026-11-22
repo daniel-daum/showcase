@@ -1,5 +1,12 @@
 {{define "content" -}}
-<h1 class="page-title">Repositories <span class="page-count">{{len .Repos}}</span></h1>
+<nav class="breadcrumb" aria-label="breadcrumb">
+  <a href="/">projects</a> <span aria-hidden="true">-></span>
+  <a href="/repos/" aria-current="page">repositories</a>
+</nav>
+<header class="page-header">
+  <h1><span aria-hidden="true">/</span>repositories</h1>
+  <p class="meta">All {{len .Repos}} public repositories, most recently updated first</p>
+</header>
 <div class="repo-grid">
   {{- range .Repos}}
   {{template "repocard" .}}

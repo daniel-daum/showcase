@@ -8,7 +8,7 @@ or reach Gitea's UI or API.
 
 ## Goals
 
-- GitHub-profile-style home page: avatar, name, bio, links, activity heatmap, chosen repos.
+- Home page that reads as danieldaum.net's /projects page: activity chart, featured repos, activity feed.
 - Per-repo pages: README, file tree, file viewer with syntax highlighting,
   commit log, commit diffs, releases, pull requests (read-only), packages.
 - Public clone: `git clone https://daum.dev/<repo>.git`
@@ -86,7 +86,9 @@ or reach Gitea's UI or API.
    rewrites the realm to `https://daum.dev/v2/token`.
    Also strip any `Set-Cookie` and Gitea-specific headers from proxied responses,
    and never forward the client's `Authorization` or `Cookie` headers on git routes.
-5. **Rendering:** goldmark with raw HTML disabled (default). Escape everything
+5. **Rendering:** goldmark, with raw HTML never passed through. README HTML
+   is rebuilt from a short allowlist of tags and attributes (see decisions,
+   "README HTML: an allowlist"); everything else is dropped. Escape everything
    else through `html/template`. Files over 512 KB or binary: show size and a raw link, no render.
    README images: only relative paths inside the repo or https URLs.
 6. **Headers:** `Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self' https:; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`,
@@ -105,12 +107,6 @@ or reach Gitea's UI or API.
     "gitea_url": "http://gitea.tailnet.example:3000",
     "user": "daniel",
     "site_url": "https://daum.dev",
-    "links": {
-        "website": "https://danieldaum.net",
-        "atproto": "https://bsky.app/profile/daum.dev",
-        "tangled": "https://tangled.org/daum.dev",
-        "github": "https://github.com/..."
-    },
     "repos": ["repo-a", "repo-b"],
     "images": ["repo-a"],
     "max_commits": 50
@@ -132,7 +128,7 @@ or reach Gitea's UI or API.
 
 ## Pages (URL → content)
 
-- `/` — profile card, links, heatmap, repo list (name, description, language, updated).
+- `/` — saturn's /projects page header, activity chart and heatmap, featured repos, activity feed.
 - `/<repo>/` — header (name, description, topics, latest release), action row
   (Code · Commits · Releases · Pulls · Packages), clone box (HTTPS + Tangled/GitHub links),
   latest commit line, root tree with last-commit message and age per entry, rendered README.

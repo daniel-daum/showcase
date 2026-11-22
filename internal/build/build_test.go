@@ -145,14 +145,9 @@ func fakeGitea(t *testing.T) *httptest.Server {
 func testBuilder(t *testing.T) *Builder {
 	srv := fakeGitea(t)
 	cfg := &config.Config{
-		GiteaURL: srv.URL,
-		User:     "daniel",
-		SiteURL:  "https://code.danieldaum.net",
-		Links: map[string]string{
-			"github":  "https://github.com/example",
-			"website": "https://danieldaum.net",
-			"atproto": "https://bsky.app/profile/daum.dev",
-		},
+		GiteaURL:   srv.URL,
+		User:       "daniel",
+		SiteURL:    "https://code.danieldaum.net",
 		Repos:      []string{"repo-b", "leaky", "missing", "repo-a"},
 		Images:     []string{"repo-a"},
 		MaxCommits: 50,

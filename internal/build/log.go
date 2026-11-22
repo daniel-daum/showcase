@@ -59,7 +59,7 @@ func (b *Builder) renderLog(ctx context.Context, rd *render.Renderer, dir string
 			day.Commits = append(day.Commits, LogCommit{c, stats[c.Hash]})
 		}
 	}
-	if err := rd.Write(dir, r.Name+"/log/index.html", "log", render.Page{Title: "commits · " + r.Name, Wide: true, D: &p}); err != nil {
+	if err := rd.Write(dir, r.Name+"/log/index.html", "log", render.Page{Title: "commits · " + r.Name, D: &p}); err != nil {
 		return err
 	}
 
@@ -90,7 +90,7 @@ func (b *Builder) renderLog(ctx context.Context, rd *render.Renderer, dir string
 			cp.Added += f.Added
 			cp.Deleted += f.Deleted
 		}
-		page := render.Page{Title: c.Subject + " · " + r.Name, Wide: true, D: &cp}
+		page := render.Page{Title: c.Subject + " · " + r.Name, D: &cp}
 		if err := rd.Write(dir, r.Name+"/commit/"+c.Hash+"/index.html", "commit", page); err != nil {
 			return err
 		}

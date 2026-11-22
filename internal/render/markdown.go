@@ -16,10 +16,12 @@ import (
 	"github.com/yuin/goldmark/util"
 )
 
-// Markdown renders src with raw HTML disabled (goldmark's default). Relative
-// links and images are resolved against dir inside the repo at base (e.g.
-// "/repo-a"); images that aren't relative or https are dropped.
+// Markdown renders src with goldmark's raw HTML output replaced by an
+// allowlist (see htmlRenderer). Relative links and images are resolved
+// against dir inside the repo at base (e.g. "/repo-a"); images that aren't
+// relative or https are dropped.
 func Markdown(src []byte, base, dir string) (template.HTML, error) {
+	raw := &htmlRenderer{links: linkFixer{base, dir}}
 	md := goldmark.New(
 		// GFM, but table alignment as align attributes: the default inline
 		// style attributes would be blocked by the CSP.
@@ -29,13 +31,13 @@ func Markdown(src []byte, base, dir string) (template.HTML, error) {
 			parser.WithAutoHeadingID(),
 			parser.WithASTTransformers(util.Prioritized(linkFixer{base, dir}, 100)),
 		),
-		goldmark.WithRendererOptions(renderer.WithNodeRenderers(util.Prioritized(codeRenderer{}, 100))),
+		goldmark.WithRendererOptions(renderer.WithNodeRenderers(util.Prioritized(codeRenderer{}, 100), util.Prioritized(raw, 100))),
 	)
 	var buf bytes.Buffer
 	if err := md.Convert(src, &buf); err != nil {
 		return "", err
 	}
-	return template.HTML(buf.String()), nil
+	return template.HTML(buf.String() + raw.close()), nil
 }
 
 type linkFixer struct{ base, dir string }

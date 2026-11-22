@@ -228,6 +228,8 @@ func staticType(p string) string {
 		return "text/javascript; charset=utf-8"
 	case ".svg":
 		return "image/svg+xml"
+	case ".webmanifest":
+		return "application/manifest; charset=utf-8"
 	case ".png":
 		return "image/png"
 	case ".jpg", ".jpeg":

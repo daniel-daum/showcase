@@ -4,25 +4,43 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{.Title}}</title>
+<title>daniel daum - {{.Title}}</title>
+{{- with .Meta}}
+<meta name="description" content="{{.}}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="daniel daum">
+<meta property="og:title" content="daniel daum - {{$.Title}}">
+<meta property="og:description" content="{{.}}">
+<meta property="og:image" content="https://assets.danieldaum.net/img/misc/og.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="daniel daum - software engineer, avid reader, aspiring game dev - danieldaum.net">
+<meta name="twitter:card" content="summary_large_image">
+{{- end}}
 {{- with .GoImport}}
 <meta name="go-import" content="{{.}}">
 {{- end}}
 <link rel="preload" href="/static/fonts/geistpixel/GeistPixel-Square.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/favicon/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png">
+<link rel="manifest" href="/static/favicon/site.webmanifest">
+<link rel="alternate" type="application/atom+xml" title="daniel daum" href="https://danieldaum.net/feed.xml">
 <link rel="stylesheet" href="/static/style.css?v={{.CSS}}">
 <script src="/static/theme.js?v={{.CSS}}"></script>
 <script src="/static/copy.js?v={{.CSS}}" defer></script>
 </head>
-<body{{if .Wide}} class="page--code"{{end}}>
+<body>
 <a class="skip-link" href="#site-main">skip to content</a>
 {{template "sprite"}}
 <header class="site-header">
-  <a class="site-name" href="/">{{.Site}}</a>
-  <nav aria-label="site">
-    <a href="/">repos</a>
-    {{- range .Links}}{{if eq .Name "website"}}
-    <a href="{{.URL}}">website</a>
-    {{- end}}{{end}}
+  <a class="site-name" href="https://danieldaum.net">Daniel Daum</a>
+  <nav aria-label="main navigation">
+    <a href="https://danieldaum.net/about/">about</a>
+    <a href="https://danieldaum.net/blog/">blog</a>
+    <a href="/" aria-current="page">projects</a>
+    <a href="https://danieldaum.net/garden/">garden</a>
   </nav>
 </header>
 <main id="site-main">
@@ -31,9 +49,12 @@
 <footer>
   <nav aria-label="site links">
     <p aria-hidden="true">//</p>
-    {{- range .Links}}
-    <a href="{{.URL}}" rel="me">{{.Name}}</a>
-    {{- end}}
+    <a href="mailto:daniel@danieldaum.net"> email </a>
+    <a href="https://tangled.org/danieldaum.net" aria-label="git (opens in new tab)" target="_blank" rel="noopener noreferrer">git</a>
+    <a href="https://danieldaum.net/pgp.asc" aria-label="PGP public key (516E97FF)">PGP</a>
+    <a href="https://danieldaum.net/changelog/">changelog</a>
+    <a href="https://danieldaum.net/privacy/">privacy</a>
+    <a href="https://danieldaum.net/feed.xml">feed</a>
     <button type="button" class="theme-button" hidden>theme</button>
   </nav>
 </footer>

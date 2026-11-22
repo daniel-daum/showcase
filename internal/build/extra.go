@@ -71,7 +71,7 @@ func (b *Builder) renderExtras(ctx context.Context, rd *render.Renderer, dir str
 	}
 
 	for _, p := range []ExtraPage{rel, pulls, pkgs} {
-		page := render.Page{Title: p.Tab + " · " + r.Name, Wide: true, D: &p}
+		page := render.Page{Title: p.Tab + " · " + r.Name, D: &p}
 		if err := rd.Write(dir, r.Name+"/"+p.Tab+"/index.html", p.Tab, page); err != nil {
 			return err
 		}
@@ -80,7 +80,7 @@ func (b *Builder) renderExtras(ctx context.Context, rd *render.Renderer, dir str
 		{Repo: r, Tab: "code", Kind: "branches", Refs: r.Branches},
 		{Repo: r, Tab: "code", Kind: "tags", Refs: r.Tags},
 	} {
-		page := render.Page{Title: p.Kind + " · " + r.Name, Wide: true, D: &p}
+		page := render.Page{Title: p.Kind + " · " + r.Name, D: &p}
 		if err := rd.Write(dir, r.Name+"/"+p.Kind+"/index.html", "refs", page); err != nil {
 			return err
 		}

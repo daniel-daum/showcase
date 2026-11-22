@@ -1,11 +1,7 @@
 {{define "content" -}}
-<header class="profile">
-  {{- with .Avatar}}<img class="avatar-lg" src="{{.}}" alt="" width="160" height="160">{{end}}
-  <div class="profile-text">
-    <h1>{{or .User.FullName .User.Login}}</h1>
-    <p class="profile-handle">{{.User.Login}}{{with .User.Location}} · {{.}}{{end}}</p>
-    {{- with .User.Description}}<p class="profile-bio">{{.}}</p>{{end}}
-  </div>
+<header class="page-header">
+  <h1><span aria-hidden="true">/</span>projects</h1>
+  <p class="meta">Things I've built or projects in development</p>
 </header>
 
 <section class="box heat">

@@ -27,9 +27,11 @@ only what a code browser needs on top.
 - **Base:** Josh Comeau reset, 78ch body width, the heading scale, text links
   underlined in `--accent-muted` that turn `--accent` on hover, and the focus
   ring, high-contrast and reduced-motion rules.
-- **Chrome:** `.site-header` with `.site-name` (daum.dev) and a nav, and a
-  footer nav that starts with `//` and holds links to danieldaum.net, Tangled,
-  GitHub and Bluesky. UI labels are lowercase like saturn's.
+- **Chrome:** exactly danieldaum.net's (see decisions, "The chrome is
+  danieldaum.net's"): the name links home, the nav is about/blog/projects/
+  garden, the footer is `//` email git PGP changelog privacy feed theme. UI
+  labels are lowercase like saturn's.
+- **Favicon:** saturn's, in `web/static/favicon/`.
 
 ## Saturn components → daum.dev pages
 
@@ -56,8 +58,9 @@ New for daum.dev, built from the same tokens:
   `--accent` with `color-mix()`, so they follow the palette.
 - **Language dots:** eight classes mapped to the `--syn-*` colours, so they
   follow the palette too.
-- **Code pages:** a wider `body.page--code` (about `min(72rem, 94vw)`), like
-  saturn's `page--wide`. The 78ch width is too narrow for code and diffs.
+- **Page width:** saturn's `78ch` body on every page, so the header and
+  footer don't move between the two sites (see decisions, "The chrome is
+  danieldaum.net's").
 - **Line numbers:** links (`#L12`) in `--text-secondary`. The `:target` line
   is highlighted with `--surface` and an `--accent-muted` edge.
 

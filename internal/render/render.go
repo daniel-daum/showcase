@@ -25,24 +25,18 @@ type Renderer struct {
 	Now   time.Time // fixed per build so output is deterministic
 	css   string    // short hash of style.css, so caches never serve a stale one
 	Theme string    // saturn palette name, the default without JS
-	Site  string    // the brand: the site's host
-	Links []Link    // footer links
 	pages map[string]*template.Template
 	syms  map[string][]byte // sprite symbols by id: f-<glyph> file icons, i-<name> UI icons
 }
 
-type Link struct{ Name, URL string }
-
 // Page is what every template receives.
 type Page struct {
 	Title    string
+	Meta     string // optional meta description
 	GoImport string // optional go-import meta content
-	Wide     bool   // code layout (page--code)
 	D        any
 
 	Theme string // filled in by Write
-	Site  string
-	Links []Link
 	CSS   string
 }
 
@@ -109,7 +103,7 @@ func (r *Renderer) Write(dir, rel, name string, p Page) error {
 	if !ok {
 		return fmt.Errorf("render: no template %q", name)
 	}
-	p.Theme, p.Site, p.Links, p.CSS = r.Theme, r.Site, r.Links, r.css
+	p.Theme, p.CSS = r.Theme, r.css
 	var buf bytes.Buffer
 	if err := t.ExecuteTemplate(&buf, "base", p); err != nil {
 		return fmt.Errorf("render %s: %w", rel, err)

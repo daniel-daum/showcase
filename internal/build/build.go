@@ -2,7 +2,6 @@
 package build
 
 import (
-	"cmp"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -10,9 +9,7 @@ import (
 	"fmt"
 	"html/template"
 	"log/slog"
-	"maps"
 	"path/filepath"
-	"slices"
 	"strings"
 	"time"
 
@@ -68,7 +65,7 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 		return err
 	}
 
-	rd.Theme, rd.Site, rd.Links = b.Cfg.Theme, siteHost(b.Cfg.SiteURL), links(b.Cfg.Links)
+	rd.Theme = b.Cfg.Theme
 	p := Profile{User: user}
 	if img, ct, err := b.Gitea.Avatar(ctx, user.AvatarURL); err != nil {
 		b.Log.Warn("avatar", "err", err)
@@ -123,17 +120,17 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 
 	p.Heatmap, p.Total = render.Heatmap(days, b.Now(), yearWeeks+1)
 	p.HeatHalf, _ = render.Heatmap(days, b.Now(), halfWeeks)
-	title := user.FullName
-	if title == "" {
-		title = user.Login
-	}
-	if err := rd.Write(dir, "index.html", "profile", render.Page{Title: title, D: p}); err != nil {
+	if err := rd.Write(dir, "index.html", "profile", render.Page{
+		Title: "projects",
+		Meta:  "daniel daum's projects - oakland based software engineer",
+		D:     p,
+	}); err != nil {
 		return fmt.Errorf("profile: %w", err)
 	}
-	if err := rd.Write(dir, "repos/index.html", "repos", render.Page{Title: "Repositories · " + title, D: p}); err != nil {
+	if err := rd.Write(dir, "repos/index.html", "repos", render.Page{Title: "repositories", D: p}); err != nil {
 		return fmt.Errorf("repos page: %w", err)
 	}
-	if err := rd.Write(dir, "404.html", "notfound", render.Page{Title: "not found", D: p}); err != nil {
+	if err := rd.Write(dir, "404.html", "notfound", render.Page{Title: "404 page not found", D: p}); err != nil {
 		return err
 	}
 	for _, rp := range repos {
@@ -148,17 +145,4 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 		}
 	}
 	return nil
-}
-
-// links orders the footer links: known keys first, then the rest by key.
-func links(m map[string]string) []render.Link {
-	seen := map[string]bool{}
-	var out []render.Link
-	for _, k := range append([]string{"website", "atproto", "tangled", "github"}, slices.Sorted(maps.Keys(m))...) {
-		if u, ok := m[k]; ok && !seen[k] {
-			seen[k] = true
-			out = append(out, render.Link{Name: cmp.Or(map[string]string{"atproto": "bluesky"}[k], k), URL: u})
-		}
-	}
-	return out
 }

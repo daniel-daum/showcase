@@ -562,15 +562,17 @@ footer nav p {
     color: var(--accent-muted);
 }
 
+/* the footer links point at danieldaum.net, so the selectors match the
+   path, not the full url, as in saturn */
 @media (max-width: 600px) {
     footer nav p,
-    footer nav a[href="/pgp.asc"] {
+    footer nav a[href$="/pgp.asc"] {
         display: none;
     }
 }
 
 @media (max-width: 480px) {
-    footer nav a[href="/changelog/"] {
+    footer nav a[href$="/changelog/"] {
         display: none;
     }
 }
@@ -1425,17 +1427,18 @@ footer nav a,
     --add: var(--syn-string);
     --del: var(--syn-variable);
 
-    /* layers, darkest first. Same steps as the Paint themes for Gitea
-       (body, box, box header, hover, border): saturn's background tinted
-       into a neutral grey ladder, so each palette keeps its hue at low
-       chroma. web/contrast_test.go checks the text on them. */
-    --page: color-mix(in oklab, var(--background-dark) 55%, #141414);
-    --box: color-mix(in oklab, var(--background-dark) 55%, #1c1c1c);
-    --box-head: color-mix(in oklab, var(--background-dark) 55%, #282828);
-    --hover: color-mix(in oklab, var(--background-dark) 55%, #343434);
-    --rule: color-mix(in oklab, var(--background-dark) 55%, #4e4e4e);
-    --edge: color-mix(in oklab, var(--background-dark) 55%, #6d6d6d);
-    --line: color-mix(in oklab, var(--background-dark) 55%, #808080);
+    /* layers, darkest first. The page is saturn's own background, so
+       moving between danieldaum.net and here doesn't change it. Each layer
+       above it lifts the lightness by about the steps of the Paint themes
+       for Gitea (box, box header, hover, border) and keeps the palette's
+       hue. web/contrast_test.go checks the text on them. */
+    --page: var(--background-dark);
+    --box: color-mix(in oklab, var(--background-dark) 98%, white);
+    --box-head: color-mix(in oklab, var(--background-dark) 95%, white);
+    --hover: color-mix(in oklab, var(--background-dark) 92%, white);
+    --rule: color-mix(in oklab, var(--background-dark) 86%, white);
+    --edge: color-mix(in oklab, var(--background-dark) 80%, white);
+    --line: color-mix(in oklab, var(--background-dark) 76%, white);
 
     /* text: content near the heading colour, --text-secondary for metadata */
     --body-text: color-mix(in oklab, var(--text-body) 45%, var(--text-headings));
@@ -1452,12 +1455,14 @@ footer nav a,
     --depth: var(--highlight), 0 1px 1px rgb(0 0 0 / 0.25);
 }
 
-body {
+/* body keeps saturn's size, colour and background, so the header, the
+   footer and the 78ch page width match danieldaum.net exactly. The code
+   browser's own type starts at main. */
+main {
     font-family: var(--ui);
     font-size: 15px;
     line-height: 1.55;
     color: var(--body-text);
-    background-color: var(--page);
 }
 
 p {
@@ -1489,23 +1494,14 @@ input:focus-visible {
     outline-offset: 2px;
 }
 
-/* rem, not saturn's 78ch: ch follows the font, and Geist Pixel is wide */
-body {
-    max-width: 50rem;
-}
-
-body.page--code {
-    max-width: 60rem;
-}
-
 h1, h2, h3,
 .site-name {
     font-family: var(--pixel);
     font-weight: normal;
 }
 
-/* saturn capitalises nav and labels; a code browser reads better without */
-.breadcrumb,
+/* saturn capitalises nav and labels; a code browser reads better without.
+   The chrome and the page breadcrumb keep saturn's capitals. */
 .pill,
 .card-title {
     text-transform: none;
@@ -1560,8 +1556,7 @@ h1, h2, h3,
 
 /* avatars are images; saturn styles every img as a full-width bordered photo */
 img.avatar-xs,
-img.avatar-sm,
-img.avatar-lg {
+img.avatar-sm {
     display: inline-block;
     flex: none;
     border: 0;
@@ -1576,15 +1571,6 @@ img.avatar-lg {
 
 .avatar-xs { width: 20px; height: 20px; }
 .avatar-sm { width: 24px; height: 24px; }
-
-/* the profile picture: a rounded square, as on Gitea */
-.avatar-lg {
-    width: 160px;
-    height: 160px;
-    border-radius: var(--radius) !important;
-    object-fit: cover;
-    box-shadow: 0 0 0 1px var(--edge);
-}
 
 .avatar-none {
     display: inline-grid;
@@ -2029,48 +2015,6 @@ a.row-title:hover,
     }
 }
 
-/* site header */
-.site-header {
-    padding-inline: 0;
-}
-
-.site-header nav a {
-    font-size: 0.85rem;
-}
-
-/* profile */
-.profile {
-    display: flex;
-    gap: 1.5rem;
-    align-items: center;
-    margin-bottom: 2rem;
-}
-
-.profile h1 {
-    margin: 0;
-    color: var(--accent-bright);
-    font-size: 1.9rem;
-}
-
-.profile-handle {
-    margin: 0.2rem 0 0;
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-}
-
-.profile-bio {
-    margin: 0.6rem 0 0;
-    font-size: 1rem;
-}
-
-@media (max-width: 480px) {
-    .profile {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-}
-
 /* heatmap: fits its box at any width; colours follow the palette */
 .heat-body {
     padding: 1rem 1rem 0.75rem;
@@ -2254,19 +2198,6 @@ a.row-title:hover,
     color: var(--accent-bright);
 }
 
-.page-title {
-    display: flex;
-    align-items: baseline;
-    gap: 0.6rem;
-    margin: 0 0 1.25rem;
-}
-
-.page-count {
-    color: var(--text-secondary);
-    font-family: var(--ui);
-    font-size: 1rem;
-}
-
 /* recently active: a small accent pill on the card, and an accent edge */
 .repo-card--active {
     border-color: var(--accent-edge);
@@ -2316,17 +2247,6 @@ a.row-title:hover,
     gap: 0 0.7rem;
     margin: 0;
     padding: 0.2rem 0;
-}
-
-/* the thread line through the avatars */
-.tl-item:not(:last-child)::before {
-    content: "";
-    position: absolute;
-    top: 1.75rem;
-    bottom: -0.2rem;
-    left: calc(3rem + 0.7rem + 0.625rem);
-    width: 1px;
-    background: var(--rule);
 }
 
 .tl-time {
@@ -2491,11 +2411,6 @@ a.tl-sha:hover {
         gap: 0 0.6rem;
     }
 
-    .tl-item:not(:last-child)::before {
-        left: 0.625rem;
-        top: 1.6rem;
-    }
-
     .tl-time {
         padding: 0;
         font-size: 0.68rem;
@@ -2631,14 +2546,6 @@ a.tl-sha:hover {
 
 .repo-title a:hover {
     color: var(--accent-bright);
-}
-
-.repo-title .repo-owner {
-    color: var(--text-secondary);
-}
-
-.repo-slash {
-    color: var(--rule);
 }
 
 .repo-title .pill {

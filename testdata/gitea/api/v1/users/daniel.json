@@ -1,0 +1,12 @@
+{
+  "id": 1,
+  "login": "daniel",
+  "full_name": "Daniel Daum",
+  "email": "",
+  "avatar_url": "http://gitea.tailnet.example:3000/avatars/0123456789abcdef",
+  "html_url": "http://gitea.tailnet.example:3000/daniel",
+  "description": "Builds small tools. <script>alert(1)</script>",
+  "website": "https://danieldaum.net",
+  "location": "Earth",
+  "visibility": "public"
+}

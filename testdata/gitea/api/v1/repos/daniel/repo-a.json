@@ -1,0 +1,14 @@
+{
+  "id": 10,
+  "name": "repo-a",
+  "full_name": "daniel/repo-a",
+  "description": "A small Go service & friends",
+  "private": false,
+  "empty": false,
+  "archived": false,
+  "website": "",
+  "default_branch": "main",
+  "language": "Go",
+  "topics": ["go", "web"],
+  "updated_at": "2026-11-20T09:00:00Z"
+}

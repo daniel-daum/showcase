@@ -1,0 +1,99 @@
+/* Flexoki palette (https://stephango.com/flexoki, MIT). Original styles. */
+@font-face {
+  font-family: "Geist Pixel";
+  src: url("/static/fonts/GeistPixel-Square.woff2") format("woff2");
+  font-display: swap;
+}
+
+:root {
+  --paper: #FFFCF0; --black: #100F0F;
+  --b50: #F2F0E5; --b100: #E6E4D9; --b150: #DAD8CE; --b200: #CECDC3;
+  --b300: #B7B5AC; --b500: #878580; --b600: #6F6E69; --b700: #575653;
+  --b800: #403E3C; --b850: #343331; --b900: #282726; --b950: #1C1B1A;
+
+  --bg: var(--paper); --bg-2: var(--b50);
+  --ui: var(--b100); --ui-2: var(--b150); --ui-3: var(--b200);
+  --tx: var(--black); --tx-2: var(--b600); --tx-3: var(--b300);
+
+  --red: #AF3029; --orange: #BC5215; --yellow: #AD8301; --green: #66800B;
+  --cyan: #24837B; --blue: #205EA6; --purple: #5E409D; --magenta: #A02F6F;
+  --heat-1: #DDE2B2; --heat-2: #BEC97E; --heat-3: #768D21; --heat-4: #536907;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: var(--black); --bg-2: var(--b950);
+    --ui: var(--b900); --ui-2: var(--b850); --ui-3: var(--b800);
+    --tx: var(--b200); --tx-2: var(--b500); --tx-3: var(--b700);
+
+    --red: #D14D41; --orange: #DA702C; --yellow: #D0A215; --green: #879A39;
+    --cyan: #3AA99F; --blue: #4385BE; --purple: #8B7EC8; --magenta: #CE5D97;
+    --heat-1: #313D07; --heat-2: #536907; --heat-3: #768D21; --heat-4: #BEC97E;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { background: var(--bg); color: var(--tx); }
+
+body {
+  margin: 0 auto;
+  max-width: 64rem;
+  padding: 0 1rem 4rem;
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+h1, h2, h3, header.site { font-family: "Geist Pixel", ui-monospace, monospace; font-weight: normal; }
+h1 { font-size: 2rem; margin: 0; line-height: 1.2; }
+h2 { font-size: 1.15rem; margin: 2rem 0 .75rem; }
+
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+code, pre, kbd { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .875rem; }
+
+.muted, .meta { color: var(--tx-2); }
+
+header.site {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--ui);
+  margin-bottom: 2rem;
+}
+header.site a { color: var(--tx); }
+
+/* profile */
+.profile { display: flex; gap: 1.5rem; align-items: flex-start; }
+.profile p { margin: .25rem 0; }
+.avatar { border-radius: 50%; border: 1px solid var(--ui-2); flex: none; }
+.bio { font-size: 1.05rem; }
+.links { list-style: none; padding: 0; margin: .75rem 0 0; display: flex; flex-wrap: wrap; gap: .25rem 1rem; }
+
+.heatmap-wrap { overflow-x: auto; border: 1px solid var(--ui); border-radius: 6px; padding: .75rem; background: var(--bg-2); }
+.heatmap { width: 100%; min-width: 40rem; height: auto; display: block; }
+.heatmap text { fill: var(--tx-2); font-size: 9px; font-family: system-ui, sans-serif; }
+.heatmap .h0 { fill: var(--ui); }
+.heatmap .h1 { fill: var(--heat-1); }
+.heatmap .h2 { fill: var(--heat-2); }
+.heatmap .h3 { fill: var(--heat-3); }
+.heatmap .h4 { fill: var(--heat-4); }
+
+.repos { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1rem; }
+.repos li { border: 1px solid var(--ui); border-radius: 6px; padding: 1rem; display: flex; flex-direction: column; }
+.repos p { margin: .5rem 0 0; }
+.repos .meta { margin-top: auto; padding-top: .5rem; font-size: .85rem; display: flex; gap: 1rem; }
+.repo-name { font-weight: 600; }
+
+.lang { display: inline-flex; align-items: center; gap: .35rem; }
+.dot { width: .7rem; height: .7rem; border-radius: 50%; display: inline-block; background: var(--tx-3); }
+.lang-0 { background: var(--red); }
+.lang-1 { background: var(--orange); }
+.lang-2 { background: var(--yellow); }
+.lang-3 { background: var(--green); }
+.lang-4 { background: var(--cyan); }
+.lang-5 { background: var(--blue); }
+.lang-6 { background: var(--purple); }
+.lang-7 { background: var(--magenta); }
+
+@media (max-width: 40rem) {
+  .profile { flex-direction: column; }
+}

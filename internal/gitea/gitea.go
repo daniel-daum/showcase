@@ -1,0 +1,218 @@
+// Package gitea is a minimal, anonymous Gitea API client. It never sends
+// credentials, so it can only see what the public can see.
+package gitea
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
+)
+
+const maxBody = 8 << 20
+
+type Client struct {
+	base string
+	user string
+	http *http.Client
+}
+
+func New(baseURL, user string) *Client {
+	return &Client{
+		base: strings.TrimRight(baseURL, "/"),
+		user: user,
+		http: &http.Client{
+			Timeout: 30 * time.Second,
+			CheckRedirect: func(*http.Request, []*http.Request) error {
+				return errors.New("gitea: refusing redirect")
+			},
+		},
+	}
+}
+
+type User struct {
+	Login       string `json:"login"`
+	FullName    string `json:"full_name"`
+	AvatarURL   string `json:"avatar_url"`
+	Description string `json:"description"`
+	Website     string `json:"website"`
+	Location    string `json:"location"`
+}
+
+type Repo struct {
+	Name          string    `json:"name"`
+	Description   string    `json:"description"`
+	Website       string    `json:"website"`
+	DefaultBranch string    `json:"default_branch"`
+	Topics        []string  `json:"topics"`
+	Language      string    `json:"language"`
+	UpdatedAt     time.Time `json:"updated_at"`
+	Private       bool      `json:"private"`
+	Empty         bool      `json:"empty"`
+	Archived      bool      `json:"archived"`
+}
+
+type Asset struct {
+	Name        string `json:"name"`
+	Size        int64  `json:"size"`
+	DownloadURL string `json:"browser_download_url"`
+}
+
+type Release struct {
+	TagName     string    `json:"tag_name"`
+	Name        string    `json:"name"`
+	Body        string    `json:"body"`
+	Draft       bool      `json:"draft"`
+	Prerelease  bool      `json:"prerelease"`
+	PublishedAt time.Time `json:"published_at"`
+	Assets      []Asset   `json:"assets"`
+}
+
+type PullRequest struct {
+	Number    int       `json:"number"`
+	Title     string    `json:"title"`
+	Body      string    `json:"body"`
+	State     string    `json:"state"`
+	Merged    bool      `json:"merged"`
+	CreatedAt time.Time `json:"created_at"`
+	User      struct {
+		Login string `json:"login"`
+	} `json:"user"`
+}
+
+type Package struct {
+	Name       string    `json:"name"`
+	Type       string    `json:"type"`
+	Version    string    `json:"version"`
+	CreatedAt  time.Time `json:"created_at"`
+	Repository *Repo     `json:"repository"`
+}
+
+func (c *Client) get(ctx context.Context, path string, v any) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", c.base+path, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Accept", "application/json")
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("gitea: GET %s: %s", path, resp.Status)
+	}
+	return json.NewDecoder(io.LimitReader(resp.Body, maxBody)).Decode(v)
+}
+
+func (c *Client) repoPath(repo, rest string) string {
+	return "/api/v1/repos/" + url.PathEscape(c.user) + "/" + url.PathEscape(repo) + rest
+}
+
+func (c *Client) User(ctx context.Context) (*User, error) {
+	var u User
+	return &u, c.get(ctx, "/api/v1/users/"+url.PathEscape(c.user), &u)
+}
+
+func (c *Client) Repo(ctx context.Context, name string) (*Repo, error) {
+	var r Repo
+	if err := c.get(ctx, c.repoPath(name, ""), &r); err != nil {
+		return nil, err
+	}
+	if r.Private { // anonymous calls should never see one; refuse anyway
+		return nil, fmt.Errorf("gitea: repo %s is private", name)
+	}
+	return &r, nil
+}
+
+func (c *Client) Languages(ctx context.Context, repo string) (map[string]int64, error) {
+	var m map[string]int64
+	return m, c.get(ctx, c.repoPath(repo, "/languages"), &m)
+}
+
+func (c *Client) Releases(ctx context.Context, repo string) ([]Release, error) {
+	var rs []Release
+	if err := c.get(ctx, c.repoPath(repo, "/releases?draft=false&limit=50"), &rs); err != nil {
+		return nil, err
+	}
+	out := rs[:0]
+	for _, r := range rs {
+		if !r.Draft {
+			out = append(out, r)
+		}
+	}
+	return out, nil
+}
+
+func (c *Client) Pulls(ctx context.Context, repo string) ([]PullRequest, error) {
+	var ps []PullRequest
+	return ps, c.get(ctx, c.repoPath(repo, "/pulls?state=all&sort=recentupdate&limit=50"), &ps)
+}
+
+// Packages returns the user's packages that are linked to one of repos.
+// Package visibility follows the owner, not the repo, so the filter matters.
+func (c *Client) Packages(ctx context.Context, repos []string) ([]Package, error) {
+	allowed := map[string]bool{}
+	for _, r := range repos {
+		allowed[r] = true
+	}
+	var out []Package
+	for page := 1; page <= 20; page++ {
+		var ps []Package
+		path := fmt.Sprintf("/api/v1/packages/%s?limit=50&page=%d", url.PathEscape(c.user), page)
+		if err := c.get(ctx, path, &ps); err != nil {
+			return nil, err
+		}
+		for _, p := range ps {
+			if p.Repository != nil && !p.Repository.Private && allowed[p.Repository.Name] {
+				out = append(out, p)
+			}
+		}
+		if len(ps) < 50 {
+			break
+		}
+	}
+	return out, nil
+}
+
+// Avatar fetches the user's avatar image. Gitea builds avatar URLs from its
+// ROOT_URL, so Gitea-hosted avatars are re-fetched through the configured base.
+func (c *Client) Avatar(ctx context.Context, avatarURL string) ([]byte, string, error) {
+	u, err := url.Parse(avatarURL)
+	if err != nil {
+		return nil, "", err
+	}
+	target := avatarURL
+	if strings.HasPrefix(u.Path, "/avatars/") || strings.HasPrefix(u.Path, "/avatar/") {
+		target = c.base + u.RequestURI()
+	} else if u.Scheme != "https" {
+		return nil, "", fmt.Errorf("gitea: unsupported avatar url %q", avatarURL)
+	}
+	req, err := http.NewRequestWithContext(ctx, "GET", target, nil)
+	if err != nil {
+		return nil, "", err
+	}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, "", fmt.Errorf("gitea: avatar: %s", resp.Status)
+	}
+	b, err := io.ReadAll(io.LimitReader(resp.Body, 2<<20))
+	if err != nil {
+		return nil, "", err
+	}
+	ct := http.DetectContentType(b)
+	switch ct {
+	case "image/png", "image/jpeg", "image/gif", "image/webp":
+		return b, ct, nil
+	}
+	return nil, "", fmt.Errorf("gitea: avatar has type %s", ct)
+}

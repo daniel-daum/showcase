@@ -261,6 +261,9 @@ func isImage(name string) bool {
 }
 
 func goImport(siteURL, name string) string {
-	host := strings.TrimPrefix(strings.TrimPrefix(siteURL, "https://"), "http://")
-	return host + "/" + name + " git " + siteURL + "/" + name + ".git"
+	return siteHost(siteURL) + "/" + name + " git " + siteURL + "/" + name + ".git"
+}
+
+func siteHost(siteURL string) string {
+	return strings.TrimPrefix(strings.TrimPrefix(siteURL, "https://"), "http://")
 }

@@ -43,7 +43,6 @@ type User struct {
 	FullName    string `json:"full_name"`
 	AvatarURL   string `json:"avatar_url"`
 	Description string `json:"description"`
-	Website     string `json:"website"`
 	Location    string `json:"location"`
 }
 
@@ -61,9 +60,7 @@ type Repo struct {
 }
 
 type Asset struct {
-	Name        string `json:"name"`
-	Size        int64  `json:"size"`
-	DownloadURL string `json:"browser_download_url"`
+	Name string `json:"name"` // the download URL is rebuilt, never Gitea's
 }
 
 type Release struct {
@@ -89,31 +86,38 @@ type PullRequest struct {
 }
 
 type Package struct {
-	Name       string    `json:"name"`
-	Type       string    `json:"type"`
-	Version    string    `json:"version"`
-	CreatedAt  time.Time `json:"created_at"`
-	Repository *Repo     `json:"repository"`
+	Name       string `json:"name"`
+	Type       string `json:"type"`
+	Version    string `json:"version"`
+	Repository *Repo  `json:"repository"`
 }
 
-func (c *Client) get(ctx context.Context, path string, v any) error {
+// fetch GETs base+path (never anything else) without credentials.
+func (c *Client) fetch(ctx context.Context, path string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", c.base+path, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	req.Header.Set("Accept", "application/json")
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusNotFound {
-		return fmt.Errorf("GET %s: %w", path, ErrNotFound)
+		return nil, fmt.Errorf("GET %s: %w", path, ErrNotFound)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("gitea: GET %s: %s", path, resp.Status)
+		return nil, fmt.Errorf("gitea: GET %s: %s", path, resp.Status)
 	}
-	return json.NewDecoder(io.LimitReader(resp.Body, maxBody)).Decode(v)
+	return io.ReadAll(io.LimitReader(resp.Body, maxBody))
+}
+
+func (c *Client) get(ctx context.Context, path string, v any) error {
+	b, err := c.fetch(ctx, path)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, v)
 }
 
 func (c *Client) repoPath(repo, rest string) string {
@@ -186,39 +190,21 @@ func (c *Client) Packages(ctx context.Context, repos []string) ([]Package, error
 	return out, nil
 }
 
-// Avatar fetches the user's avatar image. Gitea builds avatar URLs from its
-// ROOT_URL, so Gitea-hosted avatars are re-fetched through the configured base.
+// Avatar fetches the user's avatar. Gitea builds avatar URLs from its
+// ROOT_URL, so only the path is kept and fetched from the configured base.
 func (c *Client) Avatar(ctx context.Context, avatarURL string) ([]byte, string, error) {
 	u, err := url.Parse(avatarURL)
 	if err != nil {
 		return nil, "", err
 	}
-	target := avatarURL
-	if strings.HasPrefix(u.Path, "/avatars/") || strings.HasPrefix(u.Path, "/avatar/") {
-		target = c.base + u.RequestURI()
-	} else if u.Scheme != "https" {
-		return nil, "", fmt.Errorf("gitea: unsupported avatar url %q", avatarURL)
-	}
-	req, err := http.NewRequestWithContext(ctx, "GET", target, nil)
+	b, err := c.fetch(ctx, u.RequestURI())
 	if err != nil {
 		return nil, "", err
 	}
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return nil, "", err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, "", fmt.Errorf("gitea: avatar: %s", resp.Status)
-	}
-	b, err := io.ReadAll(io.LimitReader(resp.Body, 2<<20))
-	if err != nil {
-		return nil, "", err
-	}
-	ct := http.DetectContentType(b)
-	switch ct {
+	switch ct := http.DetectContentType(b); ct {
 	case "image/png", "image/jpeg", "image/gif", "image/webp":
 		return b, ct, nil
+	default:
+		return nil, "", fmt.Errorf("gitea: avatar has type %s", ct)
 	}
-	return nil, "", fmt.Errorf("gitea: avatar has type %s", ct)
 }

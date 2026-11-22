@@ -59,7 +59,6 @@ func (b *Builder) renderExtras(rd *render.Renderer, dir string, r *repo) error {
 	}
 
 	pkgs := ExtraPage{Repo: r, Tab: "packages"}
-	host := strings.TrimPrefix(strings.TrimPrefix(b.Cfg.SiteURL, "https://"), "http://")
 	for _, x := range r.Packages {
 		if strings.HasPrefix(x.Version, "sha256:") {
 			continue // untagged image manifests
@@ -69,7 +68,7 @@ func (b *Builder) renderExtras(rd *render.Renderer, dir string, r *repo) error {
 			if !b.Cfg.HasImage(x.Name) {
 				continue // not pullable through the proxy, so don't advertise it
 			}
-			v.Command = "docker pull " + host + "/" + b.Cfg.User + "/" + x.Name + ":" + x.Version
+			v.Command = "docker pull " + siteHost(b.Cfg.SiteURL) + "/" + b.Cfg.User + "/" + x.Name + ":" + x.Version
 		}
 		pkgs.Packages = append(pkgs.Packages, v)
 	}

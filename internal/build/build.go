@@ -2,11 +2,13 @@
 package build
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"html/template"
 	"log/slog"
+	"maps"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -124,33 +126,15 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 	return nil
 }
 
-var linkOrder = []string{"website", "atproto", "tangled", "github"}
-var linkNames = map[string]string{"website": "website", "atproto": "bluesky", "tangled": "tangled", "github": "github"}
-
+// links orders the footer links: known keys first, then the rest by key.
 func links(m map[string]string) []render.Link {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	rank := func(k string) int {
-		if i := slices.Index(linkOrder, k); i >= 0 {
-			return i
+	seen := map[string]bool{}
+	var out []render.Link
+	for _, k := range append([]string{"website", "atproto", "tangled", "github"}, slices.Sorted(maps.Keys(m))...) {
+		if u, ok := m[k]; ok && !seen[k] {
+			seen[k] = true
+			out = append(out, render.Link{Name: cmp.Or(map[string]string{"atproto": "bluesky"}[k], k), URL: u})
 		}
-		return len(linkOrder)
-	}
-	slices.SortFunc(keys, func(a, c string) int {
-		if d := rank(a) - rank(c); d != 0 {
-			return d
-		}
-		return strings.Compare(a, c)
-	})
-	out := make([]render.Link, 0, len(keys))
-	for _, k := range keys {
-		name := linkNames[k]
-		if name == "" {
-			name = k
-		}
-		out = append(out, render.Link{Name: name, URL: m[k]})
 	}
 	return out
 }

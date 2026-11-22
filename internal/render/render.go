@@ -24,7 +24,8 @@ import (
 type Renderer struct {
 	Now   time.Time // fixed per build so output is deterministic
 	css   string    // short hash of style.css, so caches never serve a stale one
-	Theme string    // saturn palette name
+	Theme string    // saturn palette name, the default without JS
+	Site  string    // the brand: the site's host
 	Links []Link    // footer links
 	pages map[string]*template.Template
 	syms  map[string][]byte // sprite symbols by id: f-<glyph> file icons, i-<name> UI icons
@@ -40,17 +41,22 @@ type Page struct {
 	D        any
 
 	Theme string // filled in by Write
+	Site  string
 	Links []Link
 	CSS   string
 }
 
 func New(now time.Time) (*Renderer, error) {
-	css, err := web.FS.ReadFile("static/style.css")
-	if err != nil {
-		return nil, err
+	h := sha256.New() // one version for the stylesheet and both scripts
+	for _, f := range []string{"static/style.css", "static/theme.js", "static/copy.js"} {
+		b, err := web.FS.ReadFile(f)
+		if err != nil {
+			return nil, err
+		}
+		h.Write(b)
 	}
-	sum := sha256.Sum256(css)
-	r := &Renderer{Now: now, css: hex.EncodeToString(sum[:5]), pages: map[string]*template.Template{}}
+	r := &Renderer{Now: now, css: hex.EncodeToString(h.Sum(nil)[:5]), pages: map[string]*template.Template{}}
+	var err error
 	if r.syms, err = loadSymbols(); err != nil {
 		return nil, err
 	}
@@ -103,7 +109,7 @@ func (r *Renderer) Write(dir, rel, name string, p Page) error {
 	if !ok {
 		return fmt.Errorf("render: no template %q", name)
 	}
-	p.Theme, p.Links, p.CSS = r.Theme, r.Links, r.css
+	p.Theme, p.Site, p.Links, p.CSS = r.Theme, r.Site, r.Links, r.css
 	var buf bytes.Buffer
 	if err := t.ExecuteTemplate(&buf, "base", p); err != nil {
 		return fmt.Errorf("render %s: %w", rel, err)

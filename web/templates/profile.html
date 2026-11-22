@@ -1,6 +1,6 @@
 {{define "content" -}}
 <header class="profile">
-  {{- with .Avatar}}<img class="avatar-lg" src="{{.}}" alt="" width="88" height="88">{{end}}
+  {{- with .Avatar}}<img class="avatar-lg" src="{{.}}" alt="" width="120" height="120">{{end}}
   <div class="profile-text">
     <h1>{{or .User.FullName .User.Login}}</h1>
     <p class="profile-handle">{{.User.Login}}{{with .User.Location}} · {{.}}{{end}}</p>
@@ -12,15 +12,12 @@
   <h2 class="box-head">{{template "icon" "pulse"}}{{.Total}} commits in the last year
     <span class="activity-stats">
       <span>active in <b>{{.ActiveWeeks}}</b> of the last 52 weeks</span>
-      {{- if .Streak}}<span class="streak">{{template "icon" "fire"}}<b>{{.Streak}}</b>-week streak</span>{{end}}
+      {{- if .Streak}}<span class="streak">{{template "icon" "fire"}}<span><b>{{.Streak}}</b>-week streak</span></span>{{end}}
     </span>
   </h2>
   <div class="heat-body">
-    <div class="weekly-wrap">
-      {{.Weekly}}
-      <p class="weekly-labels" aria-hidden="true"><span>a year ago</span><span>this week</span></p>
-    </div>
-    {{.Heatmap}}
+    <div class="heat-year">{{.Bars}}{{.Heatmap}}</div>
+    <div class="heat-half">{{.BarsHalf}}{{.HeatHalf}}</div>
     <p class="heat-legend" aria-hidden="true">less <i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h3"></i><i class="h4"></i> more</p>
   </div>
 </section>

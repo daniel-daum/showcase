@@ -147,7 +147,7 @@ func testBuilder(t *testing.T) *Builder {
 	cfg := &config.Config{
 		GiteaURL: srv.URL,
 		User:     "daniel",
-		SiteURL:  "https://daum.dev",
+		SiteURL:  "https://code.danieldaum.net",
 		Links: map[string]string{
 			"github":  "https://github.com/example",
 			"website": "https://danieldaum.net",
@@ -266,7 +266,7 @@ func TestPackagesNeedToken(t *testing.T) {
 	}
 	// images still come from the registry; API-only packages (npm) are gone
 	b, _ := os.ReadFile(filepath.Join(dir, "repo-a/packages/index.html"))
-	if !bytes.Contains(b, []byte("daum.dev/daniel/repo-a")) || bytes.Contains(b, []byte("@daniel/repo-a")) {
+	if !bytes.Contains(b, []byte("code.danieldaum.net/daniel/repo-a")) || bytes.Contains(b, []byte("@daniel/repo-a")) {
 		t.Error("packages page should list the registry image and nothing from the API")
 	}
 }

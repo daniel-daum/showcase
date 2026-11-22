@@ -119,7 +119,7 @@ func TestProxyRoutes(t *testing.T) {
 			if h.Get("Set-Cookie") != "" || h.Get("X-Gitea-Debug") != "" {
 				t.Errorf("%s %s: leaked upstream headers", c.method, c.path)
 			}
-			if a := h.Get("Www-Authenticate"); strings.Contains(a, "tailnet") || !strings.Contains(a, `realm="https://daum.dev/v2/token"`) {
+			if a := h.Get("Www-Authenticate"); strings.Contains(a, "tailnet") || !strings.Contains(a, `realm="https://code.danieldaum.net/v2/token"`) {
 				t.Errorf("%s %s: realm not rewritten: %s", c.method, c.path, a)
 			}
 		}

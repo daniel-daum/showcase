@@ -16,6 +16,7 @@ const (
 	featuredCards = 6
 	sparkWeeks    = 12
 	yearWeeks     = 52
+	halfWeeks     = 26 // the activity box on small screens
 	feedDays      = 90 // how far back the feed looks
 	feedItems     = 6  // and how many events it shows at most
 	feedCommits   = 2  // commit lines under a push; the rest are "+N more"
@@ -62,13 +63,16 @@ func (b *Builder) activity(p *Profile, repos []*repo, login string) {
 			all = append(all, c.When)
 		}
 	}
-	weeks := render.Weeks(all, now, yearWeeks)
-	p.Weekly, p.Streak = render.WeeklyBars(weeks, now), render.Streak(weeks)
-	for _, n := range weeks {
+	cols := render.Weeks(all, now, yearWeeks+1) // the heatmap's 53 columns
+	year := cols[1:]
+	p.Streak = render.Streak(year)
+	for _, n := range year {
 		if n > 0 {
 			p.ActiveWeeks++
 		}
 	}
+	p.Bars = render.ActivityBars(cols, now, p.Streak, yearWeeks+1)
+	p.BarsHalf = render.ActivityBars(cols, now, p.Streak, halfWeeks)
 
 	for _, r := range repos {
 		var ts []time.Time

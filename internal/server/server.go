@@ -21,7 +21,8 @@ import (
 	"daum.dev/showcase/internal/config"
 )
 
-// script-src 'self' is only for /static/copy.js (copy buttons); nothing inline.
+// script-src 'self' is only for /static/theme.js (palette) and copy.js (copy
+// buttons); nothing inline.
 const csp = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' https:; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 
 type Server struct {

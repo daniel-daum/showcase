@@ -407,9 +407,8 @@ field read is the repo's `created_at` (and `merged_at` on pulls), from the
 same responses. No new endpoints are called. Only repos in `config.json`
 are in the data, so nothing else can appear.
 
-- **Weekly bars** sit in the heatmap box, above the heatmap: 52 weeks, with
-  the same Sunday columns and colour steps (`h0`–`h4`) as the heatmap.
-  Empty weeks keep a 2px baseline. The box head shows "active in N of the
+- **Weekly bars** (replaced by the activity bar chart, see below) sit in the
+  heatmap box, above the heatmap. The box head shows "active in N of the
   last 52 weeks" and the current streak: consecutive weeks with commits,
   ending this week, or last week while this week is still empty.
 - **Layout (revised after review):** activity graph at the top, then the
@@ -490,3 +489,90 @@ No JS was added for any of it.
   instead.
 - The fixture's newest commit moves to the morning of the fixed build day,
   so the goldens and `just demo` show live dots, "Today" and "new".
+
+## Activity bar chart
+
+`render.ActivityBars` replaces the plain weekly bars above the heatmap. It
+is one inline SVG (`class="bars"`, `role="img"`), with no JS and no inline
+styles: every part has its own class and its colour comes from tokens.
+
+- **Shared x axis.** The chart uses the heatmap's grid from `heatmap.go`
+  (`left`, `cell`, `gap`, 53 columns, `colX`, `monthCols`) and the same first
+  week, `WeekStart(end, 52)`. Both viewBoxes are `left + n*(cell+gap)` wide
+  and drawn at `width: 100%; height: auto`, so each bar sits over its week
+  at any width and the text isn't stretched. The bars are bucketed with
+  `Weeks(times, now, 53)`. "Active in N of the last 52 weeks" and the streak
+  still use the last 52.
+- **Y axis.** The step is the smallest of 1, 2, 5, 10, 20, 50 … that gives
+  2–3 lines (0 included) with the top line at or above the busiest week,
+  for example 0/5/10 for a max of 6 and 0/10/20 for 15. Bars are linear on
+  that scale, at least 4 units tall. Empty weeks are a 2-unit stub. Colour
+  uses the heatmap's `level()` steps.
+- **Markers, kept few:** this week (an `--accent-bright` outline and "this
+  week" under the right end of the baseline) and the streak (a bracket in
+  `--syn-constant` under exactly the weeks `Streak` counts, so it ends last
+  week while this week is still empty). Month rules sit in the gap before
+  each heatmap month label. The streak has no label of its own, because the
+  box head already says "6-week streak". A "busiest · Oct 18 · 15" dot and
+  label were dropped after review for the same reason (busy). The busiest
+  week stays in the aria-label.
+- **Releases are not marked.** A first version drew a dashed line, a
+  diamond and the tag for each release, with labels staggered over two
+  rows. It was dropped after review: the tags were detail nobody needed,
+  and the label placement cost code. With one label left under the
+  baseline, the chart is 118 units high.
+- **Hover** detail is SVG `<title>`s: a full-height hit rect per column
+  holds "12 commits · week of Oct 18 – Oct 24", and the bar after it has
+  `pointer-events: none`, so `.bars-hit:hover + .bars-bar` brightens it and
+  the column gets a faint background. 120ms fill transitions, none under
+  reduced motion.
+- **Empty year:** grid, month rules and stubs only, with "No commits in the
+  last year" in the middle and no markers.
+- **Small screens: two renders, toggled by CSS.** Below 600px the profile
+  shows a second chart and heatmap drawn for the last 26 weeks with the same
+  column logic, and hides the full-year pair (`.heat-year` / `.heat-half`).
+  The aria-labels keep the full-year summary. A sideways scroller that
+  starts at the right (an `rtl` container) was the other option. It keeps
+  one copy, but scrolls the y-axis labels and weekday labels out of view,
+  which is the part that makes the chart readable. Each pair sits in one
+  container with equal viewBox widths, so the chart and heatmap can't fall
+  out of line. The cost is HTML: the profile went from 58.9 KB to 92.1 KB
+  (7.1 KB to 10.1 KB gzipped), most of it the second heatmap.
+
+## Served at code.danieldaum.net
+
+The site moves from `daum.dev` to `code.danieldaum.net`. Everything
+host-specific already came from `site_url` (clone URLs, `go get` paths, image
+refs, the registry token realm) except the brand in the header, which now
+shows the host of `site_url` too. Go module paths follow the host:
+`go get code.danieldaum.net/<repo>`. The fixtures and tests use the new host.
+The spec still says `daum.dev` throughout; read it as `site_url`.
+
+## Palettes shared with danieldaum.net, and a font review toggle
+
+- **Why a cookie:** danieldaum.net keeps the palette in `sessionStorage` and
+  `localStorage` under `theme`. Those are per origin, so
+  `code.danieldaum.net` can't read them. A cookie set for
+  `Domain=danieldaum.net` is visible to both. `/static/theme.js` reads a
+  `theme` cookie first, then this site's own `sessionStorage`, and otherwise
+  moves to the next palette after the last visit, like saturn's
+  `theme.js`. It writes all three whenever it picks one. The cookie is a
+  session cookie with `SameSite=Lax`, and `Secure` on https. On an IP or
+  `localhost` it's host-only. The server never reads it.
+- **Saturn's side** needs the same cookie read and write (about 10 lines in
+  its `theme.js`). Until that ships, each site rotates palettes on its own.
+- **Footer:** a `theme` button cycles moss → ink → wine → plum → teal, as on
+  danieldaum.net (flexoki stays out of the cycle there too). The buttons
+  have `hidden` and `theme.js` reveals them, since `[data-theme]` is always
+  set here from config. Saturn shows its button on that attribute instead.
+- **No flash:** `theme.js` loads in `<head>` without `defer`, so the palette
+  is set before the first paint. It's same-origin, so the CSP is unchanged
+  (`script-src 'self'`, nothing inline). Without JS, the page keeps the
+  palette from config. The cache-busting `?v=` hash now covers `style.css`,
+  `theme.js` and `copy.js`.
+- **Font review (temporary):** a `font` button sets `data-font="pixel"` on
+  `<html>`, which points `--ui` at Geist Pixel. It's remembered in
+  `localStorage`. Code stays Geist Mono. Remove the button, its CSS and the
+  font part of `theme.js` once a font is chosen.
+- **Width:** repo pages (`page--code`) are up to 60rem wide, down from
+  68rem. The profile keeps saturn's 78ch.

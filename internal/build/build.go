@@ -39,14 +39,14 @@ func New(cfg *config.Config, data string) *Builder {
 }
 
 type Profile struct {
-	User    *gitea.User
-	Avatar  string
-	Heatmap template.HTML
-	Total   int
-	Repos   []RepoCard // all, newest update first: the repos page
+	User   *gitea.User
+	Avatar string
+	Total  int
+	Repos  []RepoCard // all, newest update first: the repos page
 
 	// activity (activity.go)
-	Weekly              template.HTML // one bar per week of the last year
+	Bars, Heatmap       template.HTML // the year's 53 week columns
+	BarsHalf, HeatHalf  template.HTML // the last 26, for small screens
 	ActiveWeeks, Streak int
 	Featured            []RepoCard // config's featured repos, or the newest six
 	Feed                []FeedItem // newest first
@@ -66,7 +66,7 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 		return err
 	}
 
-	rd.Theme, rd.Links = b.Cfg.Theme, links(b.Cfg.Links)
+	rd.Theme, rd.Site, rd.Links = b.Cfg.Theme, siteHost(b.Cfg.SiteURL), links(b.Cfg.Links)
 	p := Profile{User: user}
 	if img, ct, err := b.Gitea.Avatar(ctx, user.AvatarURL); err != nil {
 		b.Log.Warn("avatar", "err", err)
@@ -118,7 +118,8 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 	}
 	b.activity(&p, repos, user.Login)
 
-	p.Heatmap, p.Total = render.Heatmap(days, b.Now())
+	p.Heatmap, p.Total = render.Heatmap(days, b.Now(), yearWeeks+1)
+	p.HeatHalf, _ = render.Heatmap(days, b.Now(), halfWeeks)
 	title := user.FullName
 	if title == "" {
 		title = user.Login

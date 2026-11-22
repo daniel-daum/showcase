@@ -17,7 +17,7 @@ var (
 	eventHandler = regexp.MustCompile(`<[a-zA-Z][^>]*\son[a-z]+=`)
 	scriptTag    = regexp.MustCompile(`(?i)<script`)
 	// the one allowed script: same-origin copy buttons, no inline code
-	copyScript = regexp.MustCompile(`<script src="/static/copy\.js\?v=[0-9a-f]+" defer></script>`)
+	ownScripts = regexp.MustCompile(`<script src="/static/(theme\.js\?v=[0-9a-f]+"|copy\.js\?v=[0-9a-f]+" defer)></script>`)
 	iconUse    = regexp.MustCompile(`<use href="#([fi]-[a-z0-9-]+)">`)
 )
 
@@ -44,7 +44,7 @@ func TestOutputIsSafe(t *testing.T) {
 			return nil
 		}
 		pages++
-		s = copyScript.ReplaceAllString(s, "")
+		s = ownScripts.ReplaceAllString(s, "")
 		for name, re := range map[string]*regexp.Regexp{"inline style": inlineStyle, "event handler": eventHandler, "script": scriptTag} {
 			if m := re.FindString(s); m != "" {
 				t.Errorf("%s has an %s: %s", rel, name, m)

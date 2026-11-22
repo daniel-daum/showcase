@@ -1,7 +1,7 @@
 {
     "gitea_url": "http://127.0.0.1:1",
     "user": "daniel",
-    "site_url": "https://daum.dev",
+    "site_url": "https://code.danieldaum.net",
     "links": {
         "website": "https://danieldaum.net",
         "atproto": "https://bsky.app/profile/daum.dev",

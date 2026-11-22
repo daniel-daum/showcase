@@ -1639,3 +1639,73 @@ a.commit-log-hash:hover {
 .empty {
     color: var(--text-secondary);
 }
+
+/* file viewer */
+.breadcrumb [aria-current] {
+    color: var(--text-headings);
+}
+
+.breadcrumb a,
+.breadcrumb [aria-current] {
+    text-transform: none;
+}
+
+.code-block .code-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.code-label a {
+    color: var(--text-secondary);
+}
+
+.code-label a:hover {
+    color: var(--accent);
+}
+
+pre.lines {
+    padding: 1rem 0;
+}
+
+.line {
+    display: block;
+    padding-right: 1.25rem;
+    min-height: 1.5em;
+}
+
+.ln {
+    display: inline-block;
+    width: 5ch;
+    margin-right: 1.25rem;
+    text-align: right;
+    color: var(--text-secondary);
+    opacity: 0.6;
+    user-select: none;
+}
+
+.ln:hover {
+    color: var(--accent);
+    opacity: 1;
+}
+
+.line:target {
+    background: var(--background-dark);
+    box-shadow: inset 2px 0 var(--accent);
+}
+
+.file-note {
+    margin: 0;
+    padding: 1.25rem;
+    color: var(--text-secondary);
+    border: 1px solid var(--borders);
+    border-radius: 0 0 6px 6px;
+}
+
+.file-image img {
+    width: auto;
+    max-width: 100%;
+    margin: 0 auto;
+}

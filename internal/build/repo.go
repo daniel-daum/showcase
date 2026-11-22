@@ -1,21 +1,27 @@
 package build
 
 import (
+	"bytes"
 	"cmp"
 	"context"
 	"fmt"
 	"html/template"
 	"net/url"
+	"path"
 	"path/filepath"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"daum.dev/showcase/internal/gitea"
 	"daum.dev/showcase/internal/gitx"
 	"daum.dev/showcase/internal/render"
 )
 
-const maxRender = 512 << 10 // files larger than this aren't rendered
+const (
+	maxRender = 512 << 10 // larger files get no highlighted view
+	maxRaw    = 50 << 20  // larger files get no raw copy
+)
 
 // repo is one allowlisted repo with its API metadata and local mirror.
 type repo struct {
@@ -26,17 +32,32 @@ type repo struct {
 
 type Row struct {
 	gitx.Entry
+	Base string // last path segment
 	Href string
 	Last gitx.Commit
 }
+
+type Crumb struct{ Name, Href string }
 
 type RepoPage struct {
 	Repo     *gitea.Repo
 	Tab      string
 	CloneURL string
 	Latest   *gitx.Commit
+	Crumbs   []Crumb // tree pages only
 	Rows     []Row
 	Readme   template.HTML
+}
+
+type BlobPage struct {
+	Repo          *gitea.Repo
+	Tab           string
+	Crumbs        []Crumb
+	Path, Raw     string
+	Size          int64
+	Lines         []template.HTML
+	Image, Binary bool
+	Large         bool // too big to render; Raw is "" if too big to keep
 }
 
 // loadRepo fetches metadata and updates the mirror. Anonymous access means a
@@ -63,8 +84,7 @@ func (b *Builder) loadRepo(ctx context.Context, name string) (*repo, error) {
 }
 
 func (b *Builder) renderRepo(ctx context.Context, rd *render.Renderer, dir string, r *repo) error {
-	base := "/" + r.Name
-	p := RepoPage{Repo: r.Repo, Tab: "code", CloneURL: b.Cfg.SiteURL + base + ".git"}
+	p := RepoPage{Repo: r.Repo, Tab: "code", CloneURL: b.Cfg.SiteURL + "/" + r.Name + ".git"}
 	page := render.Page{Title: r.Name, D: &p}
 	if r.Head == "" {
 		return rd.Write(dir, r.Name+"/index.html", "repo", page)
@@ -75,48 +95,77 @@ func (b *Builder) renderRepo(ctx context.Context, rd *render.Renderer, dir strin
 		return fmt.Errorf("latest commit: %v", err)
 	}
 	p.Latest = &log[0]
+	entries, err := r.Git.Tree(ctx, r.Head)
+	if err != nil {
+		return err
+	}
+	last, err := r.Git.LastChanges(ctx, r.Head)
+	if err != nil {
+		return err
+	}
+	kids := map[string][]gitx.Entry{}
+	for _, e := range entries {
+		if slices.ContainsFunc(strings.Split(e.Name, "/"), func(s string) bool { return s == "" || s == "." || s == ".." }) {
+			continue
+		}
+		parent := path.Dir(e.Name)
+		if parent == "." {
+			parent = ""
+		}
+		kids[parent] = append(kids[parent], e)
+	}
 
-	entries, err := r.Git.Tree(ctx, r.Head, "")
-	if err != nil {
+	// root
+	if p.Rows, p.Readme, err = b.listing(ctx, r, "", kids[""], last); err != nil {
 		return err
 	}
-	rows, err := b.rows(ctx, r, "", entries)
-	if err != nil {
+	if slices.ContainsFunc(kids[""], func(e gitx.Entry) bool { return e.Name == "go.mod" }) {
+		page.GoImport = goImport(b.Cfg.SiteURL, r.Name)
+	}
+	if err := rd.Write(dir, r.Name+"/index.html", "repo", page); err != nil {
 		return err
 	}
-	p.Rows = rows
 
 	for _, e := range entries {
-		if e.Name == "go.mod" {
-			page.GoImport = goImport(b.Cfg.SiteURL, r.Name)
-		}
-		if p.Readme == "" && e.Type == "blob" && isReadme(e.Name) {
-			if p.Readme, err = b.readme(ctx, r, e, base); err != nil {
+		switch {
+		case e.Type == "tree":
+			tp := RepoPage{Repo: r.Repo, Tab: "code", Crumbs: crumbs(r.Name, e.Name)}
+			if tp.Rows, tp.Readme, err = b.listing(ctx, r, e.Name, kids[e.Name], last); err != nil {
 				return err
+			}
+			rel := r.Name + "/tree/" + e.Name + "/index.html"
+			if err := rd.Write(dir, rel, "dir", render.Page{Title: e.Name + " · " + r.Name, D: &tp}); err != nil {
+				return err
+			}
+		case e.Type == "blob":
+			if err := b.renderBlob(ctx, rd, dir, r, e); err != nil {
+				return fmt.Errorf("%s: %w", e.Name, err)
 			}
 		}
 	}
-	return rd.Write(dir, r.Name+"/index.html", "repo", page)
+	return nil
 }
 
-// rows sorts entries (directories first) and finds each one's last commit.
-func (b *Builder) rows(ctx context.Context, r *repo, dir string, entries []gitx.Entry) ([]Row, error) {
+// listing builds the rows and README for one directory.
+func (b *Builder) listing(ctx context.Context, r *repo, dir string, entries []gitx.Entry, last map[string]gitx.Commit) ([]Row, template.HTML, error) {
+	var readme template.HTML
 	rows := make([]Row, 0, len(entries))
 	for _, e := range entries {
-		full := strings.TrimPrefix(dir+"/"+e.Name, "/")
-		row := Row{Entry: e}
+		row := Row{Entry: e, Base: path.Base(e.Name), Last: last[e.Name]}
 		switch e.Type {
 		case "tree":
-			row.Href = "/" + r.Name + "/tree/" + render.EscapePath(full) + "/"
+			row.Href = "/" + r.Name + "/tree/" + render.EscapePath(e.Name) + "/"
 		case "blob":
-			row.Href = "/" + r.Name + "/blob/" + render.EscapePath(full)
-		}
-		log, err := r.Git.Log(ctx, r.Head, 1, full)
-		if err != nil {
-			return nil, err
-		}
-		if len(log) > 0 {
-			row.Last = log[0]
+			row.Href = "/" + r.Name + "/blob/" + render.EscapePath(e.Name)
+			if readme == "" && isReadme(row.Base) && e.Size <= maxRender {
+				src, err := r.Git.Blob(ctx, e.Hash)
+				if err != nil {
+					return nil, "", err
+				}
+				if readme, err = readmeHTML(row.Base, src, "/"+r.Name, dir); err != nil {
+					return nil, "", err
+				}
+			}
 		}
 		rows = append(rows, row)
 	}
@@ -124,18 +173,51 @@ func (b *Builder) rows(ctx context.Context, r *repo, dir string, entries []gitx.
 		if (a.Type == "tree") != (c.Type == "tree") {
 			return cmp.Compare(c.Type, a.Type) // "tree" sorts before "blob"/"commit"
 		}
-		return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(c.Name))
+		return cmp.Compare(strings.ToLower(a.Base), strings.ToLower(c.Base))
 	})
-	return rows, nil
+	return rows, readme, nil
 }
 
-func (b *Builder) readme(ctx context.Context, r *repo, e gitx.Entry, base string) (template.HTML, error) {
-	src, err := r.Git.Blob(ctx, e.Hash, e.Size, maxRender)
-	if err != nil || src == nil {
-		return "", err
+func (b *Builder) renderBlob(ctx context.Context, rd *render.Renderer, dir string, r *repo, e gitx.Entry) error {
+	p := BlobPage{Repo: r.Repo, Tab: "code", Crumbs: crumbs(r.Name, e.Name), Path: e.Name, Size: e.Size}
+	p.Image = isImage(e.Name)
+	if e.Size <= maxRaw {
+		src, err := r.Git.Blob(ctx, e.Hash)
+		if err != nil {
+			return err
+		}
+		if err := render.WriteFile(filepath.Join(dir, r.Name, "raw", filepath.FromSlash(e.Name)), src); err != nil {
+			return err
+		}
+		p.Raw = "/" + r.Name + "/raw/" + render.EscapePath(e.Name)
+		p.Binary = bytes.IndexByte(src[:min(len(src), 8000)], 0) >= 0 || !utf8.Valid(src)
+		if !p.Binary && e.Size <= maxRender {
+			p.Lines = render.Highlight(e.Name, "", string(src))
+		}
 	}
-	if strings.HasSuffix(strings.ToLower(e.Name), ".md") || strings.HasSuffix(strings.ToLower(e.Name), ".markdown") {
-		return render.Markdown(src, base, "")
+	p.Large = e.Size > maxRender
+	// blob pages are stored as <path>.html; the server maps /blob/<path> to them
+	return rd.Write(dir, r.Name+"/blob/"+e.Name+".html", "blob", render.Page{Title: e.Name + " · " + r.Name, Wide: true, D: &p})
+}
+
+// crumbs links the repo and every parent directory of p; the last part has no link.
+func crumbs(repoName, p string) []Crumb {
+	cs := []Crumb{{repoName, "/" + repoName + "/"}}
+	parts := strings.Split(p, "/")
+	for i, part := range parts {
+		c := Crumb{Name: part}
+		if i < len(parts)-1 {
+			c.Href = "/" + repoName + "/tree/" + render.EscapePath(strings.Join(parts[:i+1], "/")) + "/"
+		}
+		cs = append(cs, c)
+	}
+	return cs
+}
+
+func readmeHTML(name string, src []byte, base, dir string) (template.HTML, error) {
+	n := strings.ToLower(name)
+	if strings.HasSuffix(n, ".md") || strings.HasSuffix(n, ".markdown") {
+		return render.Markdown(src, base, dir)
 	}
 	return template.HTML("<pre>" + template.HTMLEscapeString(string(src)) + "</pre>"), nil
 }
@@ -143,6 +225,16 @@ func (b *Builder) readme(ctx context.Context, r *repo, e gitx.Entry, base string
 func isReadme(name string) bool {
 	n := strings.ToLower(name)
 	return n == "readme" || n == "readme.md" || n == "readme.markdown" || n == "readme.txt"
+}
+
+// isImage reports whether the raw route serves name as an image (see
+// docs/decisions.md). SVG is deliberately not one.
+func isImage(name string) bool {
+	switch strings.ToLower(path.Ext(name)) {
+	case ".png", ".jpg", ".jpeg", ".gif", ".webp":
+		return true
+	}
+	return false
 }
 
 func goImport(siteURL, name string) string {

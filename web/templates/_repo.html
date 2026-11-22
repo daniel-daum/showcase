@@ -43,7 +43,7 @@
   <tbody>
   {{- range .}}
   <tr class="table-row">
-    <td>{{if .Href}}<a class="table-title" href="{{.Href}}">{{.Name}}{{if eq .Type "tree"}}<span class="tree-dir">/</span>{{end}}</a>{{else}}<span class="table-title">{{.Name}}</span>{{end}}</td>
+    <td>{{if .Href}}<a class="table-title" href="{{.Href}}">{{.Base}}{{if eq .Type "tree"}}<span class="tree-dir">/</span>{{end}}</a>{{else}}<span class="table-title">{{.Base}}</span>{{end}}</td>
     <td class="table-desc">{{.Last.Subject}}</td>
     <td class="table-date">{{ago .Last.When}}</td>
   </tr>

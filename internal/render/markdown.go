@@ -11,6 +11,7 @@ import (
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer"
 	"github.com/yuin/goldmark/text"
 	"github.com/yuin/goldmark/util"
 )
@@ -25,6 +26,7 @@ func Markdown(src []byte, base, dir string) (template.HTML, error) {
 			parser.WithAutoHeadingID(),
 			parser.WithASTTransformers(util.Prioritized(linkFixer{base, dir}, 100)),
 		),
+		goldmark.WithRendererOptions(renderer.WithNodeRenderers(util.Prioritized(codeRenderer{}, 100))),
 	)
 	var buf bytes.Buffer
 	if err := md.Convert(src, &buf); err != nil {
@@ -105,4 +107,31 @@ func EscapePath(p string) string {
 		parts[i] = url.PathEscape(s)
 	}
 	return strings.Join(parts, "/")
+}
+
+// codeRenderer highlights fenced code blocks with the same hl-* classes as
+// file pages.
+type codeRenderer struct{}
+
+func (codeRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
+	reg.Register(ast.KindFencedCodeBlock, func(w util.BufWriter, src []byte, n ast.Node, entering bool) (ast.WalkStatus, error) {
+		if !entering {
+			return ast.WalkContinue, nil
+		}
+		cb := n.(*ast.FencedCodeBlock)
+		var code strings.Builder
+		for i := 0; i < cb.Lines().Len(); i++ {
+			seg := cb.Lines().At(i)
+			code.Write(seg.Value(src))
+		}
+		w.WriteString("<pre><code>")
+		for i, line := range Highlight("", string(cb.Language(src)), code.String()) {
+			if i > 0 {
+				w.WriteString("\n")
+			}
+			w.WriteString(string(line))
+		}
+		w.WriteString("</code></pre>\n")
+		return ast.WalkSkipChildren, nil
+	})
 }

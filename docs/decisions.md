@@ -61,3 +61,16 @@ The site's look matches saturn instead of a generic Flexoki light/dark theme.
 It is dark only and uses saturn's tokens, palettes, fonts and components. The
 details are in `docs/theme.md`. This replaces the spec's original
 "light and dark via `prefers-color-scheme`".
+
+## File pages
+
+- A blob page for `<path>` is stored as `<repo>/blob/<path>.html`, and the
+  server maps `/blob/<path>` to it. Raw bytes are stored at `<repo>/raw/<path>`.
+- Files over 50 MB get no raw copy, only a note to clone. Files over 512 KB,
+  or binary ones (a NUL byte in the first 8 KB, or not valid UTF-8), get no
+  highlighted view. png, jpg, gif and webp are shown as images.
+- The last commit per entry comes from one `git log --name-only` pass over
+  history, not one `git log` per path.
+- Folder pages show their own README, if they have one.
+- Highlighting: chroma tokens map to saturn's `hl-*` roles in
+  `internal/render/highlight.go`. README code blocks use the same mapping.

@@ -25,9 +25,16 @@ render config="config.json":
     rm -rf out
     go run ./cmd/daumdev -config {{config}} -data .data -once -out out
 
-# Serve ./out on localhost:8000 (plain static preview until the real server exists)
+# Serve ./out on localhost:8000 (stand-in until the real server exists; maps /blob/<path> to <path>.html)
 serve:
-    python3 -m http.server 8000 --bind 127.0.0.1 -d out
+    #!/usr/bin/env python3
+    import http.server, os
+    class H(http.server.SimpleHTTPRequestHandler):
+        def translate_path(self, path):
+            p = super().translate_path(path)
+            return p + ".html" if "/blob/" in path and os.path.isfile(p + ".html") else p
+    os.chdir("out")
+    http.server.ThreadingHTTPServer(("127.0.0.1", 8000), H).serve_forever()
 
 # Render from real Gitea (needs ./config.json) and serve it
 preview config="config.json": (render config) serve

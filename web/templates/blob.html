@@ -1,0 +1,25 @@
+{{define "content" -}}
+{{template "repohead" .}}
+{{template "crumbs" .Crumbs}}
+<div class="code-block">
+  <p class="code-label">
+    <span>{{size .Size}}{{with .Lines}} · {{len .}} lines{{end}}</span>
+    {{- with .Raw}}<a href="{{.}}">raw</a>{{end}}
+  </p>
+  {{- if .Lines}}
+  <pre class="lines"><code>
+    {{- range $i, $l := .Lines}}{{$n := inc $i}}<span class="line" id="L{{$n}}"><a class="ln" href="#L{{$n}}" aria-hidden="true">{{$n}}</a>{{$l}}</span>{{end -}}
+  </code></pre>
+  {{- else if and .Image .Raw}}
+  <div class="file-note file-image"><img src="{{.Raw}}" alt="{{.Path}}"></div>
+  {{- else if not .Raw}}
+  <p class="file-note">this file is too large to show here. clone the repository to get it.</p>
+  {{- else if .Binary}}
+  <p class="file-note">binary file, not shown. use the raw link to download it.</p>
+  {{- else if .Large}}
+  <p class="file-note">this file is too large to show here. use the raw link to view it.</p>
+  {{- else}}
+  <p class="file-note">empty file.</p>
+  {{- end}}
+</div>
+{{- end}}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -67,13 +68,9 @@ type Entry struct {
 	Size                   int64 // -1 for trees and submodules
 }
 
-// Tree lists the entries of dir ("" for the root) at rev.
-func (r Repo) Tree(ctx context.Context, rev, dir string) ([]Entry, error) {
-	spec := rev + "^{tree}"
-	if dir != "" {
-		spec = rev + ":" + dir
-	}
-	out, err := r.run(ctx, "ls-tree", "-z", "-l", "--end-of-options", spec)
+// Tree lists every entry at rev, recursively, with full paths as names.
+func (r Repo) Tree(ctx context.Context, rev string) ([]Entry, error) {
+	out, err := r.run(ctx, "ls-tree", "-r", "-t", "-z", "-l", "--end-of-options", rev+"^{tree}")
 	if err != nil {
 		return nil, err
 	}
@@ -93,11 +90,8 @@ func (r Repo) Tree(ctx context.Context, rev, dir string) ([]Entry, error) {
 	return es, nil
 }
 
-// Blob returns the contents of the blob at hash, or nil if it is larger than max.
-func (r Repo) Blob(ctx context.Context, hash string, size, max int64) ([]byte, error) {
-	if size > max {
-		return nil, nil
-	}
+// Blob returns the contents of the blob at hash.
+func (r Repo) Blob(ctx context.Context, hash string) ([]byte, error) {
 	return r.run(ctx, "cat-file", "blob", hash)
 }
 
@@ -128,6 +122,34 @@ func (r Repo) Log(ctx context.Context, rev string, n int, path string) ([]Commit
 		cs = append(cs, Commit{Hash: f[0], Author: f[1], When: time.Unix(at, 0).UTC(), Subject: f[3], Body: strings.TrimSpace(f[4])})
 	}
 	return cs, nil
+}
+
+// LastChanges maps every path (files and directories) to the newest commit
+// reachable from rev that touched it, in one pass over history.
+func (r Repo) LastChanges(ctx context.Context, rev string) (map[string]Commit, error) {
+	out, err := r.run(ctx, "log", "-z", "--name-only", "--format=%x1e%H%x1f%an%x1f%at%x1f%s", "--end-of-options", rev)
+	if err != nil {
+		return nil, err
+	}
+	last := map[string]Commit{}
+	for _, rec := range strings.Split(string(out), "\x1e")[1:] {
+		head, files, _ := strings.Cut(rec, "\x00")
+		f := strings.Split(head, "\x1f")
+		if len(f) != 4 {
+			continue
+		}
+		at, _ := strconv.ParseInt(f[2], 10, 64)
+		c := Commit{Hash: f[0], Author: f[1], When: time.Unix(at, 0).UTC(), Subject: f[3]}
+		for _, p := range strings.Split(strings.TrimLeft(files, "\n"), "\x00") {
+			for ; p != "" && p != "."; p = path.Dir(p) {
+				if _, ok := last[p]; ok {
+					break // set by a newer commit, and so are its parents
+				}
+				last[p] = c
+			}
+		}
+	}
+	return last, nil
 }
 
 // CommitDays counts commits reachable from rev per UTC day since since.

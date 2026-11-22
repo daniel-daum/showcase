@@ -1,0 +1,9 @@
+{{define "content" -}}
+{{template "repohead" .}}
+{{template "crumbs" .Crumbs}}
+{{template "tree" .Rows}}
+{{- with .Readme}}
+<h2 class="section-label">readme</h2>
+<article class="readme">{{.}}</article>
+{{- end}}
+{{- end}}

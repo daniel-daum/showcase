@@ -43,6 +43,7 @@ func New(now time.Time) (*Renderer, error) {
 		"date": func(t time.Time) string { return t.UTC().Format("2006-01-02") },
 		"lang": langClass,
 		"size": humanSize,
+		"inc":  func(i int) int { return i + 1 },
 	}
 	names, err := fs.Glob(web.FS, "templates/*.html")
 	if err != nil {

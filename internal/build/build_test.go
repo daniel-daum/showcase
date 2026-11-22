@@ -53,6 +53,8 @@ func fixtureRepos(t *testing.T) string {
 	if err := os.CopyFS(work, os.DirFS("../../testdata/repo-a")); err != nil {
 		t.Fatal(err)
 	}
+	os.WriteFile(filepath.Join(work, "data.bin"), []byte("bin\x00ary"), 0o644)
+	os.WriteFile(filepath.Join(work, "big.txt"), bytes.Repeat([]byte("0123456789abcde\n"), 40<<10), 0o644)
 	run(t, work, "", "init", "-q", "-b", "main")
 	run(t, work, "", "add", "-A", ":!CHANGELOG.md")
 	run(t, work, "2026-06-01T10:00:00Z", "commit", "-q", "--no-gpg-sign", "-m", "Initial commit")
@@ -150,7 +152,11 @@ func checkGolden(t *testing.T, dir, rel string) []byte {
 	if !bytes.Equal(got, want) {
 		t.Errorf("%s differs from %s; run `just golden` and review the diff", rel, golden)
 	}
-	for _, bad := range []string{"leaky", "should never render", "<script>", "tailnet.example", "javascript:", "tracker.example"} {
+	bad := []string{"leaky", "should never render", "<script>", "tailnet.example"}
+	if !strings.Contains(rel, "/blob/") { // file pages show source text, escaped
+		bad = append(bad, "javascript:", "tracker.example")
+	}
+	for _, bad := range bad {
 		if bytes.Contains(got, []byte(bad)) {
 			t.Errorf("%s contains %q", rel, bad)
 		}
@@ -168,8 +174,20 @@ func TestSiteGolden(t *testing.T) {
 	if err := testBuilder(t).Render(context.Background(), dir); err != nil {
 		t.Fatal(err)
 	}
-	for _, rel := range []string{"index.html", "repo-a/index.html", "repo-b/index.html"} {
+	for _, rel := range []string{
+		"index.html", "repo-a/index.html", "repo-b/index.html",
+		"repo-a/tree/docs/index.html", "repo-a/tree/cmd/hello/index.html",
+		"repo-a/blob/cmd/hello/main.go.html", "repo-a/blob/README.md.html",
+		"repo-a/blob/docs/logo.png.html", "repo-a/blob/data.bin.html", "repo-a/blob/big.txt.html",
+	} {
 		checkGolden(t, dir, rel)
+	}
+	for _, f := range []string{"cmd/hello/main.go", "docs/logo.png", "big.txt", "data.bin"} {
+		want, _ := os.ReadFile(filepath.Join("../../testdata/repo-a", f))
+		got, err := os.ReadFile(filepath.Join(dir, "repo-a/raw", f))
+		if err != nil || (want != nil && !bytes.Equal(got, want)) {
+			t.Errorf("raw %s: wrong or missing (%v)", f, err)
+		}
 	}
 	for _, f := range []string{"static/style.css", "static/avatar.png", "static/fonts/geistpixel/GeistPixel-Square.woff2", "static/fonts/geistmono/GeistMono-Regular.woff2"} {
 		if _, err := os.Stat(filepath.Join(dir, f)); err != nil {

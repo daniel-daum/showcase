@@ -1,0 +1,12 @@
+{
+    "gitea_url": "http://127.0.0.1:1",
+    "user": "daniel",
+    "site_url": "https://daum.dev",
+    "links": {
+        "website": "https://danieldaum.net",
+        "atproto": "https://bsky.app/profile/daum.dev",
+        "github": "https://github.com/example"
+    },
+    "repos": ["repo-a", "repo-b"],
+    "images": ["repo-a"]
+}

@@ -13,6 +13,7 @@ import (
 
 	"daum.dev/showcase/internal/build"
 	"daum.dev/showcase/internal/config"
+	"daum.dev/showcase/internal/server"
 )
 
 func main() {
@@ -21,6 +22,8 @@ func main() {
 	out := flag.String("out", "", "output directory for -once (must not exist)")
 	data := flag.String("data", "/data", "data directory (git mirrors, site builds)")
 	every := flag.Duration("interval", 10*time.Minute, "time between builds")
+	listen := flag.String("listen", ":8080", "address to serve on")
+	serveDir := flag.String("serve-dir", "", "dev: serve this finished build instead of building")
 	flag.Parse()
 
 	cfg, err := config.Load(*cfgPath)
@@ -32,8 +35,16 @@ func main() {
 
 	b := build.New(cfg, *data)
 	if !*once {
-		slog.Warn("server not implemented yet; only building", "site", b.Current())
-		b.Run(ctx, *every)
+		srv := &server.Server{Cfg: cfg, Root: b.Current, Ready: b.Ready, Log: slog.Default()}
+		if *serveDir != "" {
+			srv.Root, srv.Ready = func() string { return *serveDir }, func() bool { return true }
+		} else {
+			go b.Run(ctx, *every)
+		}
+		slog.Info("listening", "addr", *listen)
+		if err := srv.ListenAndServe(ctx, *listen); err != nil {
+			fatal(err)
+		}
 		return
 	}
 	if *out == "" {

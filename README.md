@@ -19,6 +19,8 @@ just test        # run tests
 just lint        # gofmt + go vet
 just golden      # rewrite golden files after an intended output change
 just render      # render the site once into ./out from ./config.json
+just demo        # render the test fixtures and serve them on localhost:8000
+just run         # build from real Gitea every 10 min and serve on localhost:8000
 ```
 
 ## Configure
@@ -34,7 +36,8 @@ just render      # render the site once into ./out from ./config.json
     "repos": ["repo-a", "repo-b"],
     "images": ["repo-a"],
     "max_commits": 50,
-    "theme": "moss"
+    "theme": "moss",
+    "trusted_proxies": ["100.64.0.10"]
 }
 ```
 

@@ -106,3 +106,24 @@ details are in `docs/theme.md`. This replaces the spec's original
   (so every `docker pull` shown actually works), and untagged `sha256:`
   versions are hidden. Other package types are listed with no install command,
   because their registries aren't proxied.
+
+## Server
+
+- Routes: `/`, `/healthz`, `/static/…` and `/<repo>/…` for allowlisted repos.
+  Inside a repo, `raw/` serves files, `blob/<p>` serves `<p>.html`, paths
+  ending in `/` serve `index.html`, and a folder without the slash redirects.
+  Everything else, including any path with dot segments, `//`, `\` or NUL, is
+  a 404 using the built `404.html`. `/index.html` itself is a 404 too.
+- Methods other than GET and HEAD get a 404, and a GET or HEAD with a body
+  gets a 400. Step 8 adds the git `POST` route.
+- Raw files: png, jpg, gif and webp keep their image types. Files with a NUL
+  in the first 512 bytes are `application/octet-stream` with
+  `Content-Disposition: attachment`. Everything else, SVG and HTML included,
+  is `text/plain`.
+- Page responses get a 30s write deadline through `http.ResponseController`.
+  The server itself has no `WriteTimeout`, so proxied clones can stream.
+- Logs: for peers in `trusted_proxies`, the client IP comes from
+  `CF-Connecting-IP`, or else the last `X-Forwarded-For` entry. Otherwise it's
+  the TCP peer.
+- `-serve-dir DIR` (dev only) serves a finished build without building; `just
+  serve` and `just demo` use it.

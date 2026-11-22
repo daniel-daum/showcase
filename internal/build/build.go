@@ -107,6 +107,9 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 	if err := rd.Write(dir, "index.html", "profile", render.Page{Title: title, D: p}); err != nil {
 		return fmt.Errorf("profile: %w", err)
 	}
+	if err := rd.Write(dir, "404.html", "notfound", render.Page{Title: "not found"}); err != nil {
+		return err
+	}
 	for _, rp := range repos {
 		if err := b.renderRepo(ctx, rd, dir, rp); err != nil {
 			return fmt.Errorf("%s: %w", rp.Name, err)

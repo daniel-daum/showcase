@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/netip"
 	"net/url"
 	"os"
 	"regexp"
@@ -21,13 +22,15 @@ type Config struct {
 	Images     []string          `json:"images"`
 	MaxCommits int               `json:"max_commits"`
 	Theme      string            `json:"theme"` // saturn palette, default moss
+	// Proxies (IPs or CIDRs) whose X-Forwarded-For is believed, for logs only.
+	TrustedProxies []string `json:"trusted_proxies"`
 }
 
 var (
 	nameRe  = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
 	imageRe = regexp.MustCompile(`^[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*$`)
 	// Top-level names the site or router uses for itself.
-	reserved = []string{"static", "v2", "healthz", "api", "user", "index.html"}
+	reserved = []string{"static", "v2", "healthz", "api", "user", "index.html", "404.html"}
 	themes   = []string{"moss", "ink", "wine", "plum", "teal", "flexoki"}
 )
 
@@ -76,6 +79,13 @@ func (c *Config) validate() error {
 	for k, v := range c.Links {
 		if p, err := url.Parse(v); err != nil || p.Scheme != "https" {
 			return fmt.Errorf("link %q must be an https url", k)
+		}
+	}
+	for _, p := range c.TrustedProxies {
+		if _, err := netip.ParsePrefix(p); err != nil {
+			if _, err := netip.ParseAddr(p); err != nil {
+				return fmt.Errorf("bad trusted proxy %q", p)
+			}
 		}
 	}
 	if c.Theme == "" {

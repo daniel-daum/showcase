@@ -786,3 +786,22 @@ allowlist of it.
   security headers pass through; saturn's `_headers` don't apply to
   Function responses. Tested with Node in front of a `base_path` build:
   all 66 pages and their links work through it.
+
+## Language bar, tree rules and `.env` pages
+
+- **Language bar:** the bar shows Gitea's numbers as they are. Gitea reads
+  linguist attributes, so wrong stats get fixed in the repo being shown,
+  not in showcase. This repo's `.gitattributes` marks `gitea/` (copied
+  Gitea themes) and `testdata/` (goldens) as vendored and `icons_gen.go`
+  as generated. Before that, the themes made showcase read as mostly CSS.
+  Gitea recounts on the next push.
+- **File tree rules:** the commit message fade (`mask-image`) sits on the
+  link inside `.f-msg`, not on the cell. A mask on the cell faded its
+  top border too, so each row's rule broke off under the message column.
+- **`.env` pages:** `/<repo>/blob/.env` renders and is served like any
+  other file. In production, the reverse proxy in front of the container
+  answers every path ending in `/.env` with an empty 403 (no showcase
+  headers, missing files too), and browsers show that as a blank page. It
+  looks like a WAF rule against `.env` leaks (for example CrowdSec's
+  `vpatch-env-access`). Fix it there with an exception for this host,
+  not by renaming routes in showcase.

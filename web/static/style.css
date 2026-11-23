@@ -2800,17 +2800,19 @@ a.ci:hover {
     color: var(--accent-bright);
 }
 
-/* commit messages fade out instead of ending in an ellipsis */
+/* commit messages fade out instead of ending in an ellipsis. The mask sits
+   on the text, not the cell, so the row's top border stays unbroken. */
 .f-msg {
     max-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    mask-image: linear-gradient(to right, black calc(100% - 4rem), transparent);
 }
 
 .f-msg a,
 .f-msg span {
+    display: block;
+    overflow: hidden;
     color: var(--body-text);
+    white-space: nowrap;
+    mask-image: linear-gradient(to right, black calc(100% - 4rem), transparent);
 }
 
 .f-msg a:hover {

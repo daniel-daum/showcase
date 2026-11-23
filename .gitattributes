@@ -1,0 +1,6 @@
+# Language stats (Gitea reads linguist attributes for the language bar).
+# The Gitea themes are copied in, the goldens are test output and the icon
+# table is generated, so none of them say what the project is written in.
+gitea/**                      linguist-vendored
+testdata/**                   linguist-vendored
+internal/render/icons_gen.go  linguist-generated

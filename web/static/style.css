@@ -3372,6 +3372,11 @@ a.ln:hover {
     list-style: none;
 }
 
+.thread-more {
+    margin: 0 1rem 0.5rem 3.1rem;
+    font-size: 0.8rem;
+}
+
 .comment {
     padding: 0.5rem 0 0.5rem 1rem;
     border-left: 2px solid var(--rule);

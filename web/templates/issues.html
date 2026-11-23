@@ -11,12 +11,12 @@
           <span class="pr-icon pr--{{.State}}">{{if eq .State "open"}}{{template "icon" "issue"}}{{else}}{{template "icon" "issue-closed"}}{{end}}</span>
           <div class="row-main">
             <span class="row-title">{{.Title}}{{range .Labels}} <span class="pill">{{.Name}}</span>{{end}}</span>
-            <span class="row-sub">#{{.Number}} opened {{day .CreatedAt}} by {{.User.Login}}{{with .Thread}} · {{len .}} comment{{if ne (len .) 1}}s{{end}}{{end}}</span>
+            <span class="row-sub">#{{.Number}} opened {{day .CreatedAt}} by {{.User.Login}}{{with .Comments}} · {{.}} comment{{if ne . 1}}s{{end}}{{end}}</span>
           </div>
           <span class="badge badge--{{.State}}">{{.State}}</span>
         </summary>
         <div class="pull-body markdown">{{if .Body}}{{.Body}}{{else}}<p class="muted">No description.</p>{{end}}</div>
-        {{- template "thread" .Thread}}
+        {{- template "thread" .}}
       </details>
     </li>
     {{- end}}

@@ -115,9 +115,13 @@
 </div>
 {{- end}}
 
-{{/* thread: the comments under an issue or pull, oldest first */}}
+{{/* thread: the comments under an issue or pull, oldest first. Takes an
+     IssueView or PullView. */}}
 {{define "thread" -}}
-{{with .}}
+{{- if .Hidden}}
+<p class="thread-more muted">{{.Hidden}} older comment{{if ne .Hidden 1}}s{{end}} not shown.</p>
+{{- end}}
+{{with .Thread}}
 <ol class="thread">
   {{- range .}}
   <li class="comment">

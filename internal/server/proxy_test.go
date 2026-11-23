@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -254,5 +255,54 @@ func TestProxyRoutesIgnoreBasePath(t *testing.T) {
 		if w.Code != 200 || len(u.got) != 1 || u.got[0].RequestURI != want {
 			t.Errorf("GET %s: %d, upstream %v, want %q", path, w.Code, u.got, want)
 		}
+	}
+}
+
+// TestProxyDropsHeaders: only forwardHeaders reach Gitea, so headers Gitea
+// might trust (reverse-proxy auth, its own X-Gitea-*) can't be injected.
+func TestProxyDropsHeaders(t *testing.T) {
+	u := &upstream{}
+	s := proxyServer(t, u, true)
+	req := httptest.NewRequest("GET", "/repo-a.git/info/refs?service=git-upload-pack", nil)
+	for k, v := range map[string]string{
+		"X-WEBAUTH-USER": "daniel", "X-Forwarded-User": "daniel", "X-Gitea-OTP": "1", "Cookie": "i_like_gitea=1",
+		"Authorization": "Basic ZGFuaWVsOnB3", "Proxy-Authorization": "Basic eA==", "Git-Protocol": "version=2",
+	} {
+		req.Header.Set(k, v)
+	}
+	s.ServeHTTP(httptest.NewRecorder(), req)
+	if len(u.got) != 1 {
+		t.Fatalf("upstream got %d requests", len(u.got))
+	}
+	for k := range u.got[0].Header {
+		if !slices.Contains(forwardHeaders, k) {
+			t.Errorf("header %s reached Gitea", k)
+		}
+	}
+	if u.got[0].Header.Get("Authorization") != "" {
+		t.Error("credentials reached Gitea on a git route")
+	}
+	if u.got[0].Header.Get("Git-Protocol") != "version=2" {
+		t.Error("Git-Protocol was dropped; protocol v2 clones need it")
+	}
+}
+
+// TestProxyGitSlots: past maxGitProxied concurrent git requests, more get
+// a 503 instead of piling onto Gitea.
+func TestProxyGitSlots(t *testing.T) {
+	s := proxyServer(t, &upstream{}, true)
+	for range maxGitProxied {
+		s.gitSlots <- struct{}{}
+	}
+	w := httptest.NewRecorder()
+	s.ServeHTTP(w, httptest.NewRequest("GET", "/repo-a.git/info/refs?service=git-upload-pack", nil))
+	if w.Code != http.StatusServiceUnavailable || w.Header().Get("Retry-After") == "" {
+		t.Errorf("full slots: got %d", w.Code)
+	}
+	<-s.gitSlots
+	w = httptest.NewRecorder()
+	s.ServeHTTP(w, httptest.NewRequest("GET", "/repo-a.git/info/refs?service=git-upload-pack", nil))
+	if w.Code != http.StatusOK {
+		t.Errorf("free slot: got %d", w.Code)
 	}
 }

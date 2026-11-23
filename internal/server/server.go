@@ -31,10 +31,12 @@ type Server struct {
 	Ready func() bool
 	Log   *slog.Logger
 	proxy *httputil.ReverseProxy
+	// gitSlots caps concurrent git proxy requests at maxGitProxied
+	gitSlots chan struct{}
 }
 
 func New(cfg *config.Config, root func() string, ready func() bool, log *slog.Logger) *Server {
-	s := &Server{Cfg: cfg, Root: root, Ready: ready, Log: log}
+	s := &Server{Cfg: cfg, Root: root, Ready: ready, Log: log, gitSlots: make(chan struct{}, maxGitProxied)}
 	s.proxy = s.newProxy()
 	return s
 }

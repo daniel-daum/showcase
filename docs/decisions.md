@@ -876,3 +876,11 @@ repo-a's six documents and 1,202px for all eleven kinds.
   desktop. On hover a tab's icon lights up and a faint underline shows, so
   icon-only tabs read as clickable. Phones still scroll both rows with the
   edge fade.
+
+## Second security review
+
+Details in `docs/security.md`. The decisions: the proxy forwards an
+allowlist of request headers instead of stripping a denylist; git proxying
+is capped at 8 concurrent requests (503 beyond); registry blobs are always
+downloads; issue, pull and comment bodies are cut at 32 KB and threads show
+their newest 100 comments.

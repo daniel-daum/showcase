@@ -7,11 +7,24 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 )
 
-const maxUploadPack = 10 << 20
+const (
+	maxUploadPack = 10 << 20
+	maxGitProxied = 8 // concurrent clones and fetches; more get a 503
+)
+
+// forwardHeaders are the only request headers that reach Gitea. Anything
+// else (cookies, proxy-auth headers like X-WEBAUTH-USER, X-Forwarded-*,
+// Gitea's own X-Gitea-*) is dropped, so a visitor can't speak to Gitea as
+// anyone but an anonymous client.
+var forwardHeaders = []string{
+	"Accept", "Accept-Encoding", "Content-Type", "Content-Encoding", "Git-Protocol",
+	"User-Agent", "Range", "If-Range", "If-None-Match", "If-Modified-Since", "Authorization",
+}
 
 var (
 	realmRe  = regexp.MustCompile(`realm="[^"]*"`)
@@ -31,7 +44,11 @@ func (s *Server) newProxy() *httputil.ReverseProxy {
 			pr.Out.URL.Path, pr.Out.URL.RawPath = pr.In.Context().Value(upstreamPath{}).(string), ""
 			pr.SetURL(up)
 			pr.Out.Host = up.Host
-			pr.Out.Header.Del("Cookie")
+			for k := range pr.Out.Header {
+				if !slices.Contains(forwardHeaders, http.CanonicalHeaderKey(k)) {
+					pr.Out.Header.Del(k)
+				}
+			}
 			// only the registry's own (anonymous) bearer tokens pass, never credentials
 			a := pr.In.Header.Get("Authorization")
 			if !strings.HasPrefix(pr.In.URL.Path, "/v2/") || pr.In.URL.Path == "/v2/token" || !strings.HasPrefix(a, "Bearer ") {
@@ -58,8 +75,8 @@ func (s *Server) newProxy() *httputil.ReverseProxy {
 			} else {
 				h.Del("Www-Authenticate")
 			}
-			if strings.Contains(resp.Request.URL.Path, "/releases/download/") {
-				// uploaded assets could be anything, including HTML
+			if strings.Contains(resp.Request.URL.Path, "/releases/download/") || strings.Contains(resp.Request.URL.Path, "/blobs/") {
+				// uploaded assets and image layers could be anything, including HTML
 				h.Set("Content-Type", "application/octet-stream")
 				h.Set("Content-Disposition", "attachment")
 			}
@@ -131,6 +148,16 @@ func (s *Server) proxyRoute(w http.ResponseWriter, r *http.Request) bool {
 	if target == "" {
 		http.NotFound(w, r)
 		return true
+	}
+	if strings.HasSuffix(first, ".git") { // upload-pack is the expensive one for Gitea
+		select {
+		case s.gitSlots <- struct{}{}:
+			defer func() { <-s.gitSlots }()
+		default:
+			w.Header().Set("Retry-After", "30")
+			http.Error(w, "busy, try again shortly", http.StatusServiceUnavailable)
+			return true
+		}
 	}
 	s.proxy.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), upstreamPath{}, target)))
 	return true

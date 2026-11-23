@@ -20,6 +20,14 @@ services:
     security_opt:
       - no-new-privileges:true
 
+    # a flood of clones or a runaway build stays inside these. Builds hold
+    # blobs up to 50 MB plus git's own memory; raise mem_limit if a build
+    # gets OOM-killed (docker inspect shows OOMKilled=true).
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: "1.0"
+    pids_limit: 256
+
     networks:
       - holonet
 

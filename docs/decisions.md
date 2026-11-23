@@ -805,3 +805,74 @@ allowlist of it.
   looks like a WAF rule against `.env` leaks (for example CrowdSec's
   `vpatch-env-access`). Fix it there with an exception for this host,
   not by renaming routes in showcase.
+
+## Issues and comments
+
+The spec lists issues and comments as non-goals. Daniel asked for both, so
+they're in, read-only like pulls.
+
+- **Issues tab** (`/<repo>/issues/`), between Releases and Pulls: the 50
+  newest issues (`/issues?state=all&type=issues`; the issues API has no sort
+  option). Gitea's issues API returns pulls too, so anything with
+  `pull_request` set is dropped. The heading counts open and closed issues;
+  labels are plain pills, since the CSP allows no inline colors.
+- **Comments** on issues and pulls, oldest first, from
+  `/issues/{n}/comments`, fetched only when the item's `comments` count is
+  above zero. That endpoint only returns real comments, not timeline
+  events. Bodies come from anyone, so they go through the same Markdown
+  allowlist as READMEs; the fixture's comment carries a `<script>` and a
+  `javascript:` link to prove it.
+- **Public only:** the calls are anonymous, so only issues of public repos
+  are seen. Gitea has no confidential issues within a public repo.
+- **Read-only:** the page says issues can't be opened or answered here.
+- **Activity:** opened issues join the profile feed.
+- Icons: Octicons `issue-opened`, `issue-closed` and `comment` (19.15.0),
+  added to `scripts/icons.py`.
+
+## A Gitea token, for the packages API only
+
+Security rule 1 says the generator uses no token. Gitea 28 wants one to
+list packages, and non-container packages are coming, so there's now one
+narrow exception. Nothing uses it until `gitea_token_file` is set.
+
+- **Config:** `gitea_token_file` names a file holding the token (a Docker
+  secret or a read-only mount), so config.json stays free of secrets. The
+  token can't be set in config.json itself, and it's never marshalled.
+- **One endpoint:** `gitea.Client` sends the token only when a call asks for
+  it (only `Packages` does) and the path is the user's package listing
+  (`/api/v1/packages/<user>?…`). Any other path asking for it is refused
+  before a request goes out. Repos, issues, pulls, comments, avatars,
+  mirrors and the git and registry proxies stay anonymous: they never see
+  the token. Add more endpoints to `tokenPath` one at a time.
+- **No redirects:** the client already refuses them, so the token is never
+  replayed elsewhere.
+- **Filter:** with a token, the listing can include private packages. Only
+  packages linked to a repo that loaded anonymously, and not private, are
+  kept. The builder passes those repo names, not the config list, so a
+  private repo in config never lets its packages through.
+- **Not yet:** packages linked to no repo are still dropped, and downloads
+  still need a route. Both come with the packages work.
+- Tests: `internal/gitea` proves the header only reaches the package
+  listing, never follows a redirect, and is absent without a token;
+  `internal/config` covers the file handling.
+
+## Tab bars that fit
+
+With issues added, a repo using everything overflowed both tab rows on
+desktop. The content column is 631px (78ch of Geist Pixel at 16px, less
+padding). Measured from the font's glyph advances: the repo tabs needed
+772px (808px with four-digit counts), the README box's tabs 716px for
+repo-a's six documents and 1,202px for all eleven kinds.
+
+- **Commits tab, without its count.** The header's "N commits" pill
+  already shows the number. Tabs are a little tighter (0.85rem, 0.45rem
+  side padding, no gap, smaller count pills): 592px for repo-a, 610px with
+  large counts (issues and pulls are capped at 50). Only the current tab
+  is bold, which adds a few pixels at most.
+- **Compact document tabs.** Up to four documents keep their labels (the
+  four longest take 516px). From five on, only the open tab shows its
+  label; the others are icons with a `title`, and the label stays in the
+  page for screen readers. All eleven take 496px, so they never scroll on
+  desktop. On hover a tab's icon lights up and a faint underline shows, so
+  icon-only tabs read as clickable. Phones still scroll both rows with the
+  edge fade.

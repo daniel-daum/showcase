@@ -28,9 +28,11 @@ type Builder struct {
 }
 
 func New(cfg *config.Config, data string) *Builder {
+	gc := gitea.New(cfg.GiteaURL, cfg.User)
+	gc.SetToken(cfg.GiteaToken) // "" keeps it anonymous
 	return &Builder{
 		Cfg:   cfg,
-		Gitea: gitea.New(cfg.GiteaURL, cfg.User),
+		Gitea: gc,
 		Data:  data,
 		Now:   time.Now,
 		Log:   slog.Default(),
@@ -100,7 +102,12 @@ func (b *Builder) Render(ctx context.Context, dir string) error {
 		r.Owner, r.OwnerName, r.Avatar = user.Login, user.FullName, p.Avatar
 		repos = append(repos, r)
 	}
-	pkgs, err := b.Gitea.Packages(ctx, b.Cfg.Repos)
+	// only repos that loaded anonymously: the packages call may carry a token
+	public := make([]string, len(repos))
+	for i, r := range repos {
+		public[i] = r.Name
+	}
+	pkgs, err := b.Gitea.Packages(ctx, public)
 	if errors.Is(err, gitea.ErrNotFound) { // Gitea 28 wants a token for this API
 		b.Log.Warn("packages not visible anonymously", "err", err)
 	} else if err != nil {

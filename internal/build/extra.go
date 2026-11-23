@@ -18,6 +18,18 @@ type ReleaseView struct {
 
 type PullView struct {
 	gitea.PullRequest
+	Body   template.HTML
+	Thread []CommentView
+}
+
+type IssueView struct {
+	gitea.Issue
+	Body   template.HTML
+	Thread []CommentView
+}
+
+type CommentView struct {
+	gitea.Comment
 	Body template.HTML
 }
 
@@ -30,13 +42,30 @@ type ExtraPage struct {
 	Tab      string
 	Releases []ReleaseView
 	Pulls    []PullView
+	Issues   []IssueView
+	Open     int // issues, by state
+	Closed   int
 	Packages []PackageView // other package types, from the API
 	Images   []ImageView   // container images, from the registry
 	Kind     string        // "branches" or "tags" on the refs pages
 	Refs     []gitx.Ref
 }
 
-// renderExtras writes the releases, pulls and packages pages from API and
+// thread renders the comments on issue or pull n. Comments are Markdown
+// from anyone, so they go through the same allowlist as READMEs.
+func thread(r *repo, n int, base string) ([]CommentView, error) {
+	var out []CommentView
+	for _, c := range r.Comments[n] {
+		body, err := render.Markdown([]byte(c.Body), base, "")
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, CommentView{c, body})
+	}
+	return out, nil
+}
+
+// renderExtras writes the releases, issues, pulls and packages pages from API and
 // registry data.
 func (b *Builder) renderExtras(ctx context.Context, rd *render.Renderer, dir string, r *repo) error {
 	base := "/" + r.Name
@@ -65,7 +94,29 @@ func (b *Builder) renderExtras(ctx context.Context, rd *render.Renderer, dir str
 		if err != nil {
 			return err
 		}
-		pulls.Pulls = append(pulls.Pulls, PullView{x, body})
+		th, err := thread(r, x.Number, base)
+		if err != nil {
+			return err
+		}
+		pulls.Pulls = append(pulls.Pulls, PullView{x, body, th})
+	}
+
+	issues := ExtraPage{Repo: r, Tab: "issues"}
+	for _, x := range r.Issues {
+		body, err := render.Markdown([]byte(x.Body), base, "")
+		if err != nil {
+			return err
+		}
+		th, err := thread(r, x.Number, base)
+		if err != nil {
+			return err
+		}
+		issues.Issues = append(issues.Issues, IssueView{x, body, th})
+		if x.State == "open" {
+			issues.Open++
+		} else {
+			issues.Closed++
+		}
 	}
 
 	pkgs := ExtraPage{Repo: r, Tab: "packages", Images: r.Images}
@@ -76,7 +127,7 @@ func (b *Builder) renderExtras(ctx context.Context, rd *render.Renderer, dir str
 		pkgs.Packages = append(pkgs.Packages, PackageView{Package: x})
 	}
 
-	for _, p := range []ExtraPage{rel, pulls, pkgs} {
+	for _, p := range []ExtraPage{rel, issues, pulls, pkgs} {
 		page := render.Page{Title: p.Tab + " · " + r.Name, D: &p}
 		if err := rd.Write(dir, r.Name+"/"+p.Tab+"/index.html", p.Tab, page); err != nil {
 			return err

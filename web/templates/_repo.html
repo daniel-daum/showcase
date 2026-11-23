@@ -38,8 +38,9 @@
 <nav class="tabs" aria-label="repository">
   {{- $tab := .Tab}}
   <a href="{{$base}}/"{{if eq $tab "code"}} aria-current="page"{{end}}>{{template "icon" "code"}}Code</a>
-  <a href="{{$base}}/log/"{{if eq $tab "log"}} aria-current="page"{{end}}>{{template "icon" "commit"}}Commits{{with $r.Commits}}<span class="count">{{.}}</span>{{end}}</a>
+  <a href="{{$base}}/log/"{{if eq $tab "log"}} aria-current="page"{{end}}>{{template "icon" "commit"}}Commits</a>
   <a href="{{$base}}/releases/"{{if eq $tab "releases"}} aria-current="page"{{end}}>{{template "icon" "tag"}}Releases{{with $r.Releases}}<span class="count">{{len .}}</span>{{end}}</a>
+  <a href="{{$base}}/issues/"{{if eq $tab "issues"}} aria-current="page"{{end}}>{{template "icon" "issue"}}Issues{{with $r.Issues}}<span class="count">{{len .}}</span>{{end}}</a>
   <a href="{{$base}}/pulls/"{{if eq $tab "pulls"}} aria-current="page"{{end}}>{{template "icon" "pull"}}Pulls{{with $r.Pulls}}<span class="count">{{len .}}</span>{{end}}</a>
   <a href="{{$base}}/packages/"{{if eq $tab "packages"}} aria-current="page"{{end}}>{{template "icon" "package"}}Packages{{with $r.PackageCount}}<span class="count">{{.}}</span>{{end}}</a>
 </nav>
@@ -93,10 +94,10 @@
   <h2 class="box-head">{{template "icon" .Icon}}{{.Label}}</h2>
   {{- end}}{{else}}
   <h2 class="sr-only">Documents</h2>
-  <div class="box-head doc-tabs" role="radiogroup" aria-label="documents">
+  <div class="box-head doc-tabs{{if gt (len .) 4}} doc-tabs--compact{{end}}" role="radiogroup" aria-label="documents">
     {{- range $i, $d := .}}
     <input class="sr-only d{{$i}}" type="radio" name="doc" id="doc-{{.Key}}"{{if not $i}} checked{{end}}>
-    <label for="doc-{{.Key}}">{{template "icon" .Icon}}{{.Label}}</label>
+    <label for="doc-{{.Key}}" title="{{.Label}}">{{template "icon" .Icon}}<span class="doc-label">{{.Label}}</span></label>
     {{- end}}
   </div>
   {{- end}}
@@ -112,6 +113,20 @@
   <input id="{{.ID}}" readonly value="{{.Value}}" aria-label="{{.Label}}">
   <button class="copy" type="button" data-copy="{{.ID}}" hidden title="copy">{{template "icon" "copy"}}{{template "icon" "check"}}<span class="sr-only">copy</span></button>
 </div>
+{{- end}}
+
+{{/* thread: the comments under an issue or pull, oldest first */}}
+{{define "thread" -}}
+{{with .}}
+<ol class="thread">
+  {{- range .}}
+  <li class="comment">
+    <p class="comment-head">{{template "icon" "comment"}}<b>{{.User.Login}}</b> commented {{day .CreatedAt}}</p>
+    <div class="markdown">{{.Body}}</div>
+  </li>
+  {{- end}}
+</ol>
+{{- end}}
 {{- end}}
 
 {{/* emptystate: an icon, one line, a muted hint. Takes Icon, Title, Hint. */}}

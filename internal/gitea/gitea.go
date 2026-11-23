@@ -1,5 +1,6 @@
-// Package gitea is a minimal, anonymous Gitea API client. It never sends
-// credentials, so it can only see what the public can see.
+// Package gitea is a minimal Gitea API client. Calls are anonymous, so they
+// only see what the public can see. The one exception is an optional token
+// (SetToken), which only the package listing may send; see tokenPath.
 package gitea
 
 import (
@@ -21,9 +22,10 @@ const maxBody = 8 << 20
 var ErrNotFound = errors.New("gitea: not publicly visible")
 
 type Client struct {
-	base string
-	user string
-	http *http.Client
+	base  string
+	user  string
+	http  *http.Client
+	token string // packages API only; never sent anywhere else
 }
 
 func New(baseURL, user string) *Client {
@@ -77,12 +79,40 @@ type Release struct {
 
 type PullRequest struct {
 	Number    int        `json:"number"`
+	Comments  int        `json:"comments"`
 	Title     string     `json:"title"`
 	Body      string     `json:"body"`
 	State     string     `json:"state"`
 	Merged    bool       `json:"merged"`
 	CreatedAt time.Time  `json:"created_at"`
 	MergedAt  *time.Time `json:"merged_at"`
+	User      struct {
+		Login string `json:"login"`
+	} `json:"user"`
+}
+
+type Label struct {
+	Name string `json:"name"` // the color is dropped: the CSP allows no inline styles
+}
+
+type Issue struct {
+	Number    int        `json:"number"`
+	Title     string     `json:"title"`
+	Body      string     `json:"body"`
+	State     string     `json:"state"`
+	Comments  int        `json:"comments"`
+	CreatedAt time.Time  `json:"created_at"`
+	ClosedAt  *time.Time `json:"closed_at"`
+	Labels    []Label    `json:"labels"`
+	User      struct {
+		Login string `json:"login"`
+	} `json:"user"`
+	PullRequest *struct{} `json:"pull_request"` // set when the issue is a pull
+}
+
+type Comment struct {
+	Body      string    `json:"body"`
+	CreatedAt time.Time `json:"created_at"`
 	User      struct {
 		Login string `json:"login"`
 	} `json:"user"`
@@ -95,11 +125,29 @@ type Package struct {
 	Repository *Repo  `json:"repository"`
 }
 
-// fetch GETs base+path (never anything else) without credentials.
-func (c *Client) fetch(ctx context.Context, path string) ([]byte, error) {
+// SetToken lets the package listing see packages that need a token. Every
+// other call stays anonymous, so repos, issues, avatars and clones still
+// only show what the public sees.
+func (c *Client) SetToken(t string) { c.token = t }
+
+// tokenPath reports whether path may carry the token: only the user's
+// package listing. Extend it one endpoint at a time.
+func (c *Client) tokenPath(path string) bool {
+	return strings.HasPrefix(path, "/api/v1/packages/"+url.PathEscape(c.user)+"?")
+}
+
+// fetch GETs base+path (never anything else). Only with auth, and only for
+// a tokenPath, does it send the token.
+func (c *Client) fetch(ctx context.Context, path string, auth bool) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", c.base+path, nil)
 	if err != nil {
 		return nil, err
+	}
+	if auth && c.token != "" {
+		if !c.tokenPath(path) {
+			return nil, fmt.Errorf("gitea: refusing to send the token to %s", path)
+		}
+		req.Header.Set("Authorization", "token "+c.token)
 	}
 	resp, err := c.http.Do(req)
 	if err != nil {
@@ -117,7 +165,11 @@ func (c *Client) fetch(ctx context.Context, path string) ([]byte, error) {
 }
 
 func (c *Client) get(ctx context.Context, path string, v any) error {
-	b, err := c.fetch(ctx, path)
+	return c.decode(ctx, path, false, v)
+}
+
+func (c *Client) decode(ctx context.Context, path string, auth bool, v any) error {
+	b, err := c.fetch(ctx, path, auth)
 	if err != nil {
 		return err
 	}
@@ -195,8 +247,32 @@ func (c *Client) Pulls(ctx context.Context, repo string) ([]PullRequest, error) 
 	return ps, c.get(ctx, c.repoPath(repo, "/pulls?state=all&sort=recentupdate&limit=50"), &ps)
 }
 
-// Packages returns the user's packages that are linked to one of repos.
-// Package visibility follows the owner, not the repo, so the filter matters.
+// Issues returns the 50 newest issues (Gitea sorts them by creation),
+// pulls left out.
+func (c *Client) Issues(ctx context.Context, repo string) ([]Issue, error) {
+	var is []Issue
+	if err := c.get(ctx, c.repoPath(repo, "/issues?state=all&type=issues&limit=50"), &is); err != nil {
+		return nil, err
+	}
+	out := is[:0]
+	for _, i := range is {
+		if i.PullRequest == nil {
+			out = append(out, i)
+		}
+	}
+	return out, nil
+}
+
+// Comments returns the comments on issue or pull n, oldest first.
+func (c *Client) Comments(ctx context.Context, repo string, n int) ([]Comment, error) {
+	var cs []Comment
+	return cs, c.get(ctx, c.repoPath(repo, fmt.Sprintf("/issues/%d/comments", n)), &cs)
+}
+
+// Packages returns the user's packages that are linked to one of repos,
+// which must be repos that loaded anonymously. Package visibility follows
+// the owner, not the repo, and this call may carry the token, so the filter
+// is what keeps private packages out.
 func (c *Client) Packages(ctx context.Context, repos []string) ([]Package, error) {
 	allowed := map[string]bool{}
 	for _, r := range repos {
@@ -206,7 +282,7 @@ func (c *Client) Packages(ctx context.Context, repos []string) ([]Package, error
 	for page := 1; page <= 20; page++ {
 		var ps []Package
 		path := fmt.Sprintf("/api/v1/packages/%s?limit=50&page=%d", url.PathEscape(c.user), page)
-		if err := c.get(ctx, path, &ps); err != nil {
+		if err := c.decode(ctx, path, true, &ps); err != nil {
 			return nil, err
 		}
 		for _, p := range ps {
@@ -228,7 +304,7 @@ func (c *Client) Avatar(ctx context.Context, avatarURL string) ([]byte, string, 
 	if err != nil {
 		return nil, "", err
 	}
-	b, err := c.fetch(ctx, u.RequestURI())
+	b, err := c.fetch(ctx, u.RequestURI(), false)
 	if err != nil {
 		return nil, "", err
 	}

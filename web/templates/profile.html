@@ -37,13 +37,14 @@
       <time class="tl-time" datetime="{{.When.Format "2006-01-02T15:04:05Z07:00"}}" title="{{.When.Format "2006-01-02 15:04 MST"}}">{{.Stamp}}</time>
       <span class="tl-who">
         {{- if and .Own $.Avatar}}<img class="avatar-sm" src="{{$.Avatar}}" alt="" width="24" height="24">{{else}}<span class="avatar-sm avatar-none">{{template "icon" "user"}}</span>{{end}}
-        <span class="tl-badge">{{if eq .Kind "push"}}{{template "icon" "commit"}}{{else if eq .Kind "created"}}{{template "icon" "repo-new"}}{{else if eq .Kind "release"}}{{template "icon" "tag"}}{{else if eq .Kind "merged"}}{{template "icon" "merge"}}{{else}}{{template "icon" "pull"}}{{end}}</span>
+        <span class="tl-badge">{{if eq .Kind "push"}}{{template "icon" "commit"}}{{else if eq .Kind "created"}}{{template "icon" "repo-new"}}{{else if eq .Kind "release"}}{{template "icon" "tag"}}{{else if eq .Kind "merged"}}{{template "icon" "merge"}}{{else if eq .Kind "issue"}}{{template "icon" "issue"}}{{else}}{{template "icon" "pull"}}{{end}}</span>
       </span>
       <div class="tl-main">
         <p class="tl-text"><b class="tl-actor">{{.Actor}}</b>
           {{- if eq .Kind "push"}} pushed {{.Count}} commit{{if ne .Count 1}}s{{end}} to <code class="tl-ref">{{.Branch}}</code> on <a class="tl-repo" href="/{{.Repo}}/">{{.Repo}}</a>
           {{- else if eq .Kind "created"}} created repository <a class="tl-repo" href="{{.Href}}">{{.Repo}}</a>
           {{- else if eq .Kind "release"}} published {{if .Pre}}pre-release{{else}}release{{end}} <a class="tl-ref" href="{{.Href}}">{{.Label}}</a> on <a class="tl-repo" href="/{{.Repo}}/">{{.Repo}}</a>
+          {{- else if eq .Kind "issue"}} opened issue <a class="tl-title" href="{{.Href}}">{{or .Title .Label}}</a> on <a class="tl-repo" href="/{{.Repo}}/">{{.Repo}}</a>
           {{- else}} {{if eq .Kind "merged"}}merged{{else}}opened{{end}} pull <a class="tl-title" href="{{.Href}}">{{or .Title .Label}}</a> on <a class="tl-repo" href="/{{.Repo}}/">{{.Repo}}</a>
           {{- end}}</p>
         {{- if .Commits}}

@@ -2295,7 +2295,8 @@ a.row-title:hover,
 }
 
 .tl--merged .tl-badge { color: var(--syn-keyword); }
-.tl--opened .tl-badge { color: var(--add); }
+.tl--opened .tl-badge,
+.tl--issue .tl-badge { color: var(--add); }
 .tl--release .tl-badge { color: var(--syn-type); }
 .tl--created .tl-badge { color: var(--syn-function); }
 
@@ -2603,20 +2604,20 @@ a.tl-sha:hover {
 .tabs {
     display: flex;
     flex-wrap: nowrap; /* saturn's nav wraps; tabs scroll instead */
-    gap: 0.25rem;
+    gap: 0;
     margin: 0 0 1.25rem;
     overflow-x: auto;
     border-bottom: 1px solid var(--rule);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     scrollbar-width: none;
 }
 
 .tabs a {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.35rem;
     margin-bottom: -1px;
-    padding: 0.6rem 0.8rem;
+    padding: 0.6rem 0.45rem;
     border-bottom: 2px solid transparent;
     color: var(--text-secondary);
     white-space: nowrap;
@@ -2639,12 +2640,12 @@ a.tl-sha:hover {
 }
 
 .count {
-    min-width: 1.5rem;
-    padding: 0 0.45rem;
+    min-width: 1.25rem;
+    padding: 0 0.35rem;
     border-radius: 999px;
     background: var(--hover);
     color: var(--text-headings);
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 500;
     text-align: center;
 }
@@ -2947,8 +2948,8 @@ a.ci:hover {
 .doc-tabs label {
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
-    padding: 0.7rem 0.6rem;
+    gap: 0.4rem;
+    padding: 0.7rem 0.55rem;
     color: var(--text-secondary);
     font-weight: 500;
     white-space: nowrap;
@@ -2958,6 +2959,16 @@ a.ci:hover {
 
 .doc-tabs label:hover {
     color: var(--text-headings);
+    box-shadow: inset 0 -2px var(--rule);
+}
+
+/* the icon lights up on hover, so icon-only tabs read as clickable */
+.doc-tabs label .icon {
+    transition: color 150ms ease;
+}
+
+.doc-tabs label:hover .icon {
+    color: var(--accent-bright);
 }
 
 .doc-tabs input:checked + label {
@@ -2967,6 +2978,17 @@ a.ci:hover {
 
 .doc-tabs input:checked + label .icon {
     color: var(--accent-bright);
+}
+
+/* five or more documents can't all fit with labels, so only the open one
+   shows its label; the rest are icons, named by title and for screen readers */
+.doc-tabs--compact input:not(:checked) + label .doc-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
 .doc-tabs input:focus-visible + label {
@@ -3341,6 +3363,52 @@ a.ln:hover {
 .pull-body {
     padding: 0.25rem 1rem 1rem 3.1rem;
     font-size: 0.9rem;
+}
+
+/* comments under an issue or pull: a thin rail on the left, like a reply */
+.thread {
+    margin: 0 1rem 1rem 3.1rem;
+    padding: 0;
+    list-style: none;
+}
+
+.comment {
+    padding: 0.5rem 0 0.5rem 1rem;
+    border-left: 2px solid var(--rule);
+    font-size: 0.9rem;
+}
+
+.comment + .comment {
+    margin-top: 0.5rem;
+}
+
+.comment-head {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0 0 0.35rem;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.comment-head b {
+    color: var(--text-headings);
+    font-weight: 600;
+}
+
+.box-foot {
+    margin: 0;
+    padding: 0.6rem 1rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.8rem;
+}
+
+@media (max-width: 600px) {
+    .pull-body,
+    .thread {
+        margin-left: 1rem;
+        padding-left: 0;
+    }
 }
 
 /* 404 */

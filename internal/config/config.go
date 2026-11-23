@@ -30,6 +30,10 @@ type Config struct {
 	Theme      string   `json:"theme"` // saturn palette, default moss
 	// Proxies (IPs or CIDRs) whose X-Forwarded-For is believed, for logs only.
 	TrustedProxies []string `json:"trusted_proxies"`
+	// GiteaTokenFile holds a Gitea token for the packages API only (see
+	// gitea.Client.SetToken). A file, so the token stays out of config.json.
+	GiteaTokenFile string `json:"gitea_token_file"`
+	GiteaToken     string `json:"-"` // read from GiteaTokenFile; never written out
 }
 
 var (
@@ -108,6 +112,16 @@ func (c *Config) validate() error {
 	}
 	if c.MaxCommits <= 0 {
 		c.MaxCommits = 50
+	}
+	if c.GiteaTokenFile != "" {
+		b, err := os.ReadFile(c.GiteaTokenFile)
+		if err != nil {
+			return fmt.Errorf("gitea_token_file: %w", err)
+		}
+		c.GiteaToken = strings.TrimSpace(string(b))
+		if c.GiteaToken == "" || strings.ContainsAny(c.GiteaToken, " \t\r\n") {
+			return fmt.Errorf("gitea_token_file %s must hold one token", c.GiteaTokenFile)
+		}
 	}
 	return nil
 }

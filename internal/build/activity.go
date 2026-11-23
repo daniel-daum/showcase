@@ -31,7 +31,8 @@ type RepoCard struct {
 	Week    int           // commits in the last 7 days
 }
 
-// FeedItem is one event: "push", "created", "release", "opened" or "merged".
+// FeedItem is one event: "push", "created", "release", "opened" or "merged"
+// (pulls), or "issue" (opened).
 type FeedItem struct {
 	Kind   string
 	When   time.Time
@@ -152,6 +153,13 @@ func (b *Builder) feedItems(repos []*repo, login string, since time.Time) []Feed
 			if pr.MergedAt != nil && !pr.MergedAt.Before(since) { // the owner merges
 				it.Kind, it.When, it.Actor, it.Own = "merged", *pr.MergedAt, login, true
 				items = append(items, it)
+			}
+		}
+		for _, is := range r.Issues {
+			if !is.CreatedAt.Before(since) {
+				n := strconv.Itoa(is.Number)
+				items = append(items, FeedItem{Kind: "issue", When: is.CreatedAt, Actor: is.User.Login, Own: strings.EqualFold(is.User.Login, login),
+					Repo: r.Name, Label: "#" + n, Href: base + "issues/#issue-" + n, Title: is.Title})
 			}
 		}
 	}

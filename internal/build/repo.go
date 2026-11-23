@@ -31,6 +31,8 @@ type repo struct {
 	Head     string // "" for an empty repo
 	Releases []gitea.Release
 	Pulls    []gitea.PullRequest
+	Issues   []gitea.Issue
+	Comments map[int][]gitea.Comment // by issue or pull number
 	Packages []gitea.Package
 	Images   []ImageView // allowlisted container images, from the registry
 
@@ -183,6 +185,12 @@ func (b *Builder) loadRepo(ctx context.Context, name string) (*repo, error) {
 		return nil, err
 	}
 	if r.Pulls, err = b.Gitea.Pulls(ctx, name); err != nil && !errors.Is(err, gitea.ErrNotFound) {
+		return nil, err
+	}
+	if r.Issues, err = b.Gitea.Issues(ctx, name); err != nil && !errors.Is(err, gitea.ErrNotFound) {
+		return nil, err
+	}
+	if err := b.loadComments(ctx, r); err != nil {
 		return nil, err
 	}
 	src := b.Cfg.GiteaURL + "/" + url.PathEscape(b.Cfg.User) + "/" + url.PathEscape(name) + ".git"
@@ -408,6 +416,31 @@ func (b *Builder) renderBlob(ctx context.Context, rd *render.Renderer, dir strin
 	p.Large = e.Size > maxRender
 	// blob pages are stored as <path>.html; the server maps /blob/<path> to them
 	return rd.Write(dir, r.Name+"/blob/"+e.Name+".html", "blob", render.Page{Title: e.Name + " · " + r.Name, D: &p})
+}
+
+// loadComments fetches the comments of every issue and pull that has any.
+// Issues and pulls share one numbering, so one map holds both.
+func (b *Builder) loadComments(ctx context.Context, r *repo) error {
+	var nums []int
+	for _, x := range r.Issues {
+		if x.Comments > 0 {
+			nums = append(nums, x.Number)
+		}
+	}
+	for _, x := range r.Pulls {
+		if x.Comments > 0 {
+			nums = append(nums, x.Number)
+		}
+	}
+	r.Comments = map[int][]gitea.Comment{}
+	for _, n := range nums {
+		cs, err := b.Gitea.Comments(ctx, r.Name, n)
+		if err != nil && !errors.Is(err, gitea.ErrNotFound) {
+			return fmt.Errorf("comments on #%d: %w", n, err)
+		}
+		r.Comments[n] = cs
+	}
+	return nil
 }
 
 // crumbs links the repo and every parent directory of p; the last part has no link.

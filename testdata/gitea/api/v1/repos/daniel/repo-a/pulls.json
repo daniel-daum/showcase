@@ -1,6 +1,7 @@
 [
   {
     "number": 4,
+    "comments": 1,
     "title": "Add a /healthz endpoint",
     "body": "Adds a health check.\n\n- [x] handler\n- [ ] docs",
     "state": "open",

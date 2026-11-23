@@ -214,7 +214,7 @@ func TestSiteGolden(t *testing.T) {
 		"repo-a/blob/docs/logo.png.html", "repo-a/blob/data.bin.html", "repo-a/blob/big.txt.html",
 		"repo-a/log/index.html", "repo-b/log/index.html",
 		"repo-a/branches/index.html", "repo-a/tags/index.html",
-		"repo-a/releases/index.html", "repo-a/pulls/index.html", "repo-a/packages/index.html",
+		"repo-a/releases/index.html", "repo-a/issues/index.html", "repo-b/issues/index.html", "repo-a/pulls/index.html", "repo-a/packages/index.html",
 		"repo-b/releases/index.html",
 	} {
 		checkGolden(t, dir, rel)

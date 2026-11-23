@@ -1,0 +1,29 @@
+{{define "content" -}}
+{{template "repohead" .}}
+{{- if .Issues}}
+<section class="box">
+  <h2 class="box-head">{{template "icon" "issue"}}{{.Open}} open · {{.Closed}} closed</h2>
+  <ol class="rows">
+    {{- range .Issues}}
+    <li class="pull" id="issue-{{.Number}}">
+      <details>
+        <summary class="row">
+          <span class="pr-icon pr--{{.State}}">{{if eq .State "open"}}{{template "icon" "issue"}}{{else}}{{template "icon" "issue-closed"}}{{end}}</span>
+          <div class="row-main">
+            <span class="row-title">{{.Title}}{{range .Labels}} <span class="pill">{{.Name}}</span>{{end}}</span>
+            <span class="row-sub">#{{.Number}} opened {{day .CreatedAt}} by {{.User.Login}}{{with .Thread}} · {{len .}} comment{{if ne (len .) 1}}s{{end}}{{end}}</span>
+          </div>
+          <span class="badge badge--{{.State}}">{{.State}}</span>
+        </summary>
+        <div class="pull-body markdown">{{if .Body}}{{.Body}}{{else}}<p class="muted">No description.</p>{{end}}</div>
+        {{- template "thread" .Thread}}
+      </details>
+    </li>
+    {{- end}}
+  </ol>
+  <p class="box-foot muted">Read-only: issues can't be opened or answered here.</p>
+</section>
+{{- else}}
+{{template "emptystate" (dict "Icon" "issue" "Title" "No issues." "Hint" "This mirror is read-only, so issues can't be opened here.")}}
+{{- end}}
+{{- end}}

@@ -35,14 +35,24 @@
   </ul>
   {{- end}}
 </header>
+{{- /* tabs: plain words like the site nav. Releases, issues, pulls and
+     packages only show when there's something in them, or when open. */}}
 <nav class="tabs" aria-label="repository">
   {{- $tab := .Tab}}
-  <a href="{{$base}}/"{{if eq $tab "code"}} aria-current="page"{{end}}>{{template "icon" "code"}}Code</a>
-  <a href="{{$base}}/log/"{{if eq $tab "log"}} aria-current="page"{{end}}>{{template "icon" "commit"}}Commits</a>
-  <a href="{{$base}}/releases/"{{if eq $tab "releases"}} aria-current="page"{{end}}>{{template "icon" "tag"}}Releases{{with $r.Releases}}<span class="count">{{len .}}</span>{{end}}</a>
-  <a href="{{$base}}/issues/"{{if eq $tab "issues"}} aria-current="page"{{end}}>{{template "icon" "issue"}}Issues{{with $r.Issues}}<span class="count">{{len .}}</span>{{end}}</a>
-  <a href="{{$base}}/pulls/"{{if eq $tab "pulls"}} aria-current="page"{{end}}>{{template "icon" "pull"}}Pulls{{with $r.Pulls}}<span class="count">{{len .}}</span>{{end}}</a>
-  <a href="{{$base}}/packages/"{{if eq $tab "packages"}} aria-current="page"{{end}}>{{template "icon" "package"}}Packages{{with $r.PackageCount}}<span class="count">{{.}}</span>{{end}}</a>
+  <a href="{{$base}}/"{{if eq $tab "code"}} aria-current="page"{{end}}>Code</a>
+  <a href="{{$base}}/log/"{{if eq $tab "log"}} aria-current="page"{{end}}>Commits</a>
+  {{- if or $r.Releases (eq $tab "releases")}}
+  <a href="{{$base}}/releases/"{{if eq $tab "releases"}} aria-current="page"{{end}}>Releases{{with $r.Releases}}<span class="count">{{len .}}</span>{{end}}</a>
+  {{- end}}
+  {{- if or $r.Issues (eq $tab "issues")}}
+  <a href="{{$base}}/issues/"{{if eq $tab "issues"}} aria-current="page"{{end}}>Issues{{with $r.Issues}}<span class="count">{{len .}}</span>{{end}}</a>
+  {{- end}}
+  {{- if or $r.Pulls (eq $tab "pulls")}}
+  <a href="{{$base}}/pulls/"{{if eq $tab "pulls"}} aria-current="page"{{end}}>Pulls{{with $r.Pulls}}<span class="count">{{len .}}</span>{{end}}</a>
+  {{- end}}
+  {{- if or $r.PackageCount (eq $tab "packages")}}
+  <a href="{{$base}}/packages/"{{if eq $tab "packages"}} aria-current="page"{{end}}>Packages{{with $r.PackageCount}}<span class="count">{{.}}</span>{{end}}</a>
+  {{- end}}
 </nav>
 {{- end}}
 

@@ -2600,24 +2600,26 @@ a.tl-sha:hover {
     color: var(--accent-bright);
 }
 
-/* repo tabs */
+/* repo tabs: plain words like the site nav, the open one in the accent and
+   underlined. The underline is as wide as the word. */
 .tabs {
     display: flex;
     flex-wrap: nowrap; /* saturn's nav wraps; tabs scroll instead */
-    gap: 0;
+    gap: 1.5rem;
     margin: 0 0 1.25rem;
     overflow-x: auto;
     border-bottom: 1px solid var(--rule);
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     scrollbar-width: none;
 }
 
 .tabs a {
+    flex: none; /* Safari shrinks scrolling flex items until they overlap */
     display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
+    align-items: baseline;
+    gap: 0.3rem;
     margin-bottom: -1px;
-    padding: 0.6rem 0.45rem;
+    padding: 0.6rem 0;
     border-bottom: 2px solid transparent;
     color: var(--text-secondary);
     white-space: nowrap;
@@ -2626,28 +2628,16 @@ a.tl-sha:hover {
 
 .tabs a:hover {
     color: var(--text-headings);
-    border-bottom-color: var(--rule);
 }
 
 .tabs a[aria-current="page"] {
-    color: var(--text-headings);
-    font-weight: 500;
+    color: var(--accent-bright);
     border-bottom-color: var(--accent-bright);
 }
 
-.tabs a[aria-current="page"] .icon {
-    color: var(--accent-bright);
-}
-
 .count {
-    min-width: 1.25rem;
-    padding: 0 0.35rem;
-    border-radius: 999px;
-    background: var(--hover);
-    color: var(--text-headings);
-    font-size: 0.7rem;
-    font-weight: 500;
-    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
 }
 
 /* code box */
@@ -2893,6 +2883,14 @@ a.ci:hover {
     color: var(--text-secondary);
 }
 
+/* phones: the three languages and "other" stay on one line */
+@media (max-width: 600px) {
+    .lang-legend {
+        gap: 0.25rem 0.75rem;
+        font-size: 0.75rem;
+    }
+}
+
 /* breadcrumbs */
 .crumbs {
     display: flex;
@@ -2942,6 +2940,10 @@ a.ci:hover {
     .doc-tabs {
         padding-right: 2rem;
         mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+    }
+
+    .tabs {
+        gap: 1.25rem;
     }
 }
 

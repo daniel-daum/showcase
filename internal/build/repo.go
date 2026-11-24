@@ -511,8 +511,8 @@ func licenseName(src []byte) string {
 	return "license"
 }
 
-// langBar turns Gitea's bytes-per-language into bar segments: the six
-// largest, plus "other" for the rest.
+// langBar turns Gitea's bytes-per-language into bar segments: the three
+// largest, plus "other" for the rest, so the legend fits one line on phones.
 func langBar(bytes map[string]int64) []Lang {
 	var total int64
 	names := make([]string, 0, len(bytes))
@@ -527,7 +527,7 @@ func langBar(bytes map[string]int64) []Lang {
 	x, rest := 0.0, 0.0
 	for i, n := range names {
 		pct := 100 * float64(bytes[n]) / float64(total)
-		if i >= 6 || pct < 0.5 {
+		if i >= 3 || pct < 0.5 {
 			rest += pct
 			continue
 		}

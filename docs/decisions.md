@@ -884,3 +884,31 @@ allowlist of request headers instead of stripping a denylist; git proxying
 is capped at 8 concurrent requests (503 beyond); registry blobs are always
 downloads; issue, pull and comment bodies are cut at 32 KB and threads show
 their newest 100 comments.
+
+## A quieter code bar
+
+On an iPhone the repo tabs overlapped: Safari shrank the scrolling tabs
+below their content, so each icon sat on the previous word. Even where they
+fit, six icons, six labels and four count pills under a wrapping language
+legend made the top of the code box busy. This replaces "Tab bars that fit"
+for the repo tabs; the README box's document tabs are unchanged.
+
+- **Plain words.** The repo tabs drop their icons and read like the site
+  nav above them: secondary text, the open tab in `--accent-bright` with an
+  underline as wide as the word, 1.5rem apart (1.25rem on phones). Counts
+  are small secondary numerals, not pills. `flex: none` on each tab stops
+  Safari's squeeze.
+- **Only tabs with something in them.** Code and Commits always show.
+  Releases, Issues, Pulls and Packages show when they have at least one
+  item, or when they're the open page (an old link to an empty page still
+  says where you are). The pages themselves still exist.
+- **Three languages and "other".** `langBar` keeps the three largest
+  languages instead of six; the rest join "other", in the legend and the
+  strip. On phones the legend is 0.75rem with 0.75rem gaps.
+- **Widths** (Geist Pixel advances, as before): all six tabs with counts
+  take 448px of the 631px column. On a 390px phone (358px of content) the
+  showcase repo's three tabs take 202px; all six take 428px and scroll with
+  the edge fade. The legend for Go, CSS, HTML and other takes 335px on a
+  phone, so it stays on one line down to 375px screens.
+- Not checked in a real browser in this pass: the numbers come from the
+  font's metrics, not a render.

@@ -2,6 +2,9 @@
 # (linux/amd64), push it as 1.2.3 and latest, and create the Gitea release
 # with the image digest and the commits since the previous tag.
 #
+# To run it by hand (Actions → release → Run workflow), name an existing
+# tag: its code is built with this workflow, and its release is updated.
+#
 # Needs a repo secret REGISTRY_TOKEN: a Gitea access token with
 # write:package. GITEA_TOKEN is made by Gitea for each run.
 name: release
@@ -9,41 +12,60 @@ name: release
 on:
   push:
     tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to release, like v1.2.3
+        required: true
 
 permissions:
   contents: write # the Gitea release
 
+# The push goes through the Docker daemon on the runner's host, so the image
+# needs a name that host resolves: Gitea's tailnet name, not the address the
+# runner uses for Gitea (GITHUB_SERVER_URL, a Docker network name here).
+env:
+  IMAGE: code.aardvark-halibut.ts.net/daniel/showcase
+
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          ref: refs/tags/${{ env.TAG }}
           fetch-depth: 0 # the previous tag, for the notes
 
       - name: Build and push the image
         env:
           TOKEN: ${{ secrets.REGISTRY_TOKEN }}
         run: |
-          # Gitea's own host is the registry: <host>/daniel/showcase
-          host=${GITHUB_SERVER_URL#*://}
-          IMAGE=${host%/}/$GITHUB_REPOSITORY
-          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+          [[ $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::$TAG isn't a tag like v1.2.3"; exit 1; }
           printf '%s' "$TOKEN" | docker login "${IMAGE%%/*}" -u "$GITHUB_REPOSITORY_OWNER" --password-stdin
-          docker build --platform linux/amd64 -t "$IMAGE:${GITHUB_REF_NAME#v}" -t "$IMAGE:latest" .
+          docker build --platform linux/amd64 -t "$IMAGE:${TAG#v}" -t "$IMAGE:latest" .
           docker push "$IMAGE:latest"
-          pushed=$(docker push "$IMAGE:${GITHUB_REF_NAME#v}")
+          pushed=$(docker push "$IMAGE:${TAG#v}")
           echo "$pushed"
           echo "DIGEST=$(echo "$pushed" | awk '/digest: sha256:/ {print $3}')" >> "$GITHUB_ENV"
           docker logout "${IMAGE%%/*}"
 
-      - name: Create the Gitea release
+      # a rerun rebuilds the image with a new digest, so it updates the release
+      - name: Create or update the Gitea release
         env:
           TOKEN: ${{ secrets.GITEA_TOKEN }}
         run: |
-          prev=$(git describe --tags --abbrev=0 "$GITHUB_REF_NAME^" 2>/dev/null || true)
-          notes=$(git log --format='- %s' "${prev:+$prev..}$GITHUB_REF_NAME")
-          jq -n --arg tag "$GITHUB_REF_NAME" --arg body "$(printf 'Image: `%s@%s`\n\n%s' "$IMAGE" "$DIGEST" "$notes")" \
-            '{tag_name: $tag, name: $tag, body: $body}' |
-            curl -fsS -o /dev/null -X POST -H "Authorization: token $TOKEN" -H "Content-Type: application/json" \
-              --data @- "$GITHUB_SERVER_URL/api/v1/repos/$GITHUB_REPOSITORY/releases"
+          # the job container reaches Gitea at the runner's address for it
+          api=$GITHUB_SERVER_URL/api/v1/repos/$GITHUB_REPOSITORY/releases
+          prev=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || true)
+          notes=$(git log --format='- %s' "${prev:+$prev..}$TAG")
+          body=$(jq -n --arg tag "$TAG" --arg body "$(printf 'Image: `%s@%s`\n\n%s' "$IMAGE" "$DIGEST" "$notes")" \
+            '{tag_name: $tag, name: $tag, body: $body}')
+          if id=$(curl -fsS -H "Authorization: token $TOKEN" "$api/tags/$TAG" | jq -e .id); then
+            method=PATCH url=$api/$id
+          else
+            method=POST url=$api
+          fi
+          curl -fsS -o /dev/null -X "$method" -H "Authorization: token $TOKEN" -H "Content-Type: application/json" \
+            --data "$body" "$url"

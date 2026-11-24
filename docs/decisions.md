@@ -938,13 +938,24 @@ never `latest`, so nothing reaches it that Daniel didn't pin.
   `$GITHUB_REF_NAME`, so nothing is interpolated into a script.
 - **Registry host:** Gitea moved to the tailnet
   (`code.aardvark-halibut.ts.net`), and `git.danieldaum.net/v2/` now
-  answers 404. The workflow takes the registry host from
-  `$GITHUB_SERVER_URL`, Gitea's own address, so it follows Gitea if it
-  moves again. The justfile, compose.yaml and the docs name the tailnet
-  host. The pinned 0.1.0 digest is the same there (checked with crane).
+  answers 404. The workflow, the justfile, compose.yaml and the docs name
+  the tailnet host. The pinned 0.1.0 digest is the same there (checked
+  with crane).
+  - Not `$GITHUB_SERVER_URL`: that's the runner's address for Gitea,
+    `http://gitea:3000` (a Docker network name), which works inside the
+    job container but not for the push. `docker push` is done by the
+    Docker daemon on the runner's host, which resolves names like the
+    host does. So that host must resolve and reach the tailnet name.
+    The Gitea API call (the release) does run in the job container and
+    keeps using `$GITHUB_SERVER_URL`.
+- **Manual runs:** `workflow_dispatch` takes an existing tag. The
+  workflow comes from the branch it runs on and checks out
+  `refs/tags/<tag>`, so a fixed workflow can release a tag whose own run
+  failed. The tag must look like `v1.2.3`; anything else stops the run.
 - **Release notes:** the image with its digest (to pin in compose.yaml)
-  and the commit subjects since the previous tag. A release that already
-  exists makes the step fail after the image is pushed.
+  and the commit subjects since the previous tag. A rerun rebuilds the
+  image with a new digest, so an existing release is updated (PATCH)
+  instead of created.
 - **Not covered:** tests (`just test` runs before committing) and the
   tag's signature. A signature check was tried and dropped: the workflow
   comes from the tagged commit, so it only stops tags made in Gitea's UI,

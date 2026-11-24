@@ -90,6 +90,11 @@ the rest.
    the Gitea release `v0.2.1` with the image digest and the commits since
    `v0.2.0`.
 
+   To run it by hand, for example after a failed run: Actions → release →
+   Run workflow, on `main`, with the tag (`v0.2.1`). It builds that tag's
+   code with the workflow on `main`, so a fixed workflow works for an
+   older tag, and it updates the tag's release with the new digest.
+
 4. **Deploy.** Pin the digest from the release notes in
    `deploy/compose.yaml` (the `image:` line and the version in the comment
    above it) and commit that. Copy `compose.yaml` to the server and, next

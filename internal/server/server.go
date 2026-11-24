@@ -22,8 +22,9 @@ import (
 )
 
 // script-src 'self' is only for /static/theme.js (palette) and copy.js (copy
-// buttons); nothing inline.
-const csp = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' https:; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+// buttons); nothing inline. connect-src 'self' lets copy.js fetch the raw
+// file it copies, from this origin only.
+const csp = "default-src 'none'; connect-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https:; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 
 type Server struct {
 	Cfg   *config.Config

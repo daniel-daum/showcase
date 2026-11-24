@@ -1757,13 +1757,48 @@ a.sha--verified:hover {
 }
 
 .copy .icon-check,
-.copy.copied .icon-copy {
+.copy.copied .icon-copy,
+.button--copy .icon-check,
+.button--copy.copied .icon-copy {
     display: none;
 }
 
-.copy.copied .icon-check {
+.copy.copied .icon-check,
+.button--copy.copied .icon-check {
     display: inline-block;
     color: var(--add);
+}
+
+/* Raw and copy on file pages, joined like one split button. Without JS the
+   copy button stays hidden and Raw keeps its own corners. */
+.button-group {
+    display: inline-flex;
+}
+
+.button-group > .button:has(+ .button:not([hidden])) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.button-group > .button + .button {
+    margin-left: -1px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.button-group > .button:hover,
+.button-group > .button:focus-visible {
+    position: relative; /* the hovered edge draws over its neighbour's */
+}
+
+.button--copy {
+    cursor: pointer;
+}
+
+/* their display rules would otherwise beat [hidden]: copy.js reveals them */
+.copy[hidden],
+.button--copy[hidden] {
+    display: none;
 }
 
 /* boxes: the one container for listings, files, readmes and diffs */

@@ -997,3 +997,30 @@ commits look as before.
 - **Reuse key:** includes the verdicts, so commit pages are rebuilt when a
   key is added in Gitea and old commits turn verified.
 - Icons: Octicons `lock` and `unlock` (19.15.0), added to `scripts/icons.py`.
+
+## Copy a file
+
+File pages get a copy button joined to Raw (`[Raw | ⧉]`), like GitHub's.
+
+- **It copies the raw file.** `copy.js` fetches the Raw link's URL and puts
+  the bytes on the clipboard, so CRLF, mixed line endings and files too
+  big to show (over 512 KB) all copy exactly. That needs `connect-src
+  'self'` in the CSP: the third change to spec rule 6, after `script-src
+  'self'`. It only lets this site's own scripts (`theme.js`, `copy.js`)
+  request this origin. It adds no way out: an injected script could already
+  send data anywhere through `img-src https:`, and the site holds nothing
+  private. Under `base_path` the origin is danieldaum.net and the Raw link
+  is already rebased, so it works there too.
+- **Safari** only allows clipboard writes during the click, so the
+  download is handed to `ClipboardItem` as a promise. Browsers without
+  `ClipboardItem` get `writeText` after the download.
+- **Which files:** text with a raw copy, up to 5 MB (`maxCopy`). Images,
+  binary files and files over 5 MB keep Raw alone.
+- **Trailing blank lines:** chroma drops the empty line after a final
+  newline, so a file ending in blank lines showed one line too few.
+  `Highlight` adds it back, and `TestHighlightKeepsText` checks the lines
+  give back the source.
+- **Hidden without JS, for real now.** `.copy` and `.button` set `display`,
+  which beat the `hidden` attribute, so the clone box's copy button showed
+  without JS too, contrary to "Copy buttons need JS". `[hidden]` rules for
+  both fix it.

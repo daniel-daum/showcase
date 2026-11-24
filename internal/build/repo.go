@@ -22,6 +22,7 @@ import (
 const (
 	maxRender = 512 << 10 // larger files get no highlighted view
 	maxRaw    = 50 << 20  // larger files get no raw copy
+	maxCopy   = 5 << 20   // larger files get no copy button: too much for a clipboard
 )
 
 // repo is one allowlisted repo with its API metadata and local mirror.
@@ -178,6 +179,7 @@ type BlobPage struct {
 	Lines         []template.HTML
 	Image, Binary bool
 	Large         bool // too big to render; Raw is "" if too big to keep
+	Copy          bool // text with a raw copy, small enough for the copy button
 }
 
 // loadRepo fetches metadata and updates the mirror. Anonymous access means a
@@ -427,6 +429,7 @@ func (b *Builder) renderBlob(ctx context.Context, rd *render.Renderer, dir strin
 		}
 	}
 	p.Large = e.Size > maxRender
+	p.Copy = p.Raw != "" && !p.Binary && e.Size <= maxCopy
 	// blob pages are stored as <path>.html; the server maps /blob/<path> to them
 	return rd.Write(dir, r.Name+"/blob/"+e.Name+".html", "blob", render.Page{Title: e.Name + " · " + r.Name, D: &p})
 }

@@ -46,6 +46,10 @@ enforces it and the test that proves it. Run them all with `just test`.
   allows exactly that one script tag and nothing else.
 - Repo SVGs on `raw/` stay `text/plain` even though `/static` serves our own
   icons as `image/svg+xml` (covered by `TestRoutes`).
+- The CSP now has `connect-src 'self'` (2026-11-24), so `copy.js` can fetch
+  the raw file a file page's copy button copies. Requests go to this origin
+  only; `img-src https:` was already a wider way out. See decisions, "Copy
+  a file".
 
 ## Second review (2026-11-23)
 

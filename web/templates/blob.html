@@ -5,7 +5,12 @@
   <div class="box-head file-head">
     {{ficon .Name "blob"}}<span class="file-name">{{.Name}}</span>
     <span class="file-stats">{{size .Size}}{{with .Lines}} · {{len .}} line{{if ne (len .) 1}}s{{end}}{{end}}</span>
-    {{- with .Raw}}<a class="button button--small" href="{{.}}">{{template "icon" "download"}}Raw</a>{{end}}
+    {{- with .Raw}}
+    <span class="button-group">
+      <a class="button button--small" id="file-raw" href="{{.}}">{{template "icon" "download"}}Raw</a>
+      {{- if $.Copy}}<button class="button button--small button--copy" type="button" data-copy="file-raw" hidden title="Copy file">{{template "icon" "copy"}}{{template "icon" "check"}}<span class="sr-only">Copy file</span></button>{{end}}
+    </span>
+    {{- end}}
   </div>
   {{- if .Lines}}
   <pre class="code"><code>

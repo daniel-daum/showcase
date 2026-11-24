@@ -25,7 +25,7 @@ func Highlight(name, lang, src string) []template.HTML {
 	if lx == nil {
 		lx = lexers.Fallback
 	}
-	src = strings.TrimSuffix(src, "\n")
+	src = strings.TrimSuffix(strings.TrimSuffix(src, "\n"), "\r") // the last line's ending
 	it, err := chroma.Coalesce(lx).Tokenise(nil, src)
 	if err != nil {
 		it = chroma.Literator(chroma.Token{Type: chroma.Text, Value: src})
@@ -42,6 +42,9 @@ func Highlight(name, lang, src string) []template.HTML {
 			}
 		}
 		lines = append(lines, template.HTML(b.String()))
+	}
+	if strings.HasSuffix(src, "\n") { // chroma drops the empty line after a final newline
+		lines = append(lines, "")
 	}
 	return lines
 }

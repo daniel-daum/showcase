@@ -139,7 +139,7 @@ func ActivityBars(counts []int, end time.Time, streak, n int) template.HTML {
 	}
 
 	text("bars-now-text", right, barsLabel, "end", "this week")
-	if first := max(0, last-streak+1); streak >= 2 && last >= 0 {
+	if first := max(0, last-streak+1); streak > 0 && last >= 0 {
 		fmt.Fprintf(&b, `<path class="bars-streak" d="M%d %dV%dH%dV%d"/>`, colX(first), barsBase+4, barsBase+6, colX(last)+cell, barsBase+4)
 	}
 	return template.HTML(b.String() + `</svg>`)

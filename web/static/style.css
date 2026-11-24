@@ -2210,7 +2210,8 @@ a.row-title:hover,
 .bars .h4 { --bar: var(--accent); }
 .bars-stub { --bar: var(--hover); }
 .bars-hit:hover + .bars-bar { fill: color-mix(in oklab, var(--bar) 72%, white); }
-.bars-now { stroke: var(--accent-bright); stroke-width: 1; }
+/* headings colour, not the accent: the top step is filled with the accent */
+.bars-now { stroke: var(--text-headings); stroke-width: 1; }
 
 .bars-streak { stroke: var(--syn-constant); }
 

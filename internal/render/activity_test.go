@@ -71,6 +71,8 @@ func TestStreakBracket(t *testing.T) {
 		{"to the right edge", 40, 52, weeks, 40, 52, 13},
 		{"whole year", 0, 52, weeks, 1, 52, 52},
 		{"clipped on small screens", 10, 52, 26, 0, 25, 43},
+		{"one week, this week", 52, 52, weeks, 52, 52, 1},
+		{"one week, last week", 51, 51, weeks, 51, 51, 1},
 	}
 	for _, c := range cases {
 		counts := make([]int, weeks)

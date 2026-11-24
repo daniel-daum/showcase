@@ -1024,3 +1024,16 @@ File pages get a copy button joined to Raw (`[Raw | ⧉]`), like GitHub's.
   which beat the `hidden` attribute, so the clone box's copy button showed
   without JS too, contrary to "Copy buttons need JS". `[hidden]` rules for
   both fix it.
+
+## This week on the bar chart, clearer
+
+Production showed "1-week streak" with no bracket under the bars, and this
+week's bar looked like any other busy week. Both replace parts of
+"Markers, kept few" under "Activity bar chart".
+
+- **The streak bracket is drawn from one week,** not two, so it always
+  matches the streak in the box head. A one-week bracket is a short
+  underline under that week's bar.
+- **This week's outline is `--text-headings`,** not `--accent-bright`. The
+  busiest weeks are filled with `--accent`, and `--accent-bright` (the
+  accent with 18% white) barely showed on them.

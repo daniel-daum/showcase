@@ -10,16 +10,8 @@ Three stages. Each one works on its own.
 
 ## Release an image
 
-On a machine with Docker (the Mac):
-
-```sh
-git tag -s v0.1.0 -m v0.1.0         # signed, on a clean, committed tree
-git push origin v0.1.0
-docker login git.danieldaum.net     # a Gitea token with write:package
-just release 0.1.0                  # linux/amd64 + linux/arm64, tags 0.1.0 and latest
-```
-
-The image is `git.danieldaum.net/daniel/showcase:0.1.0`.
+Tagging, building, pushing and pinning a version are in the main
+[README](../README.md#release-a-version).
 
 ## 1. code.danieldaum.net
 

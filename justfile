@@ -31,11 +31,11 @@ image_name := "git.danieldaum.net/daniel/showcase"
 image tag="dev":
     docker build -t {{image_name}}:{{tag}} .
 
-# Push a tagged release: needs Docker, `docker login git.danieldaum.net`, a clean tree and HEAD tagged v<version>
+# Push a tagged release by hand, as CI does (linux/amd64, for the server): needs Docker, `docker login git.danieldaum.net`, a clean tree and HEAD tagged v<version>
 release version:
     git diff --quiet HEAD || { echo "commit first"; exit 1; }
     test "$(git describe --exact-match --tags HEAD 2>/dev/null)" = "v{{version}}" || { echo "tag HEAD as v{{version}} first"; exit 1; }
-    docker buildx build --platform linux/amd64,linux/arm64 -t {{image_name}}:{{version}} -t {{image_name}}:latest --push .
+    docker buildx build --platform linux/amd64 -t {{image_name}}:{{version}} -t {{image_name}}:latest --push .
 
 # Regenerate the icons from extracted npm packages: material-icon-theme@5.40.0 and @primer/octicons@19.15.0
 icons material octicons:

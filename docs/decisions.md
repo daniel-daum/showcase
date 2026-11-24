@@ -912,3 +912,34 @@ for the repo tabs; the README box's document tabs are unchanged.
   phone, so it stays on one line down to 375px screens.
 - Not checked in a real browser in this pass: the numbers come from the
   font's metrics, not a render.
+
+## Images built by Gitea Actions
+
+`.gitea/workflows/release.yml` builds and pushes the image when a tag
+`v*.*.*` is pushed, then creates the Gitea release. Tagging and deploying
+stay manual: the server runs the digest pinned in `deploy/compose.yaml`,
+never `latest`, so nothing reaches it that Daniel didn't pin.
+
+- **amd64 only.** The server is amd64. The image used to be built for
+  arm64 too, because `just release` ran on the Mac (Apple silicon). That
+  needed QEMU: Go cross-compiles natively, but the runtime stage's
+  `apk add` runs as the target arch. Nothing runs the arm64 image, so it
+  and QEMU are gone, here and in `just release`. Locally there's
+  `just image` and `just demo`.
+- **Plain docker commands**, no actions beyond checkout (pinned to a
+  commit). The newest Docker actions need Node 24, and the runner was only
+  shown to run Node 20 (`actions/checkout@v4`). The digest comes from
+  `docker push`'s output, which every image store prints, rather than
+  `docker inspect`.
+- **Tokens:** only `REGISTRY_TOKEN` is made by hand (a Gitea token with
+  `write:package`), since Gitea's run token isn't known to push packages.
+  The release is written with the run token, `GITEA_TOKEN`. Both reach
+  the scripts as environment variables, and the tag name is read from
+  `$GITHUB_REF_NAME`, so nothing is interpolated into a script.
+- **Release notes:** the image with its digest (to pin in compose.yaml)
+  and the commit subjects since the previous tag. A release that already
+  exists makes the step fail after the image is pushed.
+- **Not covered:** tests (`just test` runs before committing) and the
+  tag's signature. A signature check was tried and dropped: the workflow
+  comes from the tagged commit, so it only stops tags made in Gitea's UI,
+  and the digest pin already guards the server.

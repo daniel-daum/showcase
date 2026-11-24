@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -221,6 +222,80 @@ func (s *Status) Passed() int {
 func (c *Client) Status(ctx context.Context, repo, sha string) (*Status, error) {
 	var s Status
 	return &s, c.get(ctx, c.repoPath(repo, "/commits/"+url.PathEscape(sha)+"/status"), &s)
+}
+
+// Signature is Gitea's verdict on a signed commit. Verified means the
+// signature matches a key of the Gitea user it names, as Gitea's own lock
+// badge does.
+type Signature struct {
+	Verified bool
+	Signer   string // Gitea user name, verified only
+	KeyType  string // "SSH" or "GPG", verified only
+	Key      string // SSH key fingerprint or GPG key ID, verified only
+}
+
+// Label is the badge's hover text.
+func (s *Signature) Label() string {
+	switch {
+	case !s.Verified:
+		return "Signed, not verified"
+	case s.Signer != "":
+		return "Verified signature by " + s.Signer
+	}
+	return "Verified signature"
+}
+
+// sigKey matches the key Gitea names in a verified reason ("daniel /
+// SHA256:…" or "daniel / <GPG key ID>").
+var sigKey = regexp.MustCompile(`^(SHA256:[A-Za-z0-9+/]{43}|[0-9A-F]{16})$`)
+
+// Signatures returns Gitea's verdict on the signed commits among the n
+// newest reachable from sha, by hash. Unsigned commits are left out. Only
+// the verdict, signer name and key are kept: never the signer's email.
+func (c *Client) Signatures(ctx context.Context, repo, sha string, n int) (map[string]Signature, error) {
+	out := map[string]Signature{}
+	for page := 1; (page-1)*50 < n; page++ {
+		var cs []struct {
+			SHA    string `json:"sha"`
+			Commit struct {
+				Verification *struct {
+					Verified  bool   `json:"verified"`
+					Reason    string `json:"reason"`
+					Signature string `json:"signature"`
+					Signer    *struct {
+						Name string `json:"name"`
+					} `json:"signer"`
+				} `json:"verification"`
+			} `json:"commit"`
+		}
+		q := fmt.Sprintf("/commits?sha=%s&limit=50&page=%d&stat=false&files=false&verification=true", url.QueryEscape(sha), page)
+		if err := c.get(ctx, c.repoPath(repo, q), &cs); err != nil {
+			return nil, err
+		}
+		for _, x := range cs {
+			v := x.Commit.Verification
+			if v == nil || v.Signature == "" {
+				continue
+			}
+			s := Signature{Verified: v.Verified}
+			if v.Verified {
+				if v.Signer != nil {
+					s.Signer = v.Signer.Name
+				}
+				if _, k, _ := strings.Cut(v.Reason, " / "); sigKey.MatchString(k) {
+					s.KeyType, s.Key = "GPG", k
+					if strings.HasPrefix(k, "SHA256:") {
+						s.KeyType = "SSH"
+					}
+				}
+			}
+			out[x.SHA] = s
+		}
+		if len(cs) < 50 {
+			break
+		}
+	}
+	return out, nil
 }
 
 func (c *Client) Languages(ctx context.Context, repo string) (map[string]int64, error) {

@@ -16,7 +16,7 @@
       </div>
       {{- if or .Added .Deleted}}<span class="diffstat" title="{{.Added}} added, {{.Deleted}} removed"><span class="add">+{{.Added}}</span> <span class="del">&minus;{{.Deleted}}</span></span>{{end}}
       {{- if eq .Hash $r.Head}}{{template "ci" (dict "S" $r.Status "Href" $href)}}{{end}}
-      <a class="sha" href="{{$href}}">{{slice .Hash 0 7}}</a>
+      {{template "sha" (dict "R" $r "Hash" .Hash "Href" $href)}}
     </li>
     {{- end}}
   </ol>

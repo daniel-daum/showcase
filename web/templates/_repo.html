@@ -65,6 +65,18 @@
 {{with .S}}<a class="ci ci--{{.State}}" href="{{$.Href}}#checks" title="checks: {{.State}}">{{if eq .State "success"}}{{template "icon" "check"}}{{else if or (eq .State "failure") (eq .State "error")}}{{template "icon" "x"}}{{else}}{{template "icon" "dot"}}{{end}}<span>{{.Passed}}/{{.TotalCount}}</span></a>{{end}}
 {{- end}}
 
+{{/* sha: a short hash, linked when Href is set. A signed commit carries
+     Gitea's verdict, like Gitea's own label: verified gets a lock and the
+     signer's avatar on a green edge, unverified an open lock. Takes R,
+     Hash and Href. */}}
+{{define "sha" -}}
+{{- $s := .R.Sig .Hash}}{{$cls := "sha"}}{{with $s}}{{$cls = printf "sha sha--%s" (or (and .Verified "verified") "signed")}}{{end}}
+{{- if .Href}}<a class="{{$cls}}" href="{{.Href}}"{{with $s}} title="{{.Label}}"{{end}}>{{else}}<span class="{{$cls}}"{{with $s}} title="{{.Label}}"{{end}}>{{end}}
+{{- slice .Hash 0 7}}
+{{- with $s}}<span class="sha-sig">{{if .Verified}}{{template "icon" "lock"}}{{if $.R.IsOwner .Signer}}{{with $.R.Avatar}}<img class="avatar-xs" src="{{.}}" alt="" width="14" height="14">{{end}}{{end}}{{else}}{{template "icon" "unlock"}}{{end}}<span class="sr-only">{{.Label}}</span></span>{{end}}
+{{- if .Href}}</a>{{else}}</span>{{end}}
+{{- end}}
+
 {{define "commitrow" -}}
 {{- $r := .Repo}}{{with .Latest}}{{$href := printf "/%s/commit/%s/" $r.Name .Hash}}
 <div class="box-commit">
@@ -72,7 +84,7 @@
   <span class="commit-author">{{.Author}}</span>
   <a class="commit-msg" href="{{$href}}">{{.Subject}}</a>
   {{template "ci" (dict "S" $r.Status "Href" $href)}}
-  <a class="sha" href="{{$href}}">{{slice .Hash 0 7}}</a>
+  {{template "sha" (dict "R" $r "Hash" .Hash "Href" $href)}}
   <time class="{{fresh .When}}" datetime="{{.When.Format "2006-01-02T15:04:05Z07:00"}}" title="{{.When.Format "2006-01-02 15:04 MST"}}">{{ago .When}}</time>
 </div>
 {{- end}}

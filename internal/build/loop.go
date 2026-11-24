@@ -114,7 +114,7 @@ func (b *Builder) prune(keep ...string) {
 func (b *Builder) reuse(r *repo, dir string, dirs ...string) bool {
 	// everything the shared repo header and tabs show
 	h, _ := json.Marshal([]any{r.Head, r.Description, r.Website, r.Topics, r.Archived, r.DefaultBranch, r.LatestTag(),
-		len(r.Branches), len(r.Tags), len(r.Releases), len(r.Pulls), len(r.Issues), r.PackageCount(), r.License, r.Avatar, r.Status, b.ageKey(r)})
+		len(r.Branches), len(r.Tags), len(r.Releases), len(r.Pulls), len(r.Issues), r.PackageCount(), r.License, r.Avatar, r.Status, r.Sigs, b.ageKey(r)})
 	key := fmt.Sprintf("%x", sha256.Sum256(h))
 	if b.st.next == nil { // -once mode: no previous build
 		return false

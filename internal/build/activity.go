@@ -51,7 +51,10 @@ type FeedItem struct {
 	More    int          // push: commits not listed
 }
 
-type FeedCommit struct{ Short, Subject, Href string }
+type FeedCommit struct {
+	Short, Subject, Href string
+	Verified             bool // Gitea verified its signature
+}
 
 // activity fills the profile's activity parts from the repos' commits,
 // releases and pulls. Only allowlisted repos are in repos, so nothing else
@@ -129,7 +132,7 @@ func (b *Builder) feedItems(repos []*repo, login string, since time.Time) []Feed
 			}
 			it := &items[i]
 			if it.Count++; len(it.Commits) < feedCommits {
-				it.Commits = append(it.Commits, FeedCommit{Short: c.Hash[:min(len(c.Hash), 7)], Subject: c.Subject, Href: r.CommitHref(c.Hash)})
+				it.Commits = append(it.Commits, FeedCommit{Short: c.Hash[:min(len(c.Hash), 7)], Subject: c.Subject, Href: r.CommitHref(c.Hash), Verified: r.Sigs[c.Hash].Verified})
 			} else {
 				it.More++
 			}

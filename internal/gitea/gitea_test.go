@@ -44,6 +44,7 @@ func TestTokenOnlyForPackages(t *testing.T) {
 	c.Comments(ctx, "a", 1)
 	c.Releases(ctx, "a")
 	c.Languages(ctx, "a")
+	c.Signatures(ctx, "a", "main", 50)
 	c.User(ctx)
 	c.Avatar(ctx, srv.URL+"/avatars/x")
 	pkgs, err := c.Packages(ctx, []string{"a", "secret"})
@@ -109,4 +110,43 @@ func TestNoTokenIsAnonymous(t *testing.T) {
 	}))
 	defer srv.Close()
 	New(srv.URL, "daniel").Packages(context.Background(), []string{"a"})
+}
+
+// TestSignatures: unsigned commits are left out, a verified one keeps its
+// signer and a well-formed key, and a full page asks for the next one.
+func TestSignatures(t *testing.T) {
+	var pages []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		pages = append(pages, r.URL.Query().Get("page"))
+		if r.URL.Query().Get("page") == "2" {
+			w.Write([]byte(`[{"sha":"c","commit":{"verification":{"verified":true,"reason":"daniel / not a key","signature":"s","signer":{"name":"daniel"}}}}]`))
+			return
+		}
+		cs := []string{
+			`{"sha":"a","commit":{"verification":{"verified":true,"reason":"daniel / SHA256:Qm9vZ3VzRmluZ2VycHJpbnRGb3JUZXN0c09ubHkxMjM","signature":"s","signer":{"name":"daniel","email":"d@example.com"}}}}`,
+			`{"sha":"b","commit":{"verification":{"verified":false,"reason":"gpg.error.no_gpg_keys_found","signature":"s"}}}`,
+		}
+		for len(cs) < 50 {
+			cs = append(cs, `{"sha":"u","commit":{"verification":{"verified":false,"reason":"gpg.error.not_signed_commit","signature":""}}}`)
+		}
+		w.Write([]byte("[" + strings.Join(cs, ",") + "]"))
+	}))
+	defer srv.Close()
+	got, err := New(srv.URL, "daniel").Signatures(context.Background(), "a", "main", 60)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]Signature{
+		"a": {Verified: true, Signer: "daniel", KeyType: "SSH", Key: "SHA256:Qm9vZ3VzRmluZ2VycHJpbnRGb3JUZXN0c09ubHkxMjM"},
+		"b": {},
+		"c": {Verified: true, Signer: "daniel"},
+	}
+	if len(got) != len(want) || strings.Join(pages, ",") != "1,2" {
+		t.Fatalf("got %+v from pages %v, want %+v from pages 1,2", got, pages, want)
+	}
+	for k, w := range want {
+		if got[k] != w {
+			t.Errorf("%s = %+v, want %+v", k, got[k], w)
+		}
+	}
 }

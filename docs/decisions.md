@@ -960,3 +960,40 @@ never `latest`, so nothing reaches it that Daniel didn't pin.
   tag's signature. A signature check was tried and dropped: the workflow
   comes from the tagged commit, so it only stops tags made in Gitea's UI,
   and the digest pin already guards the server.
+
+## Signed commits
+
+Signed commits get Gitea's lock badge: the short hash gets a green edge and
+a segment with a lock and the signer's avatar when Gitea verified the
+signature, or an open lock when it's signed but not verified. Unsigned
+commits look as before.
+
+- **Gitea's verdict, not git's.** One more anonymous call per repo,
+  `/commits?sha=<HEAD>&limit=50&stat=false&files=false&verification=true`,
+  paged up to `max_commits`. Gitea checks the signature against the keys
+  of the user whose verified email committed it, so the badge matches
+  Gitea's own. Checking locally would need the keys in an allowed-signers
+  file, `ssh-keygen` and `gpg` in the image, and Gitea's email matching
+  rules again.
+- **What's kept:** verified or not, the signer's Gitea name and the key
+  (SSH fingerprint or GPG key ID, read from the `reason`, and only when it
+  has that exact form). The signer's email, the signature and the payload
+  are never decoded. The avatar shows only when the signer is the profile's
+  user; other signers get the lock alone. The API has no trust status, so
+  Gitea's yellow "untrusted" and red "warning" states aren't shown.
+- **Where:** every short hash of a commit on the log page (log rows, the
+  repo's latest commit bar, the commit page, branches and tags). The commit
+  page adds Gitea's signature bar: "Verified · signed by daniel with SSH key
+  `SHA256:…`", or "Signed · Gitea couldn't verify the signature". The
+  activity feed shows a small lock after verified hashes. Parent hashes
+  stay plain, as on Gitea. Branches and tags pointing at older commits show
+  no badge, since only the log page's commits are looked up.
+- **Colour:** `--add`, the CI pass green. `--sig` (12% of it over `--box`)
+  is the badge segment and the bar; `--sig-edge` the border. The contrast
+  test covers text on `--sig` (lowest: secondary text, 4.94:1).
+- **Failure:** 404/401/403 means no badges. Any other error fails the
+  build, like the CI status call. Empty repos skip the call (Gitea answers
+  409).
+- **Reuse key:** includes the verdicts, so commit pages are rebuilt when a
+  key is added in Gitea and old commits turn verified.
+- Icons: Octicons `lock` and `unlock` (19.15.0), added to `scripts/icons.py`.

@@ -12,9 +12,15 @@
     <span class="muted">committed <time datetime="{{.C.When.Format "2006-01-02T15:04:05Z07:00"}}" title="{{.C.When.Format "2006-01-02 15:04 MST"}}">{{ago .C.When}}</time></span>
     <span class="commit-ids">
       {{- range .Parents}}<span class="muted">parent</span> {{if .Href}}<a class="sha" href="{{.Href}}">{{slice .Name 0 7}}</a>{{else}}<span class="sha">{{slice .Name 0 7}}</span>{{end}} {{end -}}
-      <span class="muted">commit</span> <span class="sha">{{slice .C.Hash 0 7}}</span>
+      <span class="muted">commit</span> {{template "sha" (dict "R" $r "Hash" .C.Hash)}}
     </span>
   </div>
+  {{- with $r.Sig .C.Hash}}
+  <p class="sig-line{{if .Verified}} sig-line--verified{{end}}">
+    {{- if .Verified}}{{template "icon" "lock"}}<b>Verified</b><span class="muted">{{with .Signer}}signed by {{.}}{{else}}signature verified by Gitea{{end}}{{if .Key}} with {{.KeyType}} key <code>{{.Key}}</code>{{end}}</span>
+    {{- else}}{{template "icon" "unlock"}}<b>Signed</b><span class="muted">Gitea couldn't verify the signature.</span>{{end -}}
+  </p>
+  {{- end}}
   {{- with .Status}}
   <ul class="checks" id="checks">
     {{- range .Statuses}}

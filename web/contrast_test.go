@@ -35,6 +35,7 @@ func TestContrast(t *testing.T) {
 		{"--accent-bright", "--page"}, {"--accent-bright", "--box"}, {"--accent-bright", "--box-head"}, {"--accent-bright", "--hover"},
 		{"--accent", "--page"}, {"--background-dark", "--accent"},
 		{"--syn-constant", "--box"}, {"--add", "--box"}, {"--del", "--box"},
+		{"--add", "--sig"}, {"--text-secondary", "--sig"}, {"--text-headings", "--sig"},
 	}
 	var report strings.Builder
 	fmt.Fprintf(&report, "%-18s %-18s", "text", "on")

@@ -1426,6 +1426,8 @@ footer nav a,
     --radius-sm: 6px;
     --add: var(--syn-string);
     --del: var(--syn-variable);
+    --sig: color-mix(in oklab, var(--add) 12%, var(--box)); /* verified signatures */
+    --sig-edge: color-mix(in oklab, var(--add) 55%, var(--rule));
 
     /* layers, darkest first. The page is saturn's own background, so
        moving between danieldaum.net and here doesn't change it. Each layer
@@ -1665,6 +1667,48 @@ a.chip:hover {
 a.sha:hover {
     color: var(--accent-bright);
     border-color: var(--accent-edge);
+}
+
+/* signed commits, as on Gitea: a verified hash gets a green edge and a
+   lock with the signer's avatar, a signed but unverified one an open lock */
+.sha--verified,
+.sha--signed {
+    display: inline-flex;
+    align-items: center;
+}
+
+.sha--verified,
+a.sha--verified:hover {
+    border-color: var(--sig-edge);
+}
+
+.sha-sig {
+    display: inline-flex;
+    align-self: stretch;
+    align-items: center;
+    gap: 0.25rem;
+    margin: -0.05rem -0.4rem -0.05rem 0.4rem;
+    padding: 0 0.3rem;
+    border-left: 1px solid var(--rule);
+    border-radius: 0 3px 3px 0;
+    background: var(--box-head);
+}
+
+.sha--verified .sha-sig {
+    border-left-color: var(--sig-edge);
+    background: var(--sig);
+    color: var(--add);
+}
+
+.sha-sig .icon {
+    width: 12px;
+    height: 12px;
+    vertical-align: 0;
+}
+
+.sha-sig img.avatar-xs {
+    width: 14px;
+    height: 14px;
 }
 
 /* copy fields: a read-only input plus a copy button (copy.js shows it) */
@@ -2371,6 +2415,19 @@ a.row-title:hover,
 
 a.tl-sha:hover {
     color: var(--accent-bright);
+}
+
+.tl-sig {
+    display: inline-flex;
+    flex: none;
+    align-self: center;
+    margin-left: -0.45rem;
+    color: var(--add);
+}
+
+.tl-sig .icon {
+    width: 12px;
+    height: 12px;
 }
 
 .tl-subject {
@@ -3235,6 +3292,40 @@ a.ln:hover {
     gap: 0.6rem;
     margin: 0;
     padding: 0.4rem 1rem;
+}
+
+/* commit page: the signature bar, like Gitea's */
+.sig-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.6rem;
+    margin: 0;
+    padding: 0.5rem 1rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.85rem;
+}
+
+.sig-line b {
+    color: var(--text-headings);
+    font-weight: 600;
+}
+
+.sig-line code {
+    padding: 0 0.25rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    overflow-wrap: anywhere;
+}
+
+.sig-line--verified {
+    border-top-color: var(--sig-edge);
+    background: var(--sig);
+}
+
+.sig-line--verified .icon,
+.sig-line--verified b {
+    color: var(--add);
 }
 
 .checks li.ci--success .icon { color: var(--add); }

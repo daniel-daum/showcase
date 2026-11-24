@@ -3,6 +3,7 @@ package build
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"image"
@@ -16,6 +17,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -129,6 +131,10 @@ func fakeGitea(t *testing.T) *httptest.Server {
 			w.Write(buf.Bytes())
 			return
 		}
+		if r.URL.Path == "/api/v1/repos/daniel/repo-a/commits" {
+			signedCommits(t, filepath.Join(root, "daniel/repo-a.git"), w, r)
+			return
+		}
 		p := statusRe.ReplaceAllString(r.URL.Path, "/status") // any commit's status
 		b, err := os.ReadFile(filepath.Join("../../testdata/gitea", filepath.FromSlash(p)+".json"))
 		if err != nil {
@@ -140,6 +146,41 @@ func fakeGitea(t *testing.T) *httptest.Server {
 	}))
 	t.Cleanup(srv.Close)
 	return srv
+}
+
+// signedCommits answers Gitea's commit list for repo-a from the fixture
+// repo, with Gitea's verdict on each: the newest commit is verified (SSH),
+// the next signed but unverified, the third verified (GPG), the rest
+// unsigned. The signer's email must never reach a page.
+func signedCommits(t *testing.T, gitDir string, w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	limit, _ := strconv.Atoi(q.Get("limit"))
+	page, _ := strconv.Atoi(q.Get("page"))
+	if q.Get("verification") != "true" || q.Get("stat") != "false" || limit < 1 || page < 1 {
+		t.Errorf("commits query %q", r.URL.RawQuery)
+	}
+	skip := (page - 1) * limit
+	out, err := exec.Command("git", "--git-dir", gitDir, "log", "--format=%H", "--skip", strconv.Itoa(skip), "-n", strconv.Itoa(limit), "--end-of-options", q.Get("sha")).Output()
+	if err != nil {
+		t.Errorf("commits: %v", err)
+	}
+	type obj = map[string]any
+	signer := obj{"name": "daniel", "email": "signer-should-never-render@example.com"}
+	cs := []obj{}
+	for i, h := range strings.Fields(string(out)) {
+		v := obj{"verified": false, "reason": "gpg.error.not_signed_commit", "signature": ""}
+		switch skip + i {
+		case 0:
+			v = obj{"verified": true, "reason": "daniel / SHA256:Qm9vZ3VzRmluZ2VycHJpbnRGb3JUZXN0c09ubHkxMjM", "signature": "-----BEGIN SSH SIGNATURE-----", "signer": signer}
+		case 1:
+			v = obj{"verified": false, "reason": "gpg.error.no_gpg_keys_found", "signature": "-----BEGIN SSH SIGNATURE-----"}
+		case 2:
+			v = obj{"verified": true, "reason": "daniel / 0123456789ABCDEF", "signature": "-----BEGIN PGP SIGNATURE-----", "signer": signer}
+		}
+		cs = append(cs, obj{"sha": h, "commit": obj{"message": "x", "verification": v}})
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(cs)
 }
 
 func testBuilder(t *testing.T) *Builder {

@@ -16,7 +16,7 @@
         <span class="row-sub">{{if $href}}<a href="{{$href}}">{{.Subject}}</a>{{else}}{{.Subject}}{{end}}</span>
       </div>
       <time class="{{fresh .When}}" datetime="{{.When.Format "2006-01-02T15:04:05Z07:00"}}">{{ago .When}}</time>
-      {{if $href}}<a class="sha" href="{{$href}}">{{slice .Hash 0 7}}</a>{{else}}<span class="sha">{{slice .Hash 0 7}}</span>{{end}}
+      {{template "sha" (dict "R" $r "Hash" .Hash "Href" $href)}}
     </li>
     {{- end}}
   </ol>

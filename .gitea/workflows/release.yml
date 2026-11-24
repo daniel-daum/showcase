@@ -33,6 +33,10 @@ jobs:
     env:
       TAG: ${{ inputs.tag || github.ref_name }}
     steps:
+      - name: Check the tag
+        run: |
+          [[ $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::$TAG isn't a tag like v1.2.3"; exit 1; }
+
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: refs/tags/${{ env.TAG }}
@@ -42,7 +46,6 @@ jobs:
         env:
           TOKEN: ${{ secrets.REGISTRY_TOKEN }}
         run: |
-          [[ $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::$TAG isn't a tag like v1.2.3"; exit 1; }
           printf '%s' "$TOKEN" | docker login "${IMAGE%%/*}" -u "$GITHUB_REPOSITORY_OWNER" --password-stdin
           docker build --platform linux/amd64 -t "$IMAGE:${TAG#v}" -t "$IMAGE:latest" .
           docker push "$IMAGE:latest"

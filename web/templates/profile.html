@@ -50,7 +50,7 @@
         {{- if .Commits}}
         <ul class="tl-commits">
           {{- range .Commits}}
-          <li>{{if .Href}}<a class="tl-sha" href="{{.Href}}">{{.Short}}</a>{{else}}<span class="tl-sha">{{.Short}}</span>{{end}}<span class="tl-subject">{{.Subject}}</span></li>
+          <li>{{if .Href}}<a class="tl-sha" href="{{.Href}}">{{.Short}}</a>{{else}}<span class="tl-sha">{{.Short}}</span>{{end}}{{if .Verified}}<span class="tl-sig" title="Verified signature">{{template "icon" "lock"}}<span class="sr-only">Verified signature</span></span>{{end}}<span class="tl-subject">{{.Subject}}</span></li>
           {{- end}}
           <li class="tl-foot">{{with .More}}<span class="tl-chip">+{{.}} more</span>{{end}}<a class="tl-link" href="{{.Href}}">Commits &rarr;</a></li>
         </ul>

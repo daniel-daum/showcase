@@ -39,7 +39,8 @@ type repo struct {
 	Owner, OwnerName, Avatar string // for the header and commit rows
 	Commits                  int
 	Branches, Tags           []gitx.Ref
-	Status                   *gitea.Status // CI status of HEAD, nil if none
+	Status                   *gitea.Status              // CI status of HEAD, nil if none
+	Sigs                     map[string]gitea.Signature // signed commits among Recent, by hash
 	Langs                    []Lang
 	License, LicenseHref     string
 	Listed                   map[string]bool // commits that have their own page
@@ -65,6 +66,15 @@ func (r *repo) Release(tag string) *gitea.Release {
 		if r.Releases[i].TagName == tag {
 			return &r.Releases[i]
 		}
+	}
+	return nil
+}
+
+// Sig is Gitea's verdict on a commit's signature, nil if it is unsigned or
+// not among the log page's commits.
+func (r *repo) Sig(hash string) *gitea.Signature {
+	if s, ok := r.Sigs[hash]; ok {
+		return &s
 	}
 	return nil
 }
@@ -221,6 +231,9 @@ func (b *Builder) loadRepo(ctx context.Context, name string) (*repo, error) {
 	case err == nil && st.TotalCount > 0:
 		r.Status = st
 	case err != nil && !errors.Is(err, gitea.ErrNotFound):
+		return nil, err
+	}
+	if r.Sigs, err = b.Gitea.Signatures(ctx, name, r.Head, b.Cfg.MaxCommits); err != nil && !errors.Is(err, gitea.ErrNotFound) {
 		return nil, err
 	}
 	log, err := r.Git.Log(ctx, r.Head, b.Cfg.MaxCommits, "")

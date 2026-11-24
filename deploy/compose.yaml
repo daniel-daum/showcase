@@ -1,9 +1,10 @@
 # showcase at code.danieldaum.net. The reverse proxy terminates TLS and
 # forwards to 127.0.0.1:8080. config.json sits next to this file.
-# Image: showcase 0.1.0 (linux/amd64 + linux/arm64), pinned by digest.
+# Image: showcase 0.1.0 (linux/amd64 + linux/arm64), pinned by digest, from
+# Gitea's registry on the tailnet.
 services:
   showcase:
-    image: git.danieldaum.net/daniel/showcase@sha256:e5d3d45006795cbf34f6e43780803f76731a3d1d2b31a8ea7bb333c719399e16
+    image: code.aardvark-halibut.ts.net/daniel/showcase@sha256:e5d3d45006795cbf34f6e43780803f76731a3d1d2b31a8ea7bb333c719399e16
     container_name: showcase
     restart: unless-stopped
     ports:

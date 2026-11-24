@@ -936,6 +936,12 @@ never `latest`, so nothing reaches it that Daniel didn't pin.
   The release is written with the run token, `GITEA_TOKEN`. Both reach
   the scripts as environment variables, and the tag name is read from
   `$GITHUB_REF_NAME`, so nothing is interpolated into a script.
+- **Registry host:** Gitea moved to the tailnet
+  (`code.aardvark-halibut.ts.net`), and `git.danieldaum.net/v2/` now
+  answers 404. The workflow takes the registry host from
+  `$GITHUB_SERVER_URL`, Gitea's own address, so it follows Gitea if it
+  moves again. The justfile, compose.yaml and the docs name the tailnet
+  host. The pinned 0.1.0 digest is the same there (checked with crane).
 - **Release notes:** the image with its digest (to pin in compose.yaml)
   and the commit subjects since the previous tag. A release that already
   exists makes the step fail after the image is pushed.

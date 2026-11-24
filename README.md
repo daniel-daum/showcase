@@ -59,8 +59,8 @@ it at danieldaum.net/projects are in [deploy/README.md](deploy/README.md).
 ### Release a version
 
 A release is a git tag `v<version>`, an image
-`git.danieldaum.net/daniel/showcase:<version>` (also tagged `latest`) and
-a Gitea release. Versions follow semver: a fix bumps the patch (0.2.0 →
+`code.aardvark-halibut.ts.net/daniel/showcase:<version>` (also tagged `latest`, in Gitea's
+registry on the tailnet) and a Gitea release. Versions follow semver: a fix bumps the patch (0.2.0 →
 0.2.1), a feature the minor (0.2.0 → 0.3.0). The examples release 0.2.1.
 
 You commit, tag and deploy. Pushing the tag starts
@@ -109,9 +109,9 @@ Docker (act_runner gives jobs the host's Docker by default).
 **Without CI**, from the Mac, after step 2:
 
 ```sh
-docker login git.danieldaum.net     # once; a Gitea token with write:package
+docker login code.aardvark-halibut.ts.net   # once; a Gitea token with write:package
 just release 0.2.1                  # same image and tags; no Gitea release
-crane digest git.danieldaum.net/daniel/showcase:0.2.1
+crane digest code.aardvark-halibut.ts.net/daniel/showcase:0.2.1
 ```
 
 Use one or the other for a version: a rebuild gets a new digest.

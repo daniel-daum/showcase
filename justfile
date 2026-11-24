@@ -25,13 +25,13 @@ digests:
     @echo "golang:1.27.4-alpine3.24 $(crane digest golang:1.27.4-alpine3.24)"
     @echo "alpine:3.24.4            $(crane digest alpine:3.24.4)"
 
-image_name := "git.danieldaum.net/daniel/showcase"
+image_name := "code.aardvark-halibut.ts.net/daniel/showcase"
 
 # Build the image for this machine (needs Docker, e.g. on the host)
 image tag="dev":
     docker build -t {{image_name}}:{{tag}} .
 
-# Push a tagged release by hand, as CI does (linux/amd64, for the server): needs Docker, `docker login git.danieldaum.net`, a clean tree and HEAD tagged v<version>
+# Push a tagged release by hand, as CI does (linux/amd64, for the server): needs Docker, `docker login code.aardvark-halibut.ts.net`, a clean tree and HEAD tagged v<version>
 release version:
     git diff --quiet HEAD || { echo "commit first"; exit 1; }
     test "$(git describe --exact-match --tags HEAD 2>/dev/null)" = "v{{version}}" || { echo "tag HEAD as v{{version}} first"; exit 1; }

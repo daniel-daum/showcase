@@ -48,7 +48,7 @@ them when you like.
 ## 2. Gitea on the tailnet
 
 Set `gitea_url` to the tailnet address (for example
-`https://git.aardvark-halibut.ts.net`) and restart the container. Mirrors
+`https://code.aardvark-halibut.ts.net`) and restart the container. Mirrors
 follow the new address on the next build. Nothing else changes: Gitea's
 address never reaches a page.
 
@@ -66,7 +66,7 @@ Check from the server:
 `docker compose exec showcase wget -qO- <gitea_url>/api/v1/version`.
 
 Once Gitea is internal, the server pulls the image from the tailnet name
-(`git.aardvark-halibut.ts.net/daniel/showcase`), or from showcase itself
+(`code.aardvark-halibut.ts.net/daniel/showcase`), or from showcase itself
 (`code.danieldaum.net/daniel/showcase`).
 
 ## 3. danieldaum.net/projects

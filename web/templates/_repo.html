@@ -1,15 +1,13 @@
 {{define "repohead" -}}
 {{- $r := .Repo}}{{$base := printf "/%s" $r.Name}}
-<nav class="breadcrumb" aria-label="breadcrumb">
-  <a href="/">projects</a> <span aria-hidden="true">-></span>
-  <a href="{{$base}}/">{{$r.Name}}</a>
-</nav>
-<header class="repo-head">
-  <h1 class="repo-title">
-    <a class="repo-name" href="{{$base}}/">{{$r.Name}}</a>
+<header class="page-header page-header--post repo-head">
+  <p class="page-header-kicker">
+    <a href="/"><span aria-hidden="true">/</span>projects</a>
+  </p>
+  <h1 class="repo-title">{{$r.Name}}
     {{- if $r.Archived}}<span class="pill">archived</span>{{end}}
   </h1>
-  {{- with $r.Description}}<p class="repo-desc">{{.}}</p>{{end}}
+  {{- with $r.Description}}<p class="meta">{{.}}</p>{{end}}
   {{- with $r.Topics}}
   <div class="pills topics">{{range .}}<span class="pill">{{.}}</span>{{end}}</div>
   {{- end}}

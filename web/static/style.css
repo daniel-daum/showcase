@@ -566,7 +566,7 @@ footer nav p {
    path, not the full url, as in saturn */
 @media (max-width: 600px) {
     footer nav p,
-    footer nav a[href$="/pgp.asc"] {
+    footer nav a[href$="/id/"] {
         display: none;
     }
 }
@@ -687,6 +687,48 @@ nav p {
 /* the home hero is the one heading in the accent */
 .page-header--home h1 {
     color: var(--accent);
+}
+
+/* a post or section page: a small kicker above a smaller h1 */
+.page-header-kicker {
+    margin: 0 0 0.5rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.page-header--post h1 {
+    font-size: 1.6rem;
+    line-height: 1.3;
+    margin-bottom: 0.6rem;
+}
+
+.page-header--post .meta {
+    margin: 0;
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+}
+
+/* a section page: the kicker is its parent and links back up, and the
+   meta is a sentence about the page, not a date */
+.page-header-kicker a {
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--accent-muted);
+    transition:
+        color 150ms ease,
+        border-bottom-color 150ms ease;
+}
+
+.page-header-kicker a:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.page-header--post .meta:not(.caps) {
+    font-size: 0.88rem;
+    letter-spacing: normal;
+    line-height: 1.6;
 }
 
 /*============================*/
@@ -1503,7 +1545,7 @@ h1, h2, h3,
 }
 
 /* saturn capitalises nav and labels; a code browser reads better without.
-   The chrome and the page breadcrumb keep saturn's capitals. */
+   The chrome and the page headers keep saturn's capitals. */
 .pill,
 .card-title {
     text-transform: none;
@@ -2625,32 +2667,17 @@ a.tl-sha:hover {
     margin-bottom: 1.25rem;
 }
 
+/* the h1 is saturn's post header; this only lines up the archived pill */
 .repo-title {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
-    margin: 0;
-    font-size: 1.5rem;
-}
-
-.repo-title a {
-    color: var(--text-headings);
-}
-
-.repo-title a:hover {
-    color: var(--accent-bright);
 }
 
 .repo-title .pill {
     font-family: var(--ui);
     font-size: 0.72rem;
-}
-
-.repo-desc {
-    margin: 0.5rem 0 0;
-    font-size: 1rem;
-    color: var(--body-text);
 }
 
 .topics {

@@ -1037,3 +1037,30 @@ week's bar looked like any other busy week. Both replace parts of
 - **This week's outline is `--text-headings`,** not `--accent-bright`. The
   busiest weeks are filled with `--accent`, and `--accent-bright` (the
   accent with 18% white) barely showed on them.
+
+## Saturn's new footer and post headers
+
+Saturn changed its footer and page headers, and showcase follows so
+danieldaum.net/projects stays seamless.
+
+- **Footer:** saturn's new links: email, source, ID, changelog, privacy,
+  RSS, theme. "source" is `/saturn/`, showcase's own page for saturn, so it
+  becomes `/projects/saturn/` under `base_path` and opens in the same tab.
+  ID, changelog, privacy and RSS stay absolute `https://danieldaum.net/…`
+  links. The 600px hide rule now matches `a[href$="/id/"]` where it matched
+  `/pgp.asc`.
+- **Headers, one rule:** the big `/name` header is only for pages in the top
+  nav, so only the home page (`/projects`) keeps it. Every other page uses
+  saturn's post header, `.page-header--post`, with a kicker linking to its
+  parent, and that kicker replaces the `projects -> …` breadcrumb.
+  - `/repos/`: kicker `/projects`, h1 "Repositories", the count sentence
+    as `.meta`.
+  - Repo pages: kicker `/projects`, h1 the repo name (shown in capitals by
+    saturn's caps rule), the description as `.meta`, then topics, stats and
+    links as before. Every page in a repo (code, commits, a file, a commit,
+    releases …) keeps this same header, so the tabs under it don't move. The
+    tabs and the in-repo path crumbs show where you are inside the repo.
+    The repo name in the h1 is no longer a link: the Code tab goes there.
+- **CSS:** saturn's `.page-header-kicker` and `.page-header--post` rules are
+  copied into part 1 of `style.css`. `.repo-title` only lays out the
+  archived pill now. `.breadcrumb` stays in part 1 as saturn's copy, unused.

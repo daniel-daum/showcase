@@ -1,10 +1,9 @@
 {{define "content" -}}
-<nav class="breadcrumb" aria-label="breadcrumb">
-  <a href="/">projects</a> <span aria-hidden="true">-></span>
-  <a href="/repos/" aria-current="page">repositories</a>
-</nav>
-<header class="page-header">
-  <h1><span aria-hidden="true">/</span>repositories</h1>
+<header class="page-header page-header--post">
+  <p class="page-header-kicker">
+    <a href="/"><span aria-hidden="true">/</span>projects</a>
+  </p>
+  <h1>Repositories</h1>
   <p class="meta">All {{len .Repos}} public repositories, most recently updated first</p>
 </header>
 <div class="repo-grid">
